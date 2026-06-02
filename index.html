@@ -1130,6 +1130,34 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
+    // ★ GitHub에 올린 원본 Raw 이미지 주소를 아래 큰따옴표 안에 정확히 넣어주세요.
+const GITHUB_LOGO_URL = "https://github.com/miri-clerobotics/manual-tool/blob/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
+
+function loadDefaultGitHubWatermark() {
+  const img = new Image();
+  // CORS(크로스도메인) 보안 정책 우회를 위해 익명 요청 허용 세팅 주입
+  img.crossOrigin = "anonymous"; 
+  
+  img.onload = function() {
+    watermarkImage = img;
+    // 이미 캔버스에 백그라운드 스크린샷이 올라와 있는 상태라면 워터마크를 즉시 갱신해 그려줌
+    if (bgImage) {
+      drawCanvas();
+    }
+  };
+  
+  img.onerror = function() {
+    console.error("GitHub 워터마크 로고를 불러오는데 실패했습니다. URL을 확인해 주세요.");
+  };
+  
+  img.src = GITHUB_LOGO_URL;
+}
+
+// 페이지 스크립트 로드 즉시 실행 유도
+loadDefaultGitHubWatermark();
+
+    
+    
     // 결과물 내보내기 핵심 연산
     function downloadResult() {
       if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
