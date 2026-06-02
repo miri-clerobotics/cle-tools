@@ -109,7 +109,7 @@
           </div>
         </div>
 
-          <div class="space-y-2 border-t border-slate-200/60 pt-4">
+        <div class="space-y-2 border-t border-slate-200/60 pt-4">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
             자동 번호표 타입
           </span>
@@ -118,10 +118,9 @@
             <button class="badge-type-btn flex-1 text-[10px] py-1.5 rounded-lg text-slate-400 hover:text-slate-600 font-semibold transition-all" data-type="alpha-low">a, b, c</button>
             <button class="badge-type-btn flex-1 text-[10px] py-1.5 rounded-lg text-slate-400 hover:text-slate-600 font-semibold transition-all" data-type="alpha-caps">A, B, C</button>
           </div>
-           </div>
-       
+        </div>
 
-          <div class="space-y-2 border-t border-slate-200/60 pt-4">
+        <div class="space-y-2 border-t border-slate-200/60 pt-4">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
             테두리 & 뱃지 색상
           </span>
@@ -256,57 +255,56 @@
             </div>
           </div>
 
-        <div class="space-y-3 border-t border-[#FF4747]/10 pt-4">
-  <div class="flex justify-between items-center">
-    <div class="flex items-center gap-1.5">
-      <span class="text-xs text-slate-500 font-semibold">회사 로고 / 출처 보호</span>
-    </div>
-    <label class="relative inline-flex items-center cursor-pointer">
-      <input type="checkbox" id="watermarkToggle" class="sr-only peer" checked>
-      <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747]"></div>
-    </label>
-  </div>
-  
-  <div id="watermarkConfig" class="space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
-    <div id="wmImageGroup" class="space-y-1.5">
-      <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
-      <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
-        <i data-lucide="image" class="w-4 h-4 text-slate-400 mr-2 group-hover:text-[#FF4747]"></i>
-        <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">CLE_Robotics_Logo(기본)</span>
-        <input type="file" id="watermarkFileInput" accept="image/*" class="hidden">
-      </label>
-    </div>
+          <div class="space-y-3 border-t border-[#FF4747]/10 pt-4">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-500 font-semibold">회사 로고 / 출처 보호</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="watermarkToggle" class="sr-only peer" checked>
+                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747]"></div>
+              </label>
+            </div>
+            
+            <div id="watermarkConfig" class="space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+              <div id="wmImageGroup" class="space-y-1.5">
+                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
+                <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
+                  <i data-lucide="image" class="w-4 h-4 text-slate-400 mr-2 group-hover:text-[#FF4747]"></i>
+                  <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">CLE_Robotics_Logo(기본)</span>
+                  <input type="file" id="watermarkFileInput" accept="image/*" class="hidden">
+                </label>
+              </div>
 
-    <div class="space-y-1.5">
-      <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">정렬 위치</span>
-      <select id="watermarkPosSelect" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-[#FF4747] font-semibold">
-        <option value="bottom-right">우측 하단 (기본)</option>
-        <option value="bottom-left">좌측 하단</option>
-        <option value="top-right">우측 상단</option>
-        <option value="top-left">좌측 상단</option>
-        <option value="center">중앙 대각 스포일러</option>
-      </select>
-    </div>
+              <div class="space-y-1.5">
+                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">정렬 위치</span>
+                <select id="watermarkPosSelect" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-[#FF4747] font-semibold">
+                  <option value="bottom-right">우측 하단 (기본)</option>
+                  <option value="bottom-left">좌측 하단</option>
+                  <option value="top-right">우측 상단</option>
+                  <option value="top-left">좌측 상단</option>
+                  <option value="center">중앙 대각 스포일러</option>
+                </select>
+              </div>
 
-    <div class="space-y-1">
-      <div class="flex justify-between text-[10px] text-slate-500 font-bold">
-        <span>투명도</span>
-        <span id="wmOpacityVal">30%</span>
-      </div>
-      <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
-    </div>
+              <div class="space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                  <span>투명도</span>
+                  <span id="wmOpacityVal">30%</span>
+                </div>
+                <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+              </div>
 
-    <div class="space-y-1">
-      <div class="flex justify-between text-[10px] text-slate-500 font-bold">
-        <span>로고 크기</span>
-        <span id="wmScaleVal">15%</span>
-      </div>
-      <input type="range" id="watermarkScaleRange" min="5" max="50" value="15" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
-    </div>
-  </div>
-</div>
-
-          
+              <div class="space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                  <span>로고 크기</span>
+                  <span id="wmScaleVal">15%</span>
+                </div>
+                <input type="range" id="watermarkScaleRange" min="5" max="50" value="15" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="space-y-2.5 border-t border-slate-200/60 pt-5">
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
@@ -395,15 +393,8 @@
     let autoScaleEnabled = true; 
     let downloadCount = 1; // ★ 파일명 순차 증가 처리를 위한 글로벌 다운로드 카운터
 
-    // 이미지 자르기(Crop)용 상태 변수
-    let cropArea = null; 
-    let isResizingCrop = false; 
-    let activeCropHandle = null; 
-    let isDrawingNewCrop = false; 
-    let cropStartX = 0, cropStartY = 0;
-
-    // 회사 로고 / 워터마크 기능 관련 전역 변수
-    let watermarkEnabled = false;
+    // ★ 변경점: 기본 스위치 ON과 싱크를 맞추기 위해 초기 변수값을 true로 설정
+    let watermarkEnabled = true;
     let watermarkType = 'image'; 
     let watermarkImage = null; 
     let watermarkText = 'COMPANY CONFIDENTIAL';
@@ -1068,7 +1059,6 @@
             
             if (selectedElement.type === 'badge') {
               focusAreas.forEach(f => {
-                // ★ [자석 정렬 개선] 임계치를 15에서 10으로 낮추어 정렬 자유도와 부드러운 반응감을 대폭 향상
                 const snapThreshold = 10;
                 if (Math.abs(nx - f.x) < snapThreshold) { nx = f.x; activeSnapGuides.push({type:'v', x:f.x}); }
                 if (Math.abs(nx - (f.x + f.w)) < snapThreshold) { nx = f.x + f.w; activeSnapGuides.push({type:'v', x:f.x+f.w}); }
@@ -1130,34 +1120,32 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
-    // ★ GitHub에 올린 원본 Raw 이미지 주소를 아래 큰따옴표 안에 정확히 넣어주세요.
-const GITHUB_LOGO_URL = "https://github.com/miri-clerobotics/manual-tool/blob/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
+    // ★ https://blog.naver.com/PostView.naver?blogId=psyang7&logNo=222843957064&categoryNo=0&parentCategoryNo=0&viewDate=&currentPage=1&postListTopCurrentPage=&from=menu&userTopListOpen=true&userTopListCount=10&userTopListManageOpen=false&userTopListCurrentPage=1: 깃허브 웹 페이지 주소를 크래시 없는 원본 Raw 주소 체계로 전면 교체 완료!
+    const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/miri-clerobotics/manual-tool/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
 
-function loadDefaultGitHubWatermark() {
-  const img = new Image();
-  // CORS(크로스도메인) 보안 정책 우회를 위해 익명 요청 허용 세팅 주입
-  img.crossOrigin = "anonymous"; 
-  
-  img.onload = function() {
-    watermarkImage = img;
-    // 이미 캔버스에 백그라운드 스크린샷이 올라와 있는 상태라면 워터마크를 즉시 갱신해 그려줌
-    if (bgImage) {
-      drawCanvas();
+    function loadDefaultGitHubWatermark() {
+      const img = new Image();
+      // CORS(크로스도메인) 보안 정책 우회를 위해 익명 요청 허용 세팅 주입
+      img.crossOrigin = "anonymous"; 
+      
+      img.onload = function() {
+        watermarkImage = img;
+        // 이미 캔버스에 백그라운드 스크린샷이 올라와 있는 상태라면 워터마크를 즉시 갱신해 그려줌
+        if (bgImage) {
+          drawCanvas();
+        }
+      };
+      
+      img.onerror = function() {
+        console.error("GitHub 워터마크 로고를 불러오는데 실패했습니다. URL을 확인해 주세요.");
+      };
+      
+      img.src = GITHUB_LOGO_URL;
     }
-  };
-  
-  img.onerror = function() {
-    console.error("GitHub 워터마크 로고를 불러오는데 실패했습니다. URL을 확인해 주세요.");
-  };
-  
-  img.src = GITHUB_LOGO_URL;
-}
 
-// 페이지 스크립트 로드 즉시 실행 유도
-loadDefaultGitHubWatermark();
+    // 페이지 스크립트 로드 즉시 실행 유도
+    loadDefaultGitHubWatermark();
 
-    
-    
     // 결과물 내보내기 핵심 연산
     function downloadResult() {
       if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
@@ -1167,7 +1155,6 @@ loadDefaultGitHubWatermark();
 
       try {
         const link = document.createElement('a');
-        // ★ [파일명 변경 반영] 요구 사양 양식에 맞춰 순번(001, 002) 형태로 연속 자동 카운트 처리
         const fileIndex = String(downloadCount).padStart(3, '0');
         link.download = `CLE Robotics_Manual_${fileIndex}.png`;
         link.href = canvas.toDataURL('image/png');
