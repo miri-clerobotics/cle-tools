@@ -523,6 +523,47 @@
 
     window.addEventListener('paste', handlePaste);
 
+    // -------------------------------------------------------------
+    // ★ [기능 추가 파트]: 드래그 앤 드롭(Drag & Drop) 파일 제어 시스템
+    // -------------------------------------------------------------
+    // 브라우저가 dropped 파일을 만났을 때 원래 파일 경로로 창 이동을 차단하는 가드 설치
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      window.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    if (dropzone) {
+      // 이미지 파일을 끌고 중앙 영역에 들어왔을 때 테두리 색상 하이라이트 활성화
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+          dropzone.classList.add('border-[#FF4747]', 'bg-slate-100/50');
+        }, false);
+      });
+
+      // 영역을 벗어나거나 파일을 떨궜을 때 데코레이션 롤백
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+          dropzone.classList.remove('border-[#FF4747]', 'bg-slate-100/50');
+        }, false);
+      });
+    }
+
+    // 윈도우 중앙 영역 어디든 이미지 파일을 가져다 놓으면 로드 유도
+    window.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        const file = files[0];
+        if (file.type.startsWith('image/')) {
+          loadImageFromFile(file);
+          showToast('드래그 앤 드롭으로 스크린샷 화면을 로드했습니다!');
+        } else {
+          showToast('이미지 형태의 파일(*.png, *.jpg 등)만 등록할 수 있습니다.', 'error');
+        }
+      }
+    });
+
     // 가이드 및 추출 단추 리스너 연동
     if (downloadBtn) downloadBtn.addEventListener('click', downloadResult);
     if (copyClipBtn) copyClipBtn.addEventListener('click', copyToClipboard);
@@ -1120,17 +1161,15 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
-    // ★ https://blog.naver.com/PostView.naver?blogId=psyang7&logNo=222843957064&categoryNo=0&parentCategoryNo=0&viewDate=&currentPage=1&postListTopCurrentPage=&from=menu&userTopListOpen=true&userTopListCount=10&userTopListManageOpen=false&userTopListCurrentPage=1: 깃허브 웹 페이지 주소를 크래시 없는 원본 Raw 주소 체계로 전면 교체 완료!
+    // GitHub 원본 Raw 이미지 주소를 바인딩하여 자동화 연동 완료
     const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/miri-clerobotics/manual-tool/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
 
     function loadDefaultGitHubWatermark() {
       const img = new Image();
-      // CORS(크로스도메인) 보안 정책 우회를 위해 익명 요청 허용 세팅 주입
       img.crossOrigin = "anonymous"; 
       
       img.onload = function() {
         watermarkImage = img;
-        // 이미 캔버스에 백그라운드 스크린샷이 올라와 있는 상태라면 워터마크를 즉시 갱신해 그려줌
         if (bgImage) {
           drawCanvas();
         }
