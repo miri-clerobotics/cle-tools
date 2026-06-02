@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLE Robotics Manual Focus Tool</title>
+  <!-- 프리미엄 UI 스타일링을 위한 Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 디자이너 친화적인 고품질 아이콘 라이브러리 Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- 가독성 극대화를 위한 초정밀 프리미엄 폰트 Pretendard CDN 탑재 -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  
+  <style>
+    body, input, textarea, select, button {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    }
+    body {
+      background-color: #F8F9FB; /* CleVis 프리미엄 라이트 백그라운드 */
+    }
+
+    /* CLE Robotics 스페셜 그라디언트 보더 효과 (#FF4747 믹스 테마) */
+    .clevis-gradient-border {
+      position: relative;
+    }
+    .clevis-gradient-border::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(to right, #FF4747, #f43f5e, #ec4899);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* 부드러운 스크롤바 디자인 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F8F9FB;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col overflow-hidden selection:bg-[#FF4747]/20 selection:text-[#FF4747]">
+
+  <!-- 상단 네비게이션 헤더 (인라인 헤더 레이아웃 및 CLE Robotics 적용) -->
+  <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 flex items-center justify-between z-10 relative shadow-[0_1px_3px_rgba(0,0,0,0.01)]">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#FF4747] to-pink-500 flex items-center justify-center text-white shadow-lg shadow-[#FF4747]/20">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">CLE Robotics</span>
+          <span class="text-sm font-semibold text-slate-500">Manual Focus Tool</span>
+        </div>
+        <p class="text-[10px] text-slate-400 font-medium">매뉴얼용 이미지 캡쳐&편집기</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="helpBtn" class="bg-white hover:bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-slate-500 hover:text-slate-850 transition-all shadow-sm">
+        <i data-lucide="info" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- 메인 작업 영역 -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- 왼쪽 사이드바 (도구 패널 - CleVis 라이트 테마) -->
+    <aside class="w-64 bg-white/90 backdrop-blur-xl border-r border-slate-200/60 p-5 flex flex-col justify-between overflow-y-auto z-10 shadow-[4px_0_24px_rgba(0,0,0,0.01)]">
+      <div class="space-y-6">
+        <div>
+          <!-- 디자이너 요청 사항: 모든 라벨 앞 데코레이션 아이콘들 전량 배제 -->
+          <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+            01. 스크린샷 등록
+          </h2>
+          <div class="space-y-2">
+            <!-- 파일 업로드 영역 (요청 사항: 아이콘 좌측 배치, 텍스트 상하 스택 우측 정렬 결합) -->
+            <label class="flex flex-row items-center justify-start gap-4 border border-dashed border-slate-200 hover:border-[#FF4747]/50 rounded-2xl p-4 cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all duration-300 group relative">
+              <!-- 디자이너 요청 사항: 아이콘 호버 시 scale 확대 효과 삭제 -->
+              <div class="bg-[#FF4747]/5 group-hover:bg-[#FF4747]/10 p-2.5 rounded-xl text-[#FF4747] transition-all duration-300 shrink-0">
+                <i data-lucide="clipboard-paste" class="w-6 h-6"></i>
+              </div>
+              <div class="flex flex-col items-start justify-center">
+                <span class="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-all">Ctrl + V 붙여넣기</span>
+                <span class="text-[10px] text-slate-400 mt-1 leading-normal">또는 클릭하여 스크린샷 선택</span>
+              </div>
+              <input type="file" id="imageInput" accept="image/*" class="hidden">
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <!-- 디자이너 요청 사항: 모든 라벨 앞 데코레이션 아이콘들 전량 배제 -->
+          <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+            02. 디자인 도구
+          </h2>
+          <!-- 디자이너 요청 사항: 모든 버튼 좌우 2열 배치 및 아이콘+텍스트 상하 수직 정렬(h-16) 구조 -->
+          <div class="grid grid-cols-2 gap-1.5">
+            <button id="toolSelect" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-semibold text-[11px] border border-[#FF4747]/20 shadow-lg shadow-[#FF4747]/15">
+              <i data-lucide="mouse-pointer" class="w-4 h-4 shrink-0"></i>
+              <span class="truncate w-full text-center">선택 및 이동</span>
+            </button>
+            <button id="toolCrop" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
+              <i data-lucide="crop" class="w-4 h-4 text-violet-400 shrink-0"></i>
+              <span class="truncate w-full text-center">이미지 자르기</span>
+            </button>
+            <button id="toolFocusRect" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
+              <i data-lucide="square" class="w-4 h-4 text-rose-500 shrink-0"></i>
+              <span class="truncate w-full text-center">사각형 포커스</span>
+            </button>
+            <button id="toolFocusCircle" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
+              <i data-lucide="circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+              <span class="truncate w-full text-center">원형 포커스</span>
+            </button>
+            <button id="toolBadge" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
+              <i data-lucide="binary" class="w-4 h-4 text-amber-500 shrink-0"></i>
+              <span class="truncate w-full text-center">자동 번호표</span>
+            </button>
+            <button id="toolText" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
+              <i data-lucide="type" class="w-4 h-4 text-pink-400 shrink-0"></i>
+              <span class="truncate w-full text-center">설명 말풍선</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ★ 디자이너 요청 사항: 포인트 테두리 및 색상 영역을 도구 아래쪽(왼쪽)으로 이전 완료 -->
+        <div class="space-y-2 border-t border-slate-200/60 pt-4">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+            테두리 & 뱃지 색상
+          </span>
+          <!-- 요청 반영: 색상 순서를 빨간색(#FF4747), 노란색(#F59E0B), 초록색(#10B981), 남색(#00418B), 블랙(#1C1C1E) 순으로 배치 -->
+          <div class="flex gap-2.5 mt-1.5">
+            <button class="color-picker-btn w-7 h-7 rounded-full border-2 border-white ring-2 ring-[#FF4747]/40 bg-[#FF4747]" data-color="#FF4747"></button> <!-- CLE Robotics 레드 -->
+            <button class="color-picker-btn w-7 h-7 rounded-full border border-slate-200 bg-[#F59E0B] transition-transform hover:scale-110" data-color="#F59E0B"></button> <!-- 노란색 -->
+            <button class="color-picker-btn w-7 h-7 rounded-full border border-slate-200 bg-[#10B981] transition-transform hover:scale-110" data-color="#10B981"></button> <!-- 초록색 -->
+            <button class="color-picker-btn w-7 h-7 rounded-full border border-slate-200 bg-[#00418B] transition-transform hover:scale-110" data-color="#00418B"></button> <!-- 남색 -->
+            <button class="color-picker-btn w-7 h-7 rounded-full border border-slate-200 bg-[#1C1C1E] transition-transform hover:scale-110" data-color="#1C1C1E"></button> <!-- 블랙 -->
+          </div>
+        </div>
+
+        <!-- ★ 디자이너 요청 사항: 자동순서 기호타입을 색상 선택기 아래쪽(왼쪽)으로 이전 완료 -->
+        <div class="space-y-1.5 border-t border-slate-200/60 pt-4">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+            자동 순서 기호 타입
+          </span>
+          <!-- 클릭 활성화 시 글자 굵기 커지지 않게 font-semibold로 통일 유지 -->
+          <div class="flex gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60 mt-1.5">
+            <button class="badge-type-btn flex-1 bg-white border border-slate-200 text-[#FF4747] text-[10px] py-1.5 rounded-lg font-semibold transition-all shadow-sm" data-type="number">1, 2, 3</button>
+            <button class="badge-type-btn flex-1 text-[10px] py-1.5 rounded-lg text-slate-400 hover:text-slate-605 font-semibold transition-all" data-type="alpha-low">a, b, c</button>
+            <button class="badge-type-btn flex-1 text-[10px] py-1.5 rounded-lg text-slate-400 hover:text-slate-605 font-semibold transition-all" data-type="alpha-caps">A, B, C</button>
+          </div>
+        </div>
+
+        <!-- 편집 제어 및 개별 삭제 파트 통합 -->
+        <div class="space-y-4 border-t border-slate-200/60 pt-4">
+          <div>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+              편집 제어
+            </h2>
+            <button id="clearAllBtn" class="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-850 border border-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 text-slate-400"></i>
+              작업 초기화
+            </button>
+          </div>
+
+          <!-- 선택 요소 제어 패널 (왼쪽 사이드바 배치 안착 및 개별 삭제 단축키 작동 완비) -->
+          <div id="selectedActionArea" class="hidden space-y-2 bg-rose-50 border border-rose-100 p-3 rounded-2xl transition-all duration-300">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-[#FF4747] font-semibold flex items-center gap-1.5 text-[11px]">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-455 animate-pulse"></i> 선택된 요소 제어
+              </span>
+            </div>
+            <button id="deleteSelectedBtn" class="w-full flex items-center justify-center gap-2 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              선택 요소 1개 삭제
+            </button>
+            <p class="text-[9px] text-slate-400 text-center font-medium mt-1">💡 단축키: 요소를 클릭하고 <kbd class="bg-slate-100 px-1 py-0.5 rounded text-slate-500 border border-slate-200">Delete</kbd> 키 입력</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-200/60 pt-4 mt-4">
+        <p class="text-[10px] text-slate-400 leading-relaxed font-medium">
+          💡 **CLE Tips**: 다른 프로그램에서 화면을 캡쳐한 뒤 이 페이지를 클릭하고 <kbd class="bg-slate-100 px-1 py-0.5 rounded text-slate-500 border border-slate-200 text-[9px]">Ctrl+V</kbd> 하시면 즉시 스크린샷이 불려옵니다.
+        </p>
+      </div>
+    </aside>
+
+    <!-- 중앙 캔버스 작업 영역 (디바이스와 캔버스 구분을 위해 살짝 그레이 톤으로 설정) -->
+    <main class="flex-1 bg-[#F1F3F6] flex items-center justify-center p-8 relative overflow-auto select-none">
+      
+      <!-- 초기 비어있는 상태의 웰컴 스크린 (샘플 버튼 제외) -->
+      <div id="dropzone" class="absolute inset-8 border border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-8 text-center bg-white/40 backdrop-blur-3xl z-0">
+        <div class="bg-[#FF4747]/5 border border-[#FF4747]/10 p-6 rounded-2xl mb-4 text-[#FF4747] shadow-inner">
+          <i data-lucide="image" class="w-12 h-12"></i>
+        </div>
+        <h3 class="text-lg font-bold mb-2 text-slate-800 tracking-tight">여기에 매뉴얼 이미지를 추가하세요</h3>
+        <p class="text-slate-400 text-xs max-w-sm leading-relaxed">
+          윈도우 단축키 <kbd class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 mx-0.5 text-[10px]">Win + Shift + S</kbd>로 캡쳐 후,<br> 이 화면에서 <kbd class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 mx-0.5 text-[10px]">Ctrl + V</kbd>를 누르면 즉시 편집할 수 있습니다.
+        </p>
+      </div>
+
+      <!-- 편집용 캔버스 컨테이너 (이미지 있을 때만 노출) -->
+      <div id="canvasContainer" class="hidden relative shadow-[0_24px_70px_rgba(0,0,0,0.06)] rounded-2xl border border-slate-200 bg-white">
+        <canvas id="editorCanvas" class="block"></canvas>
+        
+        <!-- ★ 디자이너 요청 사항: 이미지 자르기 조작 영역을 이미지(캔버스) 바로 아래 중앙에 플로팅 형태로 수려하게 팝업 배치 -->
+        <!-- 포커스 테마에 부합하도록 자르기완료 버튼을 레드(#FF4747)로 교체하고, 이미지 자르는 중 텍스트를 회색톤(text-slate-400)으로 보정 -->
+        <div id="cropControlArea" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xl z-20 flex items-center gap-4 min-w-[340px]">
+          <div class="flex items-center gap-1.5 text-slate-400 font-semibold text-xs shrink-0 select-none">
+            <i data-lucide="info" class="w-4 h-4"></i>
+            <span>이미지 자르는 중</span>
+          </div>
+          <div class="flex gap-1.5 flex-1">
+            <button id="cancelCropBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 px-3 rounded-xl text-xs font-semibold transition-all">취소</button>
+            <button id="applyCropBtn" class="flex-1 bg-gradient-to-r bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">자르기 완료</button>
+          </div>
+        </div>
+        
+        <!-- 커스텀 텍스트 인라인 입력기 (Prompt 차단 우회 및 피그마형 UX 구현) -->
+        <div id="canvasTextInputContainer" class="absolute hidden bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-3.5 shadow-2xl z-30 w-72 flex flex-col gap-2.5">
+          <span class="text-[10px] text-[#FF4747] font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="type" class="w-3.5 h-3.5 text-pink-400"></i> 설명 가이드 글귀 입력
+          </span>
+          <textarea id="canvasTextInput" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#FF4747] placeholder-slate-650 resize-none font-medium" placeholder="여기에 가이드 설명을 작성하세요..."></textarea>
+          <div class="flex gap-1.5 justify-end">
+            <button id="cancelTextInputBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] px-3 py-2 rounded-lg font-semibold transition-all">취소</button>
+            <button id="saveTextInputBtn" class="bg-[#FF4747] hover:bg-[#FF4747]/90 text-white text-[10px] px-3.5 py-2 rounded-lg font-bold transition-all flex items-center gap-1">
+              <i data-lucide="check" class="w-3 h-3"></i>입력 완료
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 오른쪽 사이드바 (상세 속성 설정 - CleVis 라이트 테마) -->
+    <aside class="w-72 bg-white/90 backdrop-blur-xl border-l border-slate-200/60 p-5 flex flex-col justify-between overflow-y-auto z-10 shadow-[-4px_0_24px_rgba(0,0,0,0.01)]">
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+            03. 디자인 컨트롤러
+          </h2>
+          
+          <!-- 배경 어둡기(Dim) 농도 조절 단추 프리셋 (기본값 30% / 없음, 기본, 어둡게 텍스트 적용 및 선택 시 폰트 크기 변경 차단) -->
+          <div class="space-y-2 mb-5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-500 font-medium">배경 어둡기 (Dim)</span>
+              <span id="dimValue" class="text-[#FF4747] font-bold bg-[#FF4747]/10 px-2 py-0.5 rounded-full text-[10px]">30%</span>
+            </div>
+            <!-- 디자이너 피드백 반영: 버튼 선택 유무와 상관없이 폰트 사이즈/두께 동일하게 유지 -->
+            <div class="flex gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
+              <button class="dim-preset-btn flex-1 text-[11px] py-2 rounded-lg text-slate-400 hover:text-slate-655 transition font-semibold" data-dim="0">없음</button>
+              <button class="dim-preset-btn flex-1 bg-white border border-slate-200 text-[#FF4747] transition-all font-semibold shadow-sm text-[11px] py-2 rounded-lg" data-dim="0.3">기본</button>
+              <button class="dim-preset-btn flex-1 py-2 rounded-lg text-[11px] text-slate-400 hover:text-slate-655 transition font-semibold" data-dim="0.6">어둡게</button>
+            </div>
+          </div>
+
+          <!-- 텍스트/도형 크기 조절 (텍스트 가로 폭 비율 맞춤 및 스케일 제어) -->
+          <div class="space-y-2 mb-5 border-t border-slate-200/60 pt-4">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-slate-500 font-medium">도형 및 텍스트 비율 맞춤</span>
+              <span id="scaleModeLabel" class="text-[9px] text-emerald-550 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95">자동비례 ON</span>
+            </div>
+            <p class="text-[10px] text-slate-400 leading-relaxed">
+              원본 캡쳐 해상도에 맞춰 도형과 글씨 폰트 크기를 매뉴얼에 최적화된 스케일로 실시간 보정합니다.
+            </p>
+            <div class="flex items-center gap-2 mt-2 bg-slate-50 border border-slate-200/60 px-3 py-2.5 rounded-xl">
+              <input type="checkbox" id="autoScaleCheckbox" checked class="w-4 h-4 rounded border-slate-200 bg-white text-[#FF4747] focus:ring-[#FF4747]/30 cursor-pointer">
+              <label for="autoScaleCheckbox" class="text-xs text-slate-600 cursor-pointer font-semibold select-none">스케일 오토 레이아웃</label>
+            </div>
+            
+            <div class="mt-4">
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">요소 기본 스케일</span>
+              <!-- 클릭 활성화 시 글자 굵기 커지지 않게 font-semibold로 통일 유지 -->
+              <div class="flex gap-1.5 mt-1.5">
+                <button class="scale-preset-btn flex-1 bg-white hover:bg-slate-50 text-slate-500 py-2 rounded-lg border border-slate-200 font-semibold text-xs transition-all animate-none" data-scale="0.7">작게 (S)</button>
+                <button class="scale-preset-btn flex-1 bg-[#FF4747] text-white py-2 rounded-lg font-semibold text-xs shadow-lg shadow-[#FF4747]/15 transition-all" data-scale="1.0">기본 (M)</button>
+                <button class="scale-preset-btn flex-1 bg-white hover:bg-slate-50 text-slate-500 py-2 rounded-lg border border-slate-200 font-semibold text-xs transition-all" data-scale="1.4">크게 (L)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 회사 로고 및 워터마크 기능 설정 영역 -->
+          <!-- 디자이너 피드백 반영: NEW 뱃지 삭제, 로고파일/설명문구 탭 버튼 완전 삭제, 가로폭비례 라벨 -> 로고 크기 변경 -->
+          <div class="space-y-3 mb-5 border-t border-[#FF4747]/10 pt-4">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-slate-500 font-semibold">회사 로고 / 출처 보호</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="watermarkToggle" class="sr-only peer">
+                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-450 after:border-slate-400 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747] peer-checked:after:bg-white"></div>
+              </label>
+            </div>
+            
+            <!-- 워터마크 커스텀 세부 조절 영역 -->
+            <div id="watermarkConfig" class="hidden space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+              
+              <!-- 이미지 파일 업로드 -->
+              <div id="wmImageGroup" class="space-y-1.5">
+                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
+                <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
+                  <i data-lucide="image" class="w-4 h-4 text-slate-400 mr-2 group-hover:text-[#FF4747]"></i>
+                  <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">로고 파일 찾기</span>
+                  <input type="file" id="watermarkFileInput" accept="image/*" class="hidden">
+                </label>
+              </div>
+
+              <!-- 배치 영역 선택 -->
+              <div class="space-y-1.5">
+                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">정렬 위치</span>
+                <select id="watermarkPosSelect" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-[#FF4747] font-semibold">
+                  <option value="bottom-right">우측 하단 (기본)</option>
+                  <option value="bottom-left">좌측 하단</option>
+                  <option value="top-right">우측 상단</option>
+                  <option value="top-left">좌측 상단</option>
+                  <option value="center">중앙 대각 스포일러</option>
+                </select>
+              </div>
+
+              <!-- 투명도 조절 -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                  <span>투명도</span>
+                  <span id="wmOpacityVal">30%</span>
+                </div>
+                <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+              </div>
+
+              <!-- 이미지 대비 크기 스케일 조절 (라벨 "가로 폭 비례" -> "로고 크기"로 명칭 변경 완료) -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                  <span>로고 크기</span>
+                  <span id="wmScaleVal">15%</span>
+                </div>
+                <input type="range" id="watermarkScaleRange" min="5" max="50" value="15" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2.5 border-t border-slate-200/60 pt-5">
+          <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+            04. 가이드 추출
+          </h2>
+          <button id="downloadBtn" class="clevis-gradient-border w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-850 py-3.5 rounded-xl text-xs font-bold transition-all shadow-md border border-slate-200">
+            <i data-lucide="download" class="w-4 h-4 text-[#FF4747]"></i>
+            완성 가이드 다운로드
+          </button>
+          <button id="copyClipBtn" class="w-full flex items-center justify-center gap-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 py-3 rounded-xl text-xs font-semibold border border-slate-200 transition-all">
+            <i data-lucide="clipboard" class="w-3.5 h-3.5 text-[#FF4747]"></i>
+            클립보드 즉시 복사
+          </button>
+        </div>
+      </div>
+
+      <!-- 버전 정보 -->
+      <div class="border-t border-slate-200/60 pt-4 text-center">
+        <p class="text-[10px] text-slate-400 font-semibold tracking-tight">CLE Robotics Manual Focus Tool</p>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- 완성된 이미지 보기 모달 (제한된 샌드박스 우회 우클릭 저장 지원용) -->
+  <div id="imagePreviewModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-50 flex flex-col items-center justify-center hidden p-4">
+    <div class="bg-white border border-slate-200 max-w-4xl w-full rounded-2xl p-6 shadow-2xl relative flex flex-col max-h-[90vh]">
+      <button id="closePreviewModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="bg-emerald-500/10 p-2 rounded-lg text-emerald-500">
+          <i data-lucide="check-circle" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-800">가이드 수동 저장</h3>
+          <p class="text-[11px] text-slate-400">현재 테스트 보안 환경(iframe)에 대응하기 위해 수동 저장 패널을 로드합니다.</p>
+        </div>
+      </div>
+      
+      <div class="flex-1 overflow-auto flex items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-200 mb-4 select-text">
+        <img id="renderedModalImg" class="max-w-full max-h-[50vh] object-contain shadow-2xl rounded border border-slate-200 cursor-pointer" src="" alt="완성본 이미지">
+      </div>
+      
+      <div class="space-y-2 text-center text-xs text-slate-600">
+        <p class="font-extrabold text-[#FF4747] flex items-center justify-center gap-1.5 animate-pulse">
+          <i data-lucide="help-circle" class="w-4 h-4 text-[#FF4747]"></i> 완성 이미지 마우스 우클릭 후 <span class="bg-[#FF4747]/10 text-[#FF4747] px-2 py-0.5 rounded border border-[#FF4747]/20">'이미지 복사'</span> 또는 <span class="bg-[#FF4747]/10 text-[#FF4747] px-2 py-0.5 rounded border border-[#FF4747]/20">'이미지를 다른 이름으로 저장'</span>을 누르세요!
+        </p>
+        <p class="text-[10px] text-slate-400 leading-normal">
+          해당 에디터를 Vercel 이나 GitHub Pages 에 직접 배포(HTTPS 단독 실행)하시면,<br>우회 가이드 안내창을 생략하고 <b>[다운로드] 및 [클립보드 복사] 단추를 원클릭으로 직접 통제</b>하실 수 있습니다.
+        </p>
+      </div>
+      
+      <button id="previewModalCloseBtn" class="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl text-sm font-bold transition-all">
+        가이드 닫기
+      </button>
+    </div>
+  </div>
+
+  <!-- 인앱 모달 안내창 -->
+  <div id="welcomeModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white border border-slate-200 max-w-md w-full rounded-3xl p-6 shadow-2xl relative">
+      <button id="closeModalBtn" class="absolute top-4 right-4 text-slate-500 hover:text-slate-600 transition-all">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="bg-[#FF4747]/10 p-2 rounded-xl text-[#FF4747]">
+          <i data-lucide="help-circle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-base font-extrabold text-slate-800">디자이너 가이드 & 사용 팁</h3>
+      </div>
+      <div class="space-y-4 text-sm text-slate-355 leading-relaxed">
+        <p>
+          매뉴얼 가공에 필요한 스크린샷 크롭, 하이라이팅, 그리고 지능형 넘버링 표기 처리를 브라우저 위에서 단 몇 초 만에 해결하는 도구입니다.
+        </p>
+        <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
+          <div class="flex gap-2">
+            <span class="text-[#FF4747] font-bold">1.</span>
+            <span>화면 영역을 캡쳐한 뒤(<kbd class="text-slate-600 bg-slate-100 px-1 py-0.5 rounded text-[10px] border border-slate-200">Win+Shift+S</kbd>), 에디터창 위에서 붙여넣기(<kbd class="text-slate-600 bg-slate-100 px-1 py-0.5 rounded text-[10px] border border-slate-200">Ctrl+V</kbd>) 하세요.</span>
+          </div>
+          <div class="flex gap-2">
+            <span class="text-[#FF4747] font-bold">2.</span>
+            <span><strong>선택 및 요소 이동</strong> 모드에서 생성한 포커스 사각/원형 라인을 클릭해 8방향 리사이즈를 정밀하게 사후 제어할 수 있습니다.</span>
+          </div>
+          <div class="flex gap-2">
+            <span class="text-[#FF4747] font-bold">3.</span>
+            <span><strong>원형 번호표 오토레이아웃</strong>: 번호표를 마우스로 잡고 포커스 외곽 부근으로 가져가면 격자 경계에 아름답게 달라붙습니다.</span>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500">
+          * 기호 타입과 색상은 각각의 가이드 개별적으로 개성 있게 믹스하여 적용할 수 있습니다.
+        </p>
+      </div>
+      <button id="modalActionBtn" class="w-full mt-6 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#FF4747]/15">
+        에디터 가동하기
+      </button>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 메시지 구조 -->
+  <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-850 px-5 py-3 rounded-2xl border border-slate-200/80 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.08)] flex items-center gap-3 text-xs font-semibold transition-all duration-300 opacity-0 translate-y-4 pointer-events-none z-50">
+    <i data-lucide="check" class="w-4 h-4 text-emerald-500" id="toastIcon"></i>
+    <span id="toastMessage">안내 메시지</span>
+  </div>
+
+  <script>
+    // Lucide 아이콘 패키지 호출
+    lucide.createIcons();
+
+    // 샌드박스 Iframe 환경 사전 지능형 감지식 탑재 (버그 해결)
+    let isIframe = false;
+    try {
+      isIframe = window.self !== window.top;
+    } catch (e) {
+      isIframe = true;
+    }
+
+    // 전역 상태 변수 관리
+    let bgImage = null; // 배경 이미지 인스턴스
+    let currentTool = 'select'; // 활성화 도구 ('select', 'crop', 'focus-rect', 'focus-circle', 'badge', 'text')
+    let focusAreas = []; // 다중 포커스 영역 배열 
+    let elements = []; // 배치된 인덱스 요소 모음 (번호표, 설명)
+    let nextBadgeNum = 1; // 다음에 매겨질 기본 번호 (reindexBadges 호출 시 자동 재정립)
+    let badgeType = 'number'; // 배치용 타겟 타입 ('number' | 'alpha-caps' | 'alpha-low')
+    let activeColor = '#FF4747'; // ★ 요청 반영: 포인트 테두리 및 인덱스 기본 포인트 색상 (#FF4747)
+    let dimOpacity = 0.3; // 배경 딤 투명도 기본 설정값 30%
+    let currentScalePreset = 1.0; // 스케일 가중치 세팅
+    let autoScaleEnabled = true; // 화면 크기 비례 조절 활성화 상태
+
+    // 이미지 자르기(Crop)용 상태 변수
+    let cropArea = null; // 잘라낼 사각형 {x, y, w, h} - 원본 기준
+    let isResizingCrop = false; // 크롭 모서리 리사이징 중 유무
+    let activeCropHandle = null; // 마우스로 선택한 크롭 조절 핸들러 명칭 ('tl', 'tr', 'bl', 'br', 't', 'b', 'l', 'r')
+    let isDrawingNewCrop = false; // 새로운 드래그앤드롭으로 크롭 영역 그리기 활성화 여부
+    let cropStartX = 0;
+    let cropStartY = 0;
+
+    // 회사 로고 / 워터마크 기능 관련 전역 변수
+    let watermarkEnabled = false;
+    let watermarkType = 'image'; // 'image' 만 독립 지원 (텍스트 워터마크 삭제에 따라 고정)
+    let watermarkImage = null; // 로고 이미지 캐시용 객체
+    let watermarkText = 'COMPANY CONFIDENTIAL';
+    let watermarkOpacity = 0.3;
+    let watermarkSize = 0.15; // 가로 크기 대비 % 비율
+    let watermarkPos = 'bottom-right'; // 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center'
+
+    // 드래그 제어용 임시 저장 데이터
+    let selectedElement = null; // 드래그 중인 가이드 요소 (뱃지, 텍스트) - 포커스 및 엘리먼트 분리 완료
+    let selectedFocusArea = null; // 선택 툴로 한 차례 클릭해서 크기 조절 상태에 돌입한 포커스 도형 (요청 반영)
+    let isResizingFocus = false; // 선택 툴을 통한 포커스 핸들러 조절 중 유무
+    let activeFocusHandle = null; // 선택한 포커스 리사이즈 핸들 명칭
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let isDrawingFocus = false;
+    let focusStartX = 0;
+    let focusStartY = 0;
+
+    // 스냅 정렬 (Magnetic Auto-Layout) 용 보조 가이드라인 데이터
+    let activeSnapGuides = [];
+
+    // 커스텀 설명 텍스트 입력을 위한 임시 좌표 저장 변수
+    let pendingTextPos = null;
+
+    // DOM 노드 캐싱
+    const imageInput = document.getElementById('imageInput');
+    const dropzone = document.getElementById('dropzone');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const canvas = document.getElementById('editorCanvas');
+    const ctx = canvas.getContext('2d');
+    const helpBtn = document.getElementById('helpBtn');
+    const welcomeModal = document.getElementById('welcomeModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const modalActionBtn = document.getElementById('modalActionBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    
+    // 도구 변경 요소 매핑
+    const tools = {
+      'select': document.getElementById('toolSelect'),
+      'crop': document.getElementById('toolCrop'),
+      'focus-rect': document.getElementById('toolFocusRect'),
+      'focus-circle': document.getElementById('toolFocusCircle'),
+      'badge': document.getElementById('toolBadge'),
+      'text': document.getElementById('toolText')
+    };
+
+    // 자르기 조작 컴포넌트들
+    const cropControlArea = document.getElementById('cropControlArea');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+
+    // 개별 요소 삭제 버튼 바인딩 (요청 사항)
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteSelectedBtn) {
+      deleteSelectedBtn.addEventListener('click', executeDeleteSelected);
+    }
+
+    // 설명 텍스트 입력창 조작 컴포넌트들
+    const canvasTextInputContainer = document.getElementById('canvasTextInputContainer');
+    const canvasTextInput = document.getElementById('canvasTextInput');
+    const saveTextInputBtn = document.getElementById('saveTextInputBtn');
+    const cancelTextInputBtn = document.getElementById('cancelTextInputBtn');
+
+    // 우회 이미지 미리보기 모달 컴포넌트
+    const imagePreviewModal = document.getElementById('imagePreviewModal');
+    const renderedModalImg = document.getElementById('renderedModalImg');
+    const closePreviewModalBtn = document.getElementById('closePreviewModalBtn');
+    const previewModalCloseBtn = document.getElementById('previewModalCloseBtn');
+
+    // 워터마크 인터페이스 컴포넌트들 (안전한 컴포넌트 가드를 위해 Let으로 재선언 및 바인딩)
+    const watermarkToggle = document.getElementById('watermarkToggle');
+    const watermarkConfig = document.getElementById('watermarkConfig');
+    const wmTypeImage = document.getElementById('wmTypeImage');
+    const wmTypeText = document.getElementById('wmTypeText');
+    const wmImageGroup = document.getElementById('wmImageGroup');
+    const wmTextGroup = document.getElementById('wmTextGroup');
+    const watermarkFileInput = document.getElementById('watermarkFileInput');
+    const wmFileName = document.getElementById('wmFileName');
+    const watermarkTextInput = document.getElementById('watermarkTextInput');
+    const watermarkPosSelect = document.getElementById('watermarkPosSelect');
+    const watermarkOpacityRange = document.getElementById('watermarkOpacityRange');
+    const watermarkScaleRange = document.getElementById('watermarkScaleRange');
+    const wmOpacityVal = document.getElementById('wmOpacityVal');
+    const wmScaleVal = document.getElementById('wmScaleVal');
+
+    // 옵션 컨트롤러 매핑
+    const dimValue = document.getElementById('dimValue');
+    const autoScaleCheckbox = document.getElementById('autoScaleCheckbox');
+    const scaleModeLabel = document.getElementById('scaleModeLabel');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const copyClipBtn = document.getElementById('copyClipBtn');
+
+    // -------------------------------------------------------------
+    // 전역 이벤트 및 시스템 초기 설정 (안전 Null 가드 전량 탑재)
+    // -------------------------------------------------------------
+
+    // 우회 뷰어 모달 제어 리스너
+    if (closePreviewModalBtn) closePreviewModalBtn.addEventListener('click', hideRenderedModal);
+    if (previewModalCloseBtn) previewModalCloseBtn.addEventListener('click', hideRenderedModal);
+
+    function showRenderedModal() {
+      // 캔버스 실시간 이미지를 우회 뷰어 모달 안의 이미지 엘리먼트에 바인딩
+      try {
+        renderedModalImg.src = canvas.toDataURL('image/png');
+        imagePreviewModal.classList.remove('hidden');
+      } catch (e) {
+        showToast('우회 가이드 생성 도중 오류가 발생했습니다.', 'error');
+      }
+    }
+
+    // 파일 로드 테스트용 가상 대시보드
+    let loadSampleBtn = document.getElementById('loadSampleBtn');
+    if (loadSampleBtn) {
+      loadSampleBtn.addEventListener('click', loadSampleImage);
+    }
+    let dropzoneSampleBtn = document.getElementById('dropzoneSampleBtn');
+    if (dropzoneSampleBtn) {
+      dropzoneSampleBtn.addEventListener('click', loadSampleImage);
+    }
+
+    function hideRenderedModal() {
+      if (imagePreviewModal) {
+        imagePreviewModal.classList.add('hidden');
+      }
+    }
+
+    // 이미지 수동 등록 감지
+    if (imageInput) {
+      imageInput.addEventListener('change', handleFileSelect);
+    }
+    
+    // 클립보드(캡쳐 후 붙여넣기 Ctrl + V) 초간단 감지 연동
+    window.addEventListener('paste', handlePaste);
+
+    // 전체 지우기 기능
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', () => {
+        elements = [];
+        focusAreas = [];
+        cropArea = null;
+        selectedFocusArea = null;
+        selectedElement = null;
+        nextBadgeNum = 1;
+        hideInlineTextInput();
+        selectTool('select'); // 즉각 일반 선택 툴로 안심 전환
+        drawCanvas();
+        updateSelectedActionArea();
+        showToast('도형과 텍스트가 모두 초기화되었습니다.');
+      });
+    }
+
+    // 툴 변경 바인딩
+    Object.keys(tools).forEach(toolKey => {
+      const toolEl = tools[toolKey];
+      if (toolEl) {
+        toolEl.addEventListener('click', () => selectTool(toolKey));
+      }
+    });
+
+    // 배경 딤 농도 3단 단축 형식 교체 연동 (디자이너 피드백 반영: 활성화 시 텍스트 변경 금지)
+    // 폰트 흔들림 방지를 위해 모든 상태의 text-[11px] 통일화 완료
+    const dimPresetBtns = document.querySelectorAll('.dim-preset-btn');
+    dimPresetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        dimPresetBtns.forEach(b => {
+          b.className = "dim-preset-btn flex-1 text-xs py-2 rounded-lg text-slate-400 hover:text-slate-655 transition font-semibold";
+        });
+        btn.className = "dim-preset-btn flex-1 bg-white border border-slate-200 text-[#ff6467] transition-all font-semibold shadow-sm text-[11px] py-2 rounded-lg";
+        dimOpacity = parseFloat(btn.getAttribute('data-dim'));
+        if (dimValue) {
+          dimValue.innerText = `${dimOpacity * 100}%`;
+        }
+        drawCanvas();
+      });
+    });
+
+    // 자동 비례 매커니즘 활성화 유무 변경
+    if (autoScaleCheckbox) {
+      autoScaleCheckbox.addEventListener('change', (e) => {
+        autoScaleEnabled = e.target.checked;
+        if (scaleModeLabel) {
+          if (autoScaleEnabled) {
+            scaleModeLabel.innerText = "자동비례 ON";
+            scaleModeLabel.className = "text-[9px] text-emerald-550 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
+          } else {
+            scaleModeLabel.innerText = "자동비례 OFF";
+            scaleModeLabel.className = "text-[9px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
+          }
+        }
+        drawCanvas();
+      });
+    }
+
+    // 스케일 가중치 옵션 프리셋 클릭
+    const scaleButtons = document.querySelectorAll('.scale-preset-btn');
+    scaleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        scaleButtons.forEach(b => {
+          b.className = "scale-preset-btn flex-1 bg-white hover:bg-slate-50 text-slate-500 py-2 rounded-lg border border-slate-200 font-semibold text-xs transition-all";
+        });
+        btn.className = "scale-preset-btn flex-1 bg-[#ff6467] text-white py-2 rounded-lg font-semibold text-xs shadow-lg shadow-[#ff6467]/15 transition-all";
+        currentScalePreset = parseFloat(btn.getAttribute('data-scale'));
+        drawCanvas();
+      });
+    });
+
+    // 포인트 테두리 컬러 체인저 버튼
+    const colorButtons = document.querySelectorAll('.color-picker-btn');
+    colorButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        colorButtons.forEach(b => {
+          b.classList.remove('border-white', 'ring-2', 'ring-[#ff6467]/40');
+          b.classList.add('border-slate-200');
+        });
+        btn.classList.add('border-white', 'ring-2', 'ring-[#ff6467]/40');
+        activeColor = btn.getAttribute('data-color');
+        
+        // 색상 자유도 부여: 선택 대상에 따른 실시간 개별 색상 갱신
+        if (selectedFocusArea) {
+          selectedFocusArea.color = activeColor;
+        }
+        if (selectedElement) {
+          selectedElement.color = activeColor;
+        }
+
+        drawCanvas();
+      });
+    });
+
+    // 순서 번호 유형 체인저 단추 연동
+    const badgeTypeBtns = document.querySelectorAll('.badge-type-btn');
+    badgeTypeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        badgeTypeBtns.forEach(b => {
+          b.className = "badge-type-btn flex-1 text-[10px] py-2 rounded-lg text-slate-400 hover:text-slate-600 font-semibold transition-all";
+        });
+        btn.className = "badge-type-btn flex-1 bg-white border border-slate-200 text-[#ff6467] text-[10px] py-2 rounded-lg font-semibold transition-all shadow-sm";
+        badgeType = btn.getAttribute('data-type');
+        
+        showToast(`다음에 배치될 번호표가 '${badgeType === 'number' ? '숫자 1,2,3' : badgeType === 'alpha-low' ? '소문자 a,b,c' : '대문자 A,B,C'}'로 지정되었습니다.`);
+      });
+    });
+
+    // 뱃지 순번 텍스트 기호 개 개별 변환 유틸리티 (1 -> A, a 등 독립 지원)
+    function getBadgeText(index, type = badgeType) {
+      if (type === 'number') {
+        return index.toString();
+      } else if (type === 'alpha-caps') {
+        const letter = String.fromCharCode(65 + ((index - 1) % 26));
+        const depth = index > 26 ? Math.floor((index - 1) / 26) : '';
+        return letter + depth;
+      } else {
+        const letter = String.fromCharCode(97 + ((index - 1) % 26));
+        const depth = index > 26 ? Math.floor((index - 1) / 26) : '';
+        return letter + depth;
+      }
+    }
+
+    // 뱃지 개별 타입 가변 인덱싱 함수
+    function reindexBadges() {
+      let numCount = 1;
+      let alphaLowCount = 1;
+      let alphaCapsCount = 1;
+      
+      elements.forEach(el => {
+        if (el.type === 'badge') {
+          if (el.badgeStyle === 'number') {
+            el.text = getBadgeText(numCount++, 'number');
+          } else if (el.badgeStyle === 'alpha-low') {
+            el.text = getBadgeText(alphaLowCount++, 'alpha-low');
+          } else if (el.badgeStyle === 'alpha-caps') {
+            el.text = getBadgeText(alphaCapsCount++, 'alpha-caps');
+          }
+        }
+      });
+    }
+
+    // 키보드 Delete / Backspace 키 개별 요소 삭제 단축키 매핑 (요청 사항)
+    window.addEventListener('keydown', (e) => {
+      // 입력 폼 제어 도중에는 단축키 차단 가드
+      if (document.activeElement === canvasTextInput || (watermarkTextInput && document.activeElement === watermarkTextInput)) {
+        return;
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        executeDeleteSelected();
+      }
+    });
+
+    // 개별 요소 삭제 실행기 (요청 반영 완료)
+    function executeDeleteSelected() {
+      if (selectedElement) {
+        elements = elements.filter(el => el !== selectedElement);
+        if (selectedElement.type === 'badge') {
+          reindexBadges();
+        }
+        selectedElement = null;
+        drawCanvas();
+        updateSelectedActionArea();
+        showToast('선택한 가이드 요소를 삭제했습니다.');
+      } else if (selectedFocusArea) {
+        focusAreas = focusAreas.filter(f => f !== selectedFocusArea);
+        selectedFocusArea = null;
+        drawCanvas();
+        updateSelectedActionArea();
+        showToast('선택한 포커스 영역을 삭제했습니다.');
+      }
+    }
+
+    // 선택 요소 삭제 패널 활성화 상태 조율기
+    function updateSelectedActionArea() {
+      const area = document.getElementById('selectedActionArea');
+      if (!area) return;
+      if (currentTool === 'select' && (selectedFocusArea || selectedElement)) {
+        area.classList.remove('hidden');
+      } else {
+        area.classList.add('hidden');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 이미지 자르기 (Crop) 조작 제어 연동
+    // -------------------------------------------------------------
+    if (applyCropBtn) applyCropBtn.addEventListener('click', executeCrop);
+    if (cancelCropBtn) {
+      cancelCropBtn.addEventListener('click', () => {
+        cropArea = null;
+        cropControlArea.classList.add('hidden');
+        selectTool('select');
+        drawCanvas();
+        showToast('자르기가 취소되었습니다.');
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 커스텀 설명 인풋 오버레이 조작 및 검증 연동 (Prompt 제거 완료)
+    // -------------------------------------------------------------
+    if (saveTextInputBtn) saveTextInputBtn.addEventListener('click', createTextElementFromOverlay);
+    if (cancelTextInputBtn) cancelTextInputBtn.addEventListener('click', hideInlineTextInput);
+    
+    // 입력창 엔터키 연동 (Ctrl + Enter로 줄바꿈 없이 전송 지원)
+    if (canvasTextInput) {
+      canvasTextInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          createTextElementFromOverlay();
+        }
+      });
+    }
+
+    function showInlineTextInput(clientX, clientY) {
+      const containerRect = canvasContainer.getBoundingClientRect();
+      
+      // 마우스 위치를 캔버스 컨테이너 상대 좌표로 계산
+      const localX = clientX - containerRect.left;
+      const localY = clientY - containerRect.top;
+
+      // 캔버스 범위를 이탈하지 않도록 바운더리 한정 가둠
+      const safeLeft = Math.max(10, Math.min(containerRect.width - 300, localX));
+      const safeTop = Math.max(10, Math.min(containerRect.height - 140, localY));
+
+      canvasTextInputContainer.style.left = `${safeLeft}px`;
+      canvasTextInputContainer.style.top = `${safeTop}px`;
+      canvasTextInputContainer.classList.remove('hidden');
+      canvasTextInput.value = '';
+      
+      // 입력 지연 시간 추가하여 부드럽게 오토포커스
+      setTimeout(() => canvasTextInput.focus(), 80);
+    }
+
+    function hideInlineTextInput() {
+      if (canvasTextInputContainer) {
+        canvasTextInputContainer.classList.add('hidden');
+      }
+      pendingTextPos = null;
+    }
+
+    function createTextElementFromOverlay() {
+      const textVal = canvasTextInput.value.trim();
+      if (textVal && pendingTextPos) {
+        elements.push({
+          type: 'text',
+          x: pendingTextPos.x / canvas.width,
+          y: pendingTextPos.y / canvas.height,
+          color: activeColor, // 개별 색상 할당 완료
+          text: textVal
+        });
+        drawCanvas();
+        showToast('가이드 설명이 생성되었습니다.');
+      }
+      hideInlineTextInput();
+    }
+
+    // -------------------------------------------------------------
+    // 워터마크 인터페이스 조작 제어 연동 (안전한 컴포넌트 가드 장착)
+    // -------------------------------------------------------------
+    if (watermarkToggle) {
+      watermarkToggle.addEventListener('change', (e) => {
+        watermarkEnabled = e.target.checked;
+        if (watermarkEnabled) {
+          watermarkConfig.classList.remove('hidden');
+        } else {
+          watermarkConfig.classList.add('hidden');
+        }
+        drawCanvas();
+      });
+    }
+
+    if (wmTypeImage) {
+      wmTypeImage.addEventListener('click', () => {
+        watermarkType = 'image';
+        wmTypeImage.className = "flex-1 bg-slate-800 text-[10px] py-1 rounded text-slate-200 font-semibold transition-all";
+        if (wmTypeText) {
+          wmTypeText.className = "flex-1 text-[10px] py-1 rounded text-slate-500 font-semibold transition-all";
+        }
+        wmImageGroup.classList.remove('hidden');
+        if (wmTextGroup) wmTextGroup.classList.add('hidden');
+        drawCanvas();
+      });
+    }
+
+    if (wmTypeText) {
+      wmTypeText.addEventListener('click', () => {
+        watermarkType = 'text';
+        if (wmTypeImage) {
+          wmTypeImage.className = "flex-1 text-[10px] py-1 rounded text-slate-500 font-semibold transition-all";
+        }
+        wmTypeText.className = "flex-1 bg-slate-800 text-[10px] py-1 rounded text-slate-200 font-semibold transition-all";
+        wmImageGroup.add('hidden');
+        if (wmTextGroup) wmTextGroup.classList.remove('hidden');
+        drawCanvas();
+      });
+    }
+
+    // 워터마크 로고 파일 등록
+    if (watermarkFileInput) {
+      watermarkFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          wmFileName.innerText = file.name;
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+              watermarkImage = img;
+              drawCanvas();
+              showToast('로고 워터마크 이미지가 준비되었습니다.');
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // 텍스트 수동 변경 실시간 감지 (안전 가드 장착)
+    if (watermarkTextInput) {
+      watermarkTextInput.addEventListener('input', (e) => {
+        watermarkText = e.target.value;
+        drawCanvas();
+      });
+    }
+
+    // 위치 콤보박스 연동
+    if (watermarkPosSelect) {
+      watermarkPosSelect.addEventListener('change', (e) => {
+        watermarkPos = e.target.value;
+        drawCanvas();
+      });
+    }
+
+    // 투명도 슬라이더 연동
+    if (watermarkOpacityRange) {
+      watermarkOpacityRange.addEventListener('input', (e) => {
+        watermarkOpacity = e.target.value / 100;
+        if (wmOpacityVal) wmOpacityVal.innerText = `${e.target.value}%`;
+        drawCanvas();
+      });
+    }
+
+    // 스케일 슬라이더 연동
+    if (watermarkScaleRange) {
+      watermarkScaleRange.addEventListener('input', (e) => {
+        watermarkSize = e.target.value / 100;
+        if (wmScaleVal) wmScaleVal.innerText = `${e.target.value}%`;
+        drawCanvas();
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 이미지 처리 핵심 컨트롤 로직
+    // -------------------------------------------------------------
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) loadImageFromFile(file);
+    }
+
+    // 캡쳐 후 Ctrl+V 즉시 실행 기능 구현
+    function handlePaste(e) {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const blob = item.getAsFile();
+          loadImageFromFile(blob);
+          showToast('클립보드에서 캡쳐 화면을 성공적으로 로드했습니다!');
+          return;
+        }
+      }
+    }
+
+    // 파일 로딩 처리기
+    function loadImageFromFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          setupCanvasWithImage(img);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 테스트용 예쁜 웹 대시보드 그래픽 프레임 생성
+    function loadSampleImage() {
+      const img = new Image();
+      img.onload = function() {
+        setupCanvasWithImage(img);
+        
+        // 다중 포커스 도형 기본 탑재 샘플링 및 빨간색(기본색) 바인딩 완료
+        focusAreas = [
+          {
+            id: 'sample-focus-1',
+            type: 'rect',
+            x: img.width * 0.40,
+            y: img.height * 0.15,
+            w: img.width * 0.50,
+            h: img.height * 0.20,
+            color: '#FF4747'
+          },
+          {
+            id: 'sample-focus-2',
+            type: 'circle',
+            x: img.width * 0.45,
+            y: img.height * 0.45,
+            w: img.width * 0.20,
+            h: img.width * 0.20,
+            color: '#FF4747'
+          }
+        ];
+        elements = [
+          {
+            type: 'badge',
+            x: 0.40,
+            y: 0.12,
+            badgeStyle: 'number',
+            color: '#FF4747',
+            text: '1'
+          },
+          {
+            type: 'badge',
+            x: 0.45,
+            y: 0.42,
+            badgeStyle: 'alpha-low',
+            color: '#10B981', // 포커스와 다른 개별 독립 색상 예시 제공
+            text: 'a'
+          },
+          {
+            type: 'text',
+            x: 0.65,
+            y: 0.72,
+            color: '#FF4747',
+            text: '선택 툴로 포커스를 클릭하면 Figma처럼 자유롭게 크기를 늘리거나 줄일 수 있습니다.'
+          }
+        ];
+        reindexBadges();
+        drawCanvas();
+        showToast('테스트 이미지 및 사후 편집 샘플 포커스들이 배치되었습니다.');
+      };
+      
+      const mockCanvas = document.createElement('canvas');
+      mockCanvas.width = 1200;
+      mockCanvas.height = 750;
+      const mctx = mockCanvas.getContext('2d');
+      
+      // 샘플 이미지 페인팅
+      mctx.fillStyle = '#f8fafc';
+      mctx.fillRect(0,0,1200,750);
+      
+      mctx.fillStyle = '#e2e8f0';
+      mctx.fillRect(0,0,1200,60);
+      mctx.fillStyle = '#94a3b8';
+      mctx.fillRect(30,20,120,20);
+      mctx.fillRect(180,20,80,20);
+      mctx.fillRect(280,20,80,20);
+      
+      mctx.beginPath();
+      mctx.arc(1140, 30, 15, 0, Math.PI * 2);
+      mctx.fillStyle = '#FF4747';
+      mctx.fill();
+      
+      mctx.fillStyle = '#ffffff';
+      mctx.fillRect(50, 100, 320, 580); // 좌측 서브 컨트롤 영역
+      mctx.fillRect(400, 100, 750, 420); // 메인 강조 차트 프레임 영역
+      mctx.fillRect(400, 550, 750, 130); // 하단 통계 정보
+      
+      mctx.fillStyle = '#f1f5f9';
+      mctx.fillRect(440, 150, 670, 320); // 차트 박스
+      mctx.fillStyle = '#FF4747'; // 액티브 서브 영역
+      mctx.fillRect(480, 250, 120, 120);
+      mctx.fillStyle = '#F59E0B';
+      mctx.fillRect(640, 250, 180, 120);
+      mctx.fillStyle = '#6366f1';
+      mctx.fillRect(860, 250, 200, 120);
+      
+      img.src = mockCanvas.toDataURL();
+    }
+
+    // 캔버스 초기 크기 렌더링 설정
+    function setupCanvasWithImage(img) {
+      bgImage = img;
+      
+      dropzone.classList.add('hidden');
+      canvasContainer.classList.remove('hidden');
+      
+      // 원본 해상도 100% 반영
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      canvas.style.maxWidth = '100%';
+      canvas.style.height = 'auto';
+      
+      focusAreas = []; 
+      cropArea = null;
+      selectedFocusArea = null;
+      selectedElement = null; // 선택 영역 초기화
+      elements = [];
+      nextBadgeNum = 1;
+      hideInlineTextInput();
+      drawCanvas();
+    }
+
+    // -------------------------------------------------------------
+    // 포커스 처리 & 렌더링 코어 엔진 (오프스크린 합집합 기반 겹치기 해결)
+    // -------------------------------------------------------------
+
+    function selectTool(toolKey) {
+      // 이미지 미등록 가드라인 설치
+      if (!bgImage && toolKey !== 'select') {
+        showToast('먼저 캡쳐 이미지를 붙여넣거나 스크린샷 파일을 올려주세요!', 'error');
+        return;
+      }
+
+      currentTool = toolKey;
+      hideInlineTextInput(); // 툴 변경 시 텍스트 팝업 강제 퇴장
+      
+      // 이미지 자르기(Crop) 모드 전환 시 이미지 전체 영역 자동 설정
+      if (toolKey === 'crop' && bgImage) {
+        cropArea = {
+          x: 0,
+          y: 0,
+          w: canvas.width,
+          h: canvas.height
+        };
+        cropControlArea.classList.remove('hidden');
+      } else {
+        cropArea = null;
+        cropControlArea.classList.add('hidden');
+      }
+
+      // 모드 변경 시 선택 영역 상태 및 스냅 가리어
+      if (toolKey !== 'select') {
+        selectedFocusArea = null;
+        selectedElement = null;
+        activeSnapGuides = [];
+      }
+
+      // 왼쪽 버튼들 동적 클래스 높이(h-16) 및 정렬 보존 패킹
+      Object.keys(tools).forEach(key => {
+        const btn = tools[key];
+        if (!btn) return; // 안전 감지 패치 탑재
+        
+        if (key === toolKey) {
+          if (key === 'crop') {
+            btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-violet-750 text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-violet-600/10 border border-violet-500/50";
+          } else {
+            btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-[#FF4747]/10 border border-[#FF4747]/50";
+          }
+        } else {
+          btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200";
+        }
+      });
+      
+      if (toolKey === 'select') {
+        canvas.style.cursor = 'default';
+      } else if (toolKey === 'crop') {
+        canvas.style.cursor = 'crosshair';
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
+      drawCanvas();
+      updateSelectedActionArea();
+    }
+
+    // 메인 그리기 메커니즘
+    function drawCanvas() {
+      if (!bgImage) return;
+
+      // 1단계: 원본 배경 이미지 그리기 (기본 원본 화질을 먼저 캔버스 전체에 선사)
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+      // 1.5단계: 자르기(Crop) 고급 가이드라인 그리기
+      if (currentTool === 'crop' && cropArea) {
+        ctx.save();
+        let rx = cropArea.x;
+        let ry = cropArea.y;
+        let rw = cropArea.w;
+        let rh = cropArea.h;
+        if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+        if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+        // 자를 영역 바깥 어두운 마스킹 처리 (EvenOdd로 투명화 효과 유도)
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        ctx.rect(rx, ry, rw, rh);
+        ctx.fill('evenodd');
+
+        // 테두리 자르기 격자 라인 페인팅
+        ctx.strokeStyle = '#c084fc'; // violet-400
+        ctx.lineWidth = 2;
+        ctx.strokeRect(rx, ry, rw, rh);
+
+        // 클래식 카메라 자르기 보조 격자 (3분할 가이드)
+        ctx.strokeStyle = 'rgba(192, 132, 252, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rx, ry + rh / 3); ctx.lineTo(rx + rw, ry + rh / 3);
+        ctx.moveTo(rx, ry + (rh * 2) / 3); ctx.lineTo(rx + rw, ry + (rh * 2) / 3);
+        ctx.moveTo(rx + rw / 3, ry); ctx.lineTo(rx + rw / 3, ry + rh);
+        ctx.moveTo(rx + (rw * 2) / 3, ry); ctx.lineTo(rx + (rw * 2) / 3, ry + rh);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 피그마 스타일 8방향 리사이즈 핸들 렌더링
+        const rect = canvas.getBoundingClientRect();
+        const rawHandleSize = 12; 
+        const hs = rawHandleSize * (canvas.width / rect.width); 
+        const hhs = hs / 2;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#8b5cf6'; // violet-500
+        ctx.lineWidth = 2;
+
+        const cx = rx + rw / 2;
+        const cy = ry + rh / 2;
+
+        const handles = [
+          { x: rx, y: ry },         // tl
+          { x: rx + rw, y: ry },    // tr
+          { x: rx, y: ry + rh },    // bl
+          { x: rx + rw, y: ry + rh },// br
+          { x: cx, y: ry },         // t
+          { x: cx, y: ry + rh },    // b
+          { x: rx, y: cy },         // l
+          { x: rx + rw, y: cy }     // r
+        ];
+
+        handles.forEach(h => {
+          ctx.beginPath();
+          ctx.rect(h.x - hhs, h.y - hhs, hs, hs);
+          ctx.fill();
+          ctx.stroke();
+        });
+        
+        ctx.restore();
+      }
+
+      // ★ 2단계: 다중 배경 딤(Dim) 레이어 및 다중 포커스 영역 마스킹 드로잉 (오프스크린 합집합 Union 기반 뚫기)
+      if (focusAreas.length > 0) {
+        ctx.save();
+        
+        // 1) 임시 가상 오프스크린 캔버스 생성 및 초기화
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = canvas.width;
+        offCanvas.height = canvas.height;
+        const offCtx = offCanvas.getContext('2d');
+        
+        // 2) 오프스크린 캔버스 전체 영역에 어두운 반투명 딤 덮기
+        offCtx.fillStyle = `rgba(15, 23, 42, ${dimOpacity})`;
+        offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+        
+        // 3) 오프스크린 그래픽 합성 모드를 'destination-out'으로 변경하여 겹치는 곳을 합집합(Union)으로 맑게 지워내기
+        offCtx.globalCompositeOperation = 'destination-out';
+        offCtx.fillStyle = 'rgba(0, 0, 0, 1)'; // 완전 투명화 유도용 불투명 솔리드 색상
+        
+        focusAreas.forEach(fArea => {
+          let rx = fArea.x;
+          let ry = fArea.y;
+          let rw = fArea.w;
+          let rh = fArea.h;
+          
+          if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+          if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+          offCtx.beginPath();
+          if (fArea.type === 'rect') {
+            drawRoundRectPath(offCtx, rx, ry, rw, rh, calculateScaledSize(4));
+          } else if (fArea.type === 'circle') {
+            const r = rw / 2;
+            const cx = rx + r;
+            const cy = ry + r;
+            offCtx.arc(cx, cy, r, 0, Math.PI * 2);
+          }
+          offCtx.fill();
+        });
+        
+        // 4) 오프스크린 가공이 완료된 구멍 뚫린 딤 레이어를 메인 캔버스 원본 스크린샷 위에 합성 렌더링
+        ctx.drawImage(offCanvas, 0, 0);
+        ctx.restore(); // 합성 모드 및 레이어 설정 복구
+
+        // 5) 각 포커스 영역의 예쁜 개별 강조 테두리 아웃라인 그리기
+        ctx.save();
+        const strokeWidth = calculateScaledSize(4);
+        ctx.lineWidth = strokeWidth;
+
+        focusAreas.forEach(fArea => {
+          ctx.strokeStyle = fArea.color || '#ff6467'; // CLE Robotics 기본 레드
+          let rx = fArea.x;
+          let ry = fArea.y;
+          let rw = fArea.w;
+          let rh = fArea.h;
+          
+          if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+          if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+          if (fArea.type === 'rect') {
+            ctx.beginPath();
+            drawRoundRectPath(ctx, rx, ry, rw, rh, calculateScaledSize(4));
+            ctx.stroke();
+          } else if (fArea.type === 'circle') {
+            ctx.beginPath();
+            const r = rw / 2;
+            const cx = rx + r;
+            const cy = ry + r;
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        });
+        ctx.restore();
+      }
+
+      // ★ 2.1단계: 선택된 포커스 도형의 리사이즈 핸들 및 피그마식 테두리 렌더링 (요청 반영 완료)
+      if (currentTool === 'select' && selectedFocusArea) {
+        ctx.save();
+        let rx = selectedFocusArea.x;
+        let ry = selectedFocusArea.y;
+        let rw = selectedFocusArea.w;
+        let rh = selectedFocusArea.h;
+        if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+        if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+        // 디자이너 확인용 밝고 스마트한 스카이블루 선택 박스
+        ctx.strokeStyle = '#0ea5e9';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 2]);
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.setLineDash([]);
+
+        // 8방향 리사이즈 핸들 페인팅
+        const rect = canvas.getBoundingClientRect();
+        const rawHandleSize = 10; 
+        const hs = rawHandleSize * (canvas.width / rect.width); 
+        const hhs = hs / 2;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#0ea5e9';
+        ctx.lineWidth = 1.5;
+
+        const cx = rx + rw / 2;
+        const cy = ry + rh / 2;
+
+        const handles = [
+          { x: rx, y: ry },         // tl
+          { x: rx + rw, y: ry },    // tr
+          { x: rx, y: ry + rh },    // bl
+          { x: rx + rw, y: ry + rh },// br
+          { x: cx, y: ry },         // t
+          { x: cx, y: ry + rh },    // b
+          { x: rx, y: cy },         // l
+          { x: rx + rw, y: cy }     // r
+        ];
+
+        handles.forEach(h => {
+          // 원형 포커스인 경우 타원 방지를 위해 4개 모서리 핸들러만 표시
+          if (selectedFocusArea.type === 'circle' && (h.x === cx || h.y === cy)) return;
+          
+          ctx.beginPath();
+          ctx.rect(h.x - hhs, h.y - hhs, hs, hs);
+          ctx.fill();
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      // ★ 2.1.5단계: 선택된 요소(번호표, 텍스트)의 피그마식 테두리 가이드 렌더링
+      if (currentTool === 'select' && selectedElement) {
+        ctx.save();
+        const pxX = selectedElement.x * canvas.width;
+        const pxY = selectedElement.y * canvas.height;
+        ctx.strokeStyle = '#0ea5e9'; // 피그마 스카이블루 스킨
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 2]);
+        
+        if (selectedElement.type === 'badge') {
+          const badgeRadius = calculateScaledSize(18);
+          ctx.beginPath();
+          ctx.arc(pxX, pxY, badgeRadius + 4, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (selectedElement.type === 'text') {
+          const fontSize = calculateScaledSize(14);
+          ctx.font = `500 ${fontSize}px sans-serif`;
+          const textWidth = ctx.measureText(selectedElement.text).width;
+          const paddingX = calculateScaledSize(12);
+          const paddingY = calculateScaledSize(8);
+          const boxW = textWidth + paddingX * 2;
+          const boxH = fontSize + paddingY * 2;
+          ctx.strokeRect(pxX - boxW / 2 - 4, pxY - boxH / 2 - 4, boxW + 8, boxH + 8);
+        }
+        ctx.restore();
+      }
+
+      // ★ 2.2단계: 번호표 오토레이아웃 스냅 정렬 시 시각적 하늘색 점선 가이드라인 출력
+      if (activeSnapGuides.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#38bdf8'; // sky-400
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        
+        activeSnapGuides.forEach(guide => {
+          ctx.beginPath();
+          if (guide.type === 'v') {
+            ctx.moveTo(guide.x, 0);
+            ctx.lineTo(guide.x, canvas.height);
+          } else {
+            ctx.moveTo(0, guide.y);
+            ctx.lineTo(canvas.width, guide.y);
+          }
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      // 2.5단계: 보안 및 출처 증빙용 로고/텍스트 워터마크(Watermark) 페인팅
+      if (watermarkEnabled) {
+        ctx.save();
+        ctx.globalAlpha = watermarkOpacity;
+        
+        let wx = 0, wy = 0;
+        let wmWidth = 0, wmHeight = 0;
+        const padding = canvas.width * 0.025; // 2.5% 마진 패딩
+        
+        if (watermarkType === 'image' && watermarkImage) {
+          // 가로 폭 기준으로 비율 크기 조절
+          wmWidth = canvas.width * watermarkSize;
+          wmHeight = wmWidth * (watermarkImage.naturalHeight / watermarkImage.naturalWidth);
+          
+          if (watermarkPos === 'bottom-right') {
+            wx = canvas.width - wmWidth - padding;
+            wy = canvas.height - wmHeight - padding;
+          } else if (watermarkPos === 'bottom-left') {
+            wx = padding;
+            wy = canvas.height - wmHeight - padding;
+          } else if (watermarkPos === 'top-right') {
+            wx = canvas.width - wmWidth - padding;
+            wy = padding;
+          } else if (watermarkPos === 'top-left') {
+            wx = padding;
+            wy = padding;
+          } else if (watermarkPos === 'center') {
+            wx = (canvas.width - wmWidth) / 2;
+            wy = (canvas.height - wmHeight) / 2;
+            
+            // 중앙에 위치 시 브랜드감성을 높이기 위한 대각 회전
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(-Math.PI / 6); // -30도 
+            wx = -wmWidth / 2;
+            wy = -wmHeight / 2;
+          }
+          
+          ctx.drawImage(watermarkImage, wx, wy, wmWidth, wmHeight);
+          
+        } else if (watermarkType === 'text' && watermarkText) {
+          const fontSize = calculateScaledSize(20) * (watermarkSize / 0.15);
+          ctx.font = `bold ${fontSize}px Inter, "Noto Sans KR", sans-serif`;
+          ctx.fillStyle = activeColor === '#ffffff' ? '#cbd5e1' : activeColor;
+          ctx.textBaseline = 'middle';
+          
+          if (watermarkPos === 'bottom-right') {
+            ctx.textAlign = 'right';
+            wx = canvas.width - padding;
+            wy = canvas.height - fontSize / 2 - padding;
+          } else if (watermarkPos === 'bottom-left') {
+            ctx.textAlign = 'left';
+            wx = padding;
+            wy = canvas.height - fontSize / 2 - padding;
+          } else if (watermarkPos === 'top-right') {
+            ctx.textAlign = 'right';
+            wx = canvas.width - padding;
+            wy = padding + fontSize / 2;
+          } else if (watermarkPos === 'top-left') {
+            ctx.textAlign = 'left';
+            wx = padding;
+            wy = padding + fontSize / 2;
+          } else if (watermarkPos === 'center') {
+            ctx.textAlign = 'center';
+            wx = canvas.width / 2;
+            wy = canvas.height / 2;
+            
+            ctx.translate(wx, wy);
+            ctx.rotate(-Math.PI * 25 / 180); // 대각선 경사
+            wx = 0;
+            wy = 0;
+          }
+          
+          ctx.fillText(watermarkText, wx, wy);
+        }
+        ctx.restore();
+      }
+
+      // 3단계: 가이드 엘리먼트 렌더링 (개별 할당된 색상 반영)
+      elements.forEach(elem => {
+        const pxX = elem.x * canvas.width;
+        const pxY = elem.y * canvas.height;
+        const elemColor = elem.color || '#ff6467'; // 개별 요소들의 색상 자유도 구현완료
+        
+        if (elem.type === 'badge') {
+          const badgeRadius = calculateScaledSize(18);
+          
+          ctx.beginPath();
+          ctx.arc(pxX, pxY, badgeRadius, 0, Math.PI * 2);
+          ctx.fillStyle = elemColor;
+          ctx.fill();
+          
+          ctx.lineWidth = calculateScaledSize(2);
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = `bold ${badgeRadius * 1.05}px "Pretendard", -apple-system, sans-serif`;
+          
+          // ★ 수직 한눈에 들어오는 가독성 정밀 보정 (들려있는 현상 하방 오프셋 보정 수식 반영)
+          const verticalOffset = badgeRadius * 0.08;
+          ctx.fillText(elem.text, pxX, pxY + verticalOffset);
+          
+        } else if (elem.type === 'text') {
+          const fontSize = calculateScaledSize(14);
+          ctx.font = `600 ${fontSize}px "Pretendard", -apple-system, sans-serif`; // 굵기 살짝 보강
+          
+          const textWidth = ctx.measureText(elem.text).width;
+          const paddingX = calculateScaledSize(12);
+          const paddingY = calculateScaledSize(8);
+          
+          const boxW = textWidth + paddingX * 2;
+          const boxH = fontSize + paddingY * 2;
+          const boxX = pxX - boxW / 2;
+          const boxY = pxY - boxH / 2;
+          
+          // ★ 디자이너 피드백 반영: 말풍선 내부를 배경색(elemColor)으로 가득 채우고 텍스트는 흰색으로 처리
+          ctx.fillStyle = elemColor;
+          drawRoundRect(ctx, boxX, boxY, boxW, boxH, calculateScaledSize(8)); // 디자이너 요청 사항: Radius-8px 변경 완료
+          ctx.fill();
+          
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = calculateScaledSize(1.5);
+          ctx.stroke();
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(elem.text, pxX, pxY + 1);
+        }
+      });
+    }
+
+    // 해상도 연동 자동 비례 연산
+    function calculateScaledSize(baseValue) {
+      if (!autoScaleEnabled) {
+        return baseValue * currentScalePreset;
+      }
+      const scaleFactor = canvas.width / 1200;
+      return baseValue * scaleFactor * currentScalePreset;
+    }
+
+    // 라운드 렉트 그리기 패스 함수 (마스킹 구멍 뚫기 및 드로잉에 전량 매핑)
+    function drawRoundRectPath(c, x, y, width, height, radius) {
+      c.moveTo(x + radius, y);
+      c.lineTo(x + width - radius, y);
+      c.quadraticCurveTo(x + width, y, x + width, y + radius);
+      c.lineTo(x + width, y + height - radius);
+      c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      c.lineTo(x + radius, y + height);
+      c.quadraticCurveTo(x, y + height, x, y + height - radius);
+      c.lineTo(x, y + radius);
+      c.quadraticCurveTo(x, y, x + radius, y);
+    }
+
+    function drawRoundRect(c, x, y, width, height, radius) {
+      c.beginPath();
+      drawRoundRectPath(c, x, y, width, height, radius);
+      c.closePath();
+    }
+
+    // -------------------------------------------------------------
+    // 이미지 자르기 (Crop) 핵심 연산 구동 엔진
+    // -------------------------------------------------------------
+    function executeCrop() {
+      if (!bgImage || !cropArea) return;
+
+      let rx = cropArea.x;
+      let ry = cropArea.y;
+      let rw = cropArea.w;
+      let rh = cropArea.h;
+      
+      // 마이너스 방향 반전 드래그 대응 보정
+      if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+      if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+      // 너무 세밀한 드래그는 무효화
+      if (rw < 10 || rh < 10) {
+        showToast('잘라낼 영역이 너무 작습니다.', 'error');
+        return;
+      }
+
+      // 1. 가상 오프스크린 임시 캔버스 생성 및 그리기
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = rw;
+      tempCanvas.height = rh;
+      const tCtx = tempCanvas.getContext('2d');
+      
+      // 원본 이미지의 지정된 영역 추출 슬라이싱
+      tCtx.drawImage(bgImage, rx, ry, rw, rh, 0, 0, rw, rh);
+
+      // 2. 잘라낸 데이터 소스를 메인 이미지 인스턴스에 적용
+      const croppedImage = new Image();
+      croppedImage.onload = function() {
+        // 기존 요소를 잘린 크기 및 오프셋 위치 비율에 맞춰 재연산 연계
+        elements = elements.map(elem => {
+          // 절대 해상도 좌표 구하기
+          const pxX = elem.x * canvas.width;
+          const pxY = elem.y * canvas.height;
+          // 자르기 기준 오프셋 깎아내기
+          const newX = pxX - rx;
+          const newY = pxY - ry;
+          return {
+            ...elem,
+            x: newX / rw,
+            y: newY / rh
+          };
+        }).filter(elem => elem.x >= 0 && elem.x <= 1 && elem.y >= 0 && elem.y <= 1); // 영역 이탈자는 제거
+
+        // 다중 포커스 하이라이트 영역 좌표 연동 보정
+        focusAreas = focusAreas.map(fArea => {
+          fArea.x -= rx;
+          fArea.y -= ry;
+          return fArea;
+        }).filter(fArea => {
+          // 이탈 감지 필터링
+          return !(fArea.x + fArea.w < 0 || fArea.x > rw || fArea.y + fArea.h < 0 || fArea.y > rh);
+        }).map(fArea => {
+          // 이너 범위 고정 클램핑 연산
+          const x1 = Math.max(0, fArea.x);
+          const y1 = Math.max(0, fArea.y);
+          const x2 = Math.min(rw, fArea.x + fArea.w);
+          const y2 = Math.min(rh, fArea.y + fArea.h);
+          fArea.x = x1;
+          fArea.y = y1;
+          fArea.w = x2 - x1;
+          fArea.h = y2 - y1;
+          return fArea;
+        });
+
+        // 3. 메인 백그라운드 인스턴스 전면 재교체
+        bgImage = croppedImage;
+        canvas.width = rw;
+        canvas.height = rh;
+        
+        cropArea = null;
+        cropControlArea.classList.add('hidden');
+        selectedFocusArea = null;
+        selectedElement = null; // 인덱스 선택 영역 초기화
+        selectTool('select');
+        drawCanvas();
+        updateSelectedActionArea();
+        showToast('이미지 크기가 예쁘게 조절되었습니다.');
+      };
+      croppedImage.src = tempCanvas.toDataURL();
+    }
+
+    // 모서리 핸들의 감지 범위(Hitbox) 대폭 확장 (기존 14px -> 28px 초강력 감지 자석)
+    function getCropHandleAt(pos) {
+      if (!cropArea) return null;
+      let rx = cropArea.x;
+      let ry = cropArea.y;
+      let rw = cropArea.w;
+      let rh = cropArea.h;
+      
+      if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+      if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+      const rect = canvas.getBoundingClientRect();
+      const rawHandleSize = 28; // 자석 효과를 주기 위한 넉넉한 28픽셀 터치 히트박스 영역 구축
+      const size = rawHandleSize * (canvas.width / rect.width); // 원본 스케일 대비 정규화
+
+      const cx = rx + rw / 2;
+      const cy = ry + rh / 2;
+
+      // 8방향 핸들 영역 정의
+      const handles = {
+        tl: { x: rx, y: ry },
+        tr: { x: rx + rw, y: ry },
+        bl: { x: rx, y: ry + rh },
+        br: { x: rx + rw, y: ry + rh },
+        t:  { x: cx, y: ry },
+        b:  { x: cx, y: ry + rh },
+        l:  { x: rx, y: cy },
+        r:  { x: rx + rw, y: cy }
+      };
+
+      // 핸들 충돌 감지는 코너 최우선 체크
+      const priorityKeys = ['tl', 'tr', 'bl', 'br', 't', 'b', 'l', 'r'];
+      for (let key of priorityKeys) {
+        const h = handles[key];
+        if (Math.abs(pos.x - h.x) <= size && Math.abs(pos.y - h.y) <= size) {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    // 포커스 도형의 8방향 리사이즈 핸들 검출 유틸리티
+    function getFocusHandleAt(pos, fArea) {
+      if (!fArea) return null;
+      let rx = fArea.x;
+      let ry = fArea.y;
+      let rw = fArea.w;
+      let rh = fArea.h;
+      
+      if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+      if (rh < 0) { ry += rh; ry = Math.abs(rh); }
+
+      const rect = canvas.getBoundingClientRect();
+      const rawHandleSize = 24; 
+      const size = rawHandleSize * (canvas.width / rect.width);
+
+      const cx = rx + rw / 2;
+      const cy = ry + rh / 2;
+
+      const handles = {
+        tl: { x: rx, y: ry },
+        tr: { x: rx + rw, y: ry },
+        bl: { x: rx, y: ry + rh },
+        br: { x: rx + rw, y: ry + rh },
+        t:  { x: cx, y: ry },
+        b:  { x: cx, y: ry + rh },
+        l:  { x: rx, y: cy },
+        r:  { x: rx + rw, y: cy }
+      };
+
+      const priorityKeys = ['tl', 'tr', 'bl', 'br', 't', 'b', 'l', 'r'];
+      for (let key of priorityKeys) {
+        // 원형 포커스인 경우 타원 방지를 위해 네 귀퉁이(Corner) 조절자만 반환 제한
+        if (fArea.type === 'circle' && (key === 't' || key === 'b' || key === 'l' || key === 'r')) continue;
+
+        const h = handles[key];
+        if (Math.abs(pos.x - h.x) <= size && Math.abs(pos.y - h.y) <= size) {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    // 마우스 마킹 위치가 크롭 영역 내부인지 판정하는 함수
+    function isPointInCropInner(x, y) {
+      if (!cropArea) return false;
+      let rx = cropArea.x;
+      let ry = cropArea.y;
+      let rw = cropArea.w;
+      let rh = cropArea.h;
+      
+      if (rw < 0) { rx += rw; rw = Math.abs(rw); }
+      if (rh < 0) { ry += rh; rh = Math.abs(rh); }
+
+      return (x >= rx && x <= rx + rw && y >= ry && y <= ry + rh);
+    }
+
+    // 크롭 전용 실시간 마우스 커서 업데이트 함수 (조작 직관성 향상)
+    function updateCropCursor(pos) {
+      if (currentTool !== 'crop' || !cropArea) return;
+      
+      const handle = getCropHandleAt(pos);
+      if (handle) {
+        if (handle === 'tl' || handle === 'br') {
+          canvas.style.cursor = 'nwse-resize';
+        } else if (handle === 'tr' || handle === 'bl') {
+          canvas.style.cursor = 'nesw-resize';
+        } else if (handle === 't' || handle === 'b') {
+          canvas.style.cursor = 'ns-resize';
+        } else if (handle === 'l' || handle === 'r') {
+          canvas.style.cursor = 'ew-resize';
+        }
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
+    }
+
+    // 선택 툴 커서 실시간 조절 업데이트 함수
+    function updateSelectCursor(pos) {
+      if (currentTool !== 'select') return;
+
+      const handle = getFocusHandleAt(pos, selectedFocusArea);
+      if (handle) {
+        if (handle === 'tl' || handle === 'br') {
+          canvas.style.cursor = 'nwse-resize';
+        } else if (handle === 'tr' || handle === 'bl') {
+          canvas.style.cursor = 'nesw-resize';
+        } else if (handle === 't' || handle === 'b') {
+          canvas.style.cursor = 'ns-resize';
+        } else if (handle === 'l' || handle === 'r') {
+          canvas.style.cursor = 'ew-resize';
+        }
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    }
+
+    // ★ 디자이너 요청 사항: 설명 오버레이 팝업 후 선택/개별삭제가 되지 않던 오류 전면 해결을 위한 정밀 충돌 감지 패치
+    function findElementAt(x, y) {
+      for (let i = elements.length - 1; i >= 0; i--) {
+        const elem = elements[i];
+        const pxX = elem.x * canvas.width;
+        const pxY = elem.y * canvas.height;
+        
+        if (elem.type === 'badge') {
+          const size = calculateScaledSize(25);
+          const dist = Math.hypot(pxX - x, pxY - y);
+          if (dist < size) {
+            return elem;
+          }
+        } else if (elem.type === 'text') {
+          // 텍스트 말풍선 내부 어느 곳이든 클릭해도 똑똑하게 감지해 선택 테두리를 둘러주도록 정밀화!
+          ctx.save();
+          const fontSize = calculateScaledSize(14);
+          ctx.font = `600 ${fontSize}px "Pretendard", -apple-system, sans-serif`;
+          const textWidth = ctx.measureText(elem.text).width;
+          const paddingX = calculateScaledSize(12);
+          const paddingY = calculateScaledSize(8);
+          
+          const boxW = textWidth + paddingX * 2;
+          const boxH = fontSize + paddingY * 2;
+          ctx.restore();
+          
+          const left = pxX - boxW / 2;
+          const right = pxX + boxW / 2;
+          const top = pxY - boxH / 2;
+          const bottom = pxY + boxH / 2;
+          
+          if (x >= left && x <= right && y >= top && y <= bottom) {
+            return elem;
+          }
+        }
+      }
+      return null;
+    }
+
+    // 다중 포커스 도형 감지를 위한 검색 유틸리티
+    function findFocusAreaAt(x, y) {
+      for (let i = focusAreas.length - 1; i >= 0; i--) {
+        const f = focusAreas[i];
+        if (x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h) {
+          return f;
+        }
+      }
+      return null;
+    }
+
+    function isPointInFocus(x, y) {
+      return findFocusAreaAt(x, y) !== null;
+    }
+
+    // -------------------------------------------------------------
+    // 마우스 터치 & 클릭 제어 로직 (다중 포커스 및 개별 상태 분리 완료)
+    // -------------------------------------------------------------
+
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width === 0 ? 1 : canvas.width / rect.width;
+      const scaleY = rect.height === 0 ? 1 : canvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const pos = getMousePos(e);
+      
+      if (currentTool === 'select') {
+        // 1순위: 현재 크기 편집 중인 선택 도형의 크기조절 핸들을 눌렀는지 검사
+        const clickedFocusHandle = getFocusHandleAt(pos, selectedFocusArea);
+        if (clickedFocusHandle) {
+          isResizingFocus = true;
+          activeFocusHandle = clickedFocusHandle;
+          dragStartX = pos.x;
+          dragStartY = pos.y;
+          return;
+        }
+
+        // 2순위: 가이드 인덱스 요소(원형 뱃지, 글자 박스) 선택 및 드래깅 (복원 패치)
+        const targetElement = findElementAt(pos.x, pos.y);
+        if (targetElement) {
+          isDragging = true;
+          selectedElement = targetElement;
+          selectedFocusArea = null; // 인덱스 잡으면 포커스 리사이즈 비활성화
+          const pxX = targetElement.x * canvas.width;
+          const pxY = targetElement.y * canvas.height;
+          dragStartX = pos.x - pxX;
+          dragStartY = pos.y - pxY;
+          drawCanvas();
+          updateSelectedActionArea();
+          return;
+        }
+
+        // 3순위: 다중 포커스 도형 자체를 잡고 이동(Move) 하거나 선택(Select) 활성화
+        const targetFocus = findFocusAreaAt(pos.x, pos.y);
+        if (targetFocus) {
+          isDragging = true;
+          selectedFocusArea = targetFocus; // 리사이즈 활성 타겟 연결
+          selectedElement = null; // 포커스 잡으면 가이드 인덱스 비활성화
+          dragStartX = pos.x - targetFocus.x;
+          dragStartY = pos.y - targetFocus.y;
+          drawCanvas();
+          updateSelectedActionArea();
+          return;
+        }
+
+        // 4순위: 빈 공간 클릭 시 선택상태 전량 리셋 해제
+        selectedFocusArea = null;
+        selectedElement = null;
+        drawCanvas();
+        updateSelectedActionArea();
+
+      } else if (currentTool === 'crop') {
+        // 크롭 정보 안전장치 탑재
+        if (!cropArea) {
+          cropArea = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+        }
+        
+        const clickedHandle = getCropHandleAt(pos);
+        if (clickedHandle) {
+          isResizingCrop = true;
+          activeCropHandle = clickedHandle;
+          cropStartX = pos.x;
+          cropStartY = pos.y;
+        } else {
+          isDrawingNewCrop = true;
+          cropStartX = pos.x;
+          cropStartY = pos.y;
+          cropArea = {
+            x: pos.x,
+            y: pos.y,
+            w: 0,
+            h: 0
+          };
+        }
+      } else if (currentTool === 'focus-rect' || currentTool === 'focus-circle') {
+        isDrawingFocus = true;
+        focusStartX = pos.x;
+        focusStartY = pos.y;
+        const newFocus = {
+          id: 'focus-' + Date.now() + Math.random().toString(36).substr(2, 4),
+          type: currentTool === 'focus-rect' ? 'rect' : 'circle',
+          x: pos.x,
+          y: pos.y,
+          w: 0,
+          h: 0,
+          color: activeColor // ★ 색상 자유도 부여: 생성 시점의 activeColor 고정기록
+        };
+        focusAreas.push(newFocus);
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const pos = getMousePos(e);
+
+      if (isDragging) {
+        if (selectedFocusArea) {
+          // 포커스 영역 전체 이동 및 경계가둠
+          selectedFocusArea.x = Math.max(0, Math.min(canvas.width - selectedFocusArea.w, pos.x - dragStartX));
+          selectedFocusArea.y = Math.max(0, Math.min(canvas.height - selectedFocusArea.h, pos.y - dragStartY));
+        } else if (selectedElement) {
+          let targetX = pos.x - dragStartX;
+          let targetY = pos.y - dragStartY;
+
+          // ★ 번호표 오토레이아웃 (Magnetic Snapping) 계산 모듈 (요청 반영 완료)
+          activeSnapGuides = []; // 스냅라인 가이드 리셋
+          if (selectedElement.type === 'badge') {
+            const snapThreshold = 15; // 정렬 범위 15px
+            
+            // 모든 포커스 도형의 경계 외곽면과 정렬 연동 검증
+            focusAreas.forEach(f => {
+              const fx = f.x;
+              const fy = f.y;
+              const fw = f.w;
+              const fh = f.h;
+              
+              // 정렬할 수 있는 핵심 수평/수직 정렬 기준점 (도형 겉라인 및 18px 외곽 지점 정량화)
+              const vGuides = [
+                { val: fx, type: 'v' },
+                { val: fx + fw, type: 'v' },
+                { val: fx - 18, type: 'v' },
+                { val: fx + fw + 18, type: 'v' },
+                { val: fx + fw / 2, type: 'v' } // 중앙 세로 정렬
+              ];
+              const hGuides = [
+                { val: fy, type: 'h' },
+                { val: fy + fh, type: 'h' },
+                { val: fy - 18, type: 'h' },
+                { val: fy + fh + 18, type: 'h' },
+                { val: fy + fh / 2, type: 'h' } // 중앙 가로 정렬
+              ];
+
+              vGuides.forEach(guide => {
+                if (Math.abs(targetX - guide.val) < snapThreshold) {
+                  targetX = guide.val;
+                  activeSnapGuides.push({ type: 'v', x: guide.val });
+                }
+              });
+
+              hGuides.forEach(guide => {
+                if (Math.abs(targetY - guide.val) < snapThreshold) {
+                  targetY = guide.val;
+                  activeSnapGuides.push({ type: 'h', y: guide.val });
+                }
+              });
+            });
+          }
+
+          // 최종 마커 위치 클램핑 가둠
+          selectedElement.x = Math.max(0, Math.min(canvas.width, targetX)) / canvas.width;
+          selectedElement.y = Math.max(0, Math.min(canvas.height, targetY)) / canvas.height;
+        }
+        drawCanvas();
+      } else if (currentTool === 'select' && isResizingFocus && selectedFocusArea) {
+        // ★ 8방향 포커스 자유 조절 공식 및 원형 정방형비 강제 수식 구동 (요청 반영 완료)
+        const f = selectedFocusArea;
+        const minSize = 20;
+        let newLeft = f.x;
+        let newTop = f.y;
+        let newWidth = f.w;
+        let newHeight = f.h;
+        let newRight = f.x + f.w;
+        let newBottom = f.y + f.h;
+
+        const isCircle = f.type === 'circle';
+
+        switch (activeFocusHandle) {
+          case 'tl':
+            newLeft = Math.max(0, Math.min(newRight - minSize, pos.x));
+            newTop = Math.max(0, Math.min(newBottom - minSize, pos.y));
+            newWidth = newRight - newLeft;
+            newHeight = newBottom - newTop;
+            if (isCircle) {
+              const side = Math.max(newWidth, newHeight);
+              newLeft = newRight - side;
+              newTop = newBottom - side;
+              newWidth = side;
+              newHeight = side;
+            }
+            f.x = newLeft;
+            f.y = newTop;
+            f.w = newWidth;
+            f.h = newHeight;
+            break;
+          case 'tr':
+            newRight = Math.min(canvas.width, Math.max(newLeft + minSize, pos.x));
+            newTop = Math.max(0, Math.min(newBottom - minSize, pos.y));
+            newWidth = newRight - newLeft;
+            newHeight = newBottom - newTop;
+            if (isCircle) {
+              const side = Math.max(newWidth, newHeight);
+              newRight = newLeft + side;
+              newTop = newBottom - side;
+              newWidth = side;
+              newHeight = side;
+            }
+            f.y = newTop;
+            f.w = newWidth;
+            f.h = newHeight;
+            break;
+          case 'bl':
+            newLeft = Math.max(0, Math.min(newRight - minSize, pos.x));
+            newBottom = Math.min(canvas.height, Math.max(newTop + minSize, pos.y));
+            newWidth = newRight - newLeft;
+            newHeight = newBottom - newTop;
+            if (isCircle) {
+              const side = Math.max(newWidth, newHeight);
+              newLeft = newRight - side;
+              newBottom = newTop + side;
+              newWidth = side;
+              newHeight = side;
+            }
+            f.x = newLeft;
+            f.w = newWidth;
+            f.h = newHeight;
+            break;
+          case 'br':
+            newRight = Math.min(canvas.width, Math.max(newLeft + minSize, pos.x));
+            newBottom = Math.min(canvas.height, Math.max(newTop + minSize, pos.y));
+            newWidth = newRight - newLeft;
+            newHeight = newBottom - newTop;
+            if (isCircle) {
+              const side = Math.max(newWidth, newHeight);
+              newRight = newLeft + side;
+              newBottom = newTop + side;
+              newWidth = side;
+              newHeight = side;
+            }
+            f.w = newWidth;
+            f.h = newHeight;
+            break;
+          case 't':
+            if (isCircle) break;
+            newTop = Math.max(0, Math.min(newBottom - minSize, pos.y));
+            f.y = newTop;
+            f.h = newBottom - newTop;
+            break;
+          case 'b':
+            if (isCircle) break;
+            f.h = Math.min(canvas.height, Math.max(newTop + minSize, pos.y)) - newTop;
+            break;
+          case 'l':
+            if (isCircle) break;
+            newLeft = Math.max(0, Math.min(newRight - minSize, pos.x));
+            f.x = newLeft;
+            f.w = newRight - newLeft;
+            break;
+          case 'r':
+            if (isCircle) break;
+            f.w = Math.min(canvas.width, Math.max(newLeft + minSize, pos.x)) - newLeft;
+            break;
+        }
+        drawCanvas();
+      } else if (currentTool === 'crop') {
+        if (isResizingCrop && cropArea) {
+          // 마우스 8방향 리사이징 알고리즘 설계
+          const minSize = 30; // 자르기 최소 크기
+          let newLeft = cropArea.x;
+          let newTop = cropArea.y;
+          let newWidth = cropArea.w;
+          let newHeight = cropArea.h;
+          let newRight = cropArea.x + cropArea.w;
+          let newBottom = cropArea.y + cropArea.h;
+
+          switch (activeCropHandle) {
+            case 'tl':
+              newLeft = Math.max(0, Math.min(newRight - minSize, pos.x));
+              newTop = Math.max(0, Math.min(newBottom - minSize, pos.y));
+              newWidth = newRight - newLeft;
+              newHeight = newBottom - newTop;
+              cropArea.x = newLeft;
+              cropArea.y = newTop;
+              cropArea.w = newWidth;
+              cropArea.h = newHeight;
+              break;
+            case 'tr':
+              newRight = Math.min(canvas.width, Math.max(newLeft + minSize, pos.x));
+              newTop = Math.max(0, Math.min(newBottom - minSize, pos.y));
+              newWidth = newRight - newLeft;
+              newHeight = newBottom - newTop;
+              cropArea.y = newTop;
+              cropArea.w = newWidth;
+              cropArea.h = newHeight;
+              break;
+            case 'bl':
+              newLeft = Math.max(0, Math.min(newRight - minSize, pos.x));
+              newBottom = Math.min(canvas.height, Math.max(newTop + minSize, pos.y));
+              newWidth = newRight - newLeft;
+              newHeight = newBottom - newTop;
+              cropArea.x = newLeft;
+              cropArea.w = newWidth;
+              cropArea.h = newHeight;
+              break;
+            case 'br':
+              newRight = Math.min(canvas.width, Math.max(newLeft + minSize, pos.x));
+              newBottom = Math.min(canvas.height, Math.max(newTop + minSize, pos.y));
+              newWidth = newRight - newLeft;
+              newHeight = newBottom - newTop;
+              cropArea.w = newWidth;
+              cropArea.h = newHeight;
+              break;
+            case 't':
+              newTop = Math.max(0, Math.min(newBottom - minSize, pos.y));
+              newHeight = newBottom - newTop;
+              cropArea.y = newTop;
+              cropArea.h = newHeight;
+              break;
+            case 'b':
+              newBottom = Math.min(canvas.height, Math.max(newTop + minSize, pos.y));
+              newHeight = newBottom - newTop;
+              cropArea.h = newHeight;
+              break;
+            case 'l':
+              newLeft = Math.max(0, Math.min(newRight - minSize, pos.x));
+              newWidth = newRight - newLeft;
+              cropArea.x = newLeft;
+              cropArea.w = newWidth;
+              break;
+            case 'r':
+              newRight = Math.min(canvas.width, Math.max(newLeft + minSize, pos.x));
+              newWidth = newRight - newLeft;
+              cropArea.w = newWidth;
+              break;
+          }
+          drawCanvas();
+        } else if (isDrawingNewCrop && cropArea) {
+          const clampedX = Math.max(0, Math.min(canvas.width, pos.x));
+          const clampedY = Math.max(0, Math.min(canvas.height, pos.y));
+          cropArea.w = clampedX - cropStartX;
+          cropArea.h = clampedY - cropStartY;
+          drawCanvas();
+        } else {
+          updateCropCursor(pos);
+        }
+      } else if (isDrawingFocus && focusAreas.length > 0) {
+        const target = focusAreas[focusAreas.length - 1];
+        const clampedX = Math.max(0, Math.min(canvas.width, pos.x));
+        const clampedY = Math.max(0, Math.min(canvas.height, pos.y));
+        target.w = clampedX - focusStartX;
+        target.h = clampedY - focusStartY;
+        
+        // 원형 포커스인 경우 최초 생성 시에도 정방형 비율 제약 반영 완료
+        if (target.type === 'circle') {
+          target.h = target.w;
+        }
+        drawCanvas();
+      }
+
+      // 커서 스타일 실시간 보정 조율
+      if (currentTool === 'select') {
+        updateSelectCursor(pos);
+      }
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      const pos = getMousePos(e);
+      activeSnapGuides = []; // 스냅라인 가이드 파기 리셋
+
+      if (isDragging) {
+        isDragging = false;
+        drawCanvas();
+        updateSelectedActionArea();
+      } else if (currentTool === 'select' && isResizingFocus && selectedFocusArea) {
+        isResizingFocus = false;
+        activeFocusHandle = null;
+        
+        // 크기 편집 시 음수 좌표 보정 정규화 (선택 편집 버그 해결)
+        if (selectedFocusArea.w < 0) {
+          selectedFocusArea.x += selectedFocusArea.w;
+          selectedFocusArea.w = Math.abs(selectedFocusArea.w);
+        }
+        if (selectedFocusArea.h < 0) {
+          selectedFocusArea.y += selectedFocusArea.h;
+          selectedFocusArea.h = Math.abs(selectedFocusArea.h);
+        }
+
+        updateSelectCursor(pos);
+        drawCanvas();
+        updateSelectedActionArea();
+        showToast('포커스 영역 크기 편집이 완료되었습니다.');
+      } else if (currentTool === 'crop') {
+        if (isDrawingNewCrop) {
+          isDrawingNewCrop = false;
+          if (cropArea && (Math.abs(cropArea.w) < 15 || Math.abs(cropArea.h) < 15)) {
+            cropArea = {
+              x: 0,
+              y: 0,
+              w: canvas.width,
+              h: canvas.height
+            };
+          } else if (cropArea) {
+            if (cropArea.w < 0) {
+              cropArea.x += cropArea.w;
+              cropArea.w = Math.abs(cropArea.w);
+            }
+            if (cropArea.h < 0) {
+              cropArea.y += cropArea.h;
+              cropArea.h = Math.abs(cropArea.h);
+            }
+          }
+        }
+        isResizingCrop = false;
+        activeCropHandle = null;
+        updateCropCursor(pos);
+        drawCanvas();
+      } else if (isDrawingFocus && focusAreas.length > 0) {
+        isDrawingFocus = false;
+        const target = focusAreas[focusAreas.length - 1];
+        if (Math.abs(target.w) < 10 || Math.abs(target.h) < 10) {
+          focusAreas.pop(); 
+          drawCanvas();
+        } else {
+          // 좌표 정밀 보정
+          if (target.w < 0) {
+            target.x += target.w;
+            target.w = Math.abs(target.w);
+          }
+          if (target.h < 0) {
+            target.y += target.h;
+            target.h = Math.abs(target.h);
+          }
+          if (target.type === 'circle') {
+            target.h = target.w;
+          }
+          selectTool('select');
+          showToast('포커스 하이라이트가 안전하게 추가되었습니다.');
+        }
+      } else {
+        if (currentTool === 'badge') {
+          // 생성 시점에 activeColor 및 badgeType 정보를 개별적으로 캡처 잠금
+          elements.push({
+            type: 'badge',
+            x: Math.max(0, Math.min(canvas.width, pos.x)) / canvas.width,
+            y: Math.max(0, Math.min(canvas.height, pos.y)) / canvas.height,
+            color: activeColor, // 개별 포인트 색상화 완비
+            badgeStyle: badgeType, // 개별 순서 인덱싱 스타일 완비
+            text: ''
+          });
+          reindexBadges(); // 각각의 스타일에 맞게 재정렬
+          drawCanvas();
+          showToast(`순서 번호표 '${elements[elements.length - 1].text}'가 성공적으로 배치되었습니다.`);
+        } else if (currentTool === 'text') {
+          pendingTextPos = {
+            x: Math.max(0, Math.min(canvas.width, pos.x)),
+            y: Math.max(0, Math.min(canvas.height, pos.y))
+          };
+          showInlineTextInput(e.clientX, e.clientY);
+        }
+      }
+    });
+
+    // 충돌 감지 유틸리티
+    function findElementAt(x, y) {
+      for (let i = elements.length - 1; i >= 0; i--) {
+        const elem = elements[i];
+        const pxX = elem.x * canvas.width;
+        const pxY = elem.y * canvas.height;
+        const size = calculateScaledSize(25);
+        
+        const dist = Math.hypot(pxX - x, pxY - y);
+        if (dist < size) {
+          return elem;
+        }
+      }
+      return null;
+    }
+
+    // -------------------------------------------------------------
+    // 이미지 파일 추출 및 클립보드 내보내기 (보안 격리 환경 완벽 대응)
+    // -------------------------------------------------------------
+
+    function downloadResult() {
+      if (!bgImage) {
+        showToast('저장할 대상 이미지가 없습니다.', 'error');
+        return;
+      }
+      // 저장 및 추출 시 보조 편집 가이드 렉트(파란 점선) 비노출 조율을 위해 임시 저장
+      const tempSelected = selectedFocusArea;
+      selectedFocusArea = null;
+      drawCanvas();
+
+      // ★ Iframe 환경일 때는 무조건 원클릭 저장 불통이므로 즉각 우회 모달을 띄워 사용자 구출!
+      if (isIframe) {
+        showRenderedModal();
+        selectedFocusArea = tempSelected;
+        drawCanvas();
+        return;
+      }
+
+      // 정식 배포 URL 상태일 때는 막힘 없이 로컬 파일로 다이렉트 저장
+      try {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            fallbackDataURLDownload();
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `ManualFocus_${Date.now()}.png`;
+          link.href = url;
+          document.body.appendChild(link);
+          
+          try {
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 150);
+            
+            selectedFocusArea = tempSelected;
+            drawCanvas();
+            showToast('성공적으로 이미지가 저장되었습니다!');
+          } catch (innerError) {
+            document.body.removeChild(link);
+            showRenderedModal();
+          }
+        }, 'image/png');
+      } catch (err) {
+        fallbackDataURLDownload();
+      }
+
+      function fallbackDataURLDownload() {
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `ManualFocus_${Date.now()}.png`;
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          selectedFocusArea = tempSelected;
+          drawCanvas();
+          showToast('성공적으로 이미지가 저장되었습니다!');
+        } catch (e) {
+          showRenderedModal();
+          selectedFocusArea = tempSelected;
+          drawCanvas();
+        }
+      }
+    }
+
+    function copyToClipboard() {
+      if (!bgImage) {
+        showToast('대상 이미지가 설정되지 않았습니다.', 'error');
+        return;
+      }
+      
+      // 추출용 보조 가이드 비활성화 유도
+      const tempSelected = selectedFocusArea;
+      selectedFocusArea = null;
+      drawCanvas();
+
+      // Iframe 환경일 때 클립보드 복사 원천 제한 우회
+      if (isIframe) {
+        showRenderedModal();
+        selectedFocusArea = tempSelected;
+        drawCanvas();
+        return;
+      }
+
+      try {
+        canvas.toBlob(blob => {
+          if (!blob) {
+            showToast('이미지 변환 실패', 'error');
+            return;
+          }
+          const item = new ClipboardItem({ "image/png": blob });
+          navigator.clipboard.write([item]).then(() => {
+            selectedFocusArea = tempSelected;
+            drawCanvas();
+            showToast('클립보드에 편집 이미지가 즉시 복사되었습니다!');
+          }).catch(err => {
+            selectedFocusArea = tempSelected;
+            drawCanvas();
+            showRenderedModal();
+          });
+        });
+      } catch (e) {
+        selectedFocusArea = tempSelected;
+        drawCanvas();
+        showRenderedModal();
+      }
+    }
+
+    // 파일 끌어다 놓기(Drag & Drop) 처리
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        loadImageFromFile(file);
+        showToast('드롭된 화면 캡쳐를 성공적으로 로드했습니다!');
+      }
+    });
+
+  </script>
+</body>
+</html>
