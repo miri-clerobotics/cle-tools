@@ -256,56 +256,57 @@
             </div>
           </div>
 
-          <div class="space-y-3 border-t border-[#FF4747]/10 pt-4">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs text-slate-500 font-semibold">클레로보틱스 워터마크</span>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="watermarkToggle" class="sr-only peer">
-                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747]"></div>
-              </label>
-            </div>
-            
-            <div id="watermarkConfig" class="hidden space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
-              <div id="wmImageGroup" class="space-y-1.5">
-                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
-                <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
-                  <i data-lucide="image" class="w-4 h-4 text-slate-400 mr-2 group-hover:text-[#FF4747]"></i>
-                  <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">로고 파일 찾기</span>
-                  <input type="file" id="watermarkFileInput" accept="image/*" class="hidden">
-                </label>
-              </div>
+        <div class="space-y-3 border-t border-[#FF4747]/10 pt-4">
+  <div class="flex justify-between items-center">
+    <div class="flex items-center gap-1.5">
+      <span class="text-xs text-slate-500 font-semibold">회사 로고 / 출처 보호</span>
+    </div>
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input type="checkbox" id="watermarkToggle" class="sr-only peer" checked>
+      <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747]"></div>
+    </label>
+  </div>
+  
+  <div id="watermarkConfig" class="space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+    <div id="wmImageGroup" class="space-y-1.5">
+      <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
+      <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
+        <i data-lucide="image" class="w-4 h-4 text-slate-400 mr-2 group-hover:text-[#FF4747]"></i>
+        <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">CLE_Robotics_Logo(기본)</span>
+        <input type="file" id="watermarkFileInput" accept="image/*" class="hidden">
+      </label>
+    </div>
 
-              <div class="space-y-1.5">
-                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">정렬 위치</span>
-                <select id="watermarkPosSelect" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-[#FF4747] font-semibold">
-                  <option value="bottom-right">우측 하단 (기본)</option>
-                  <option value="bottom-left">좌측 하단</option>
-                  <option value="top-right">우측 상단</option>
-                  <option value="top-left">좌측 상단</option>
-                  <option value="center">중앙 대각 스포일러</option>
-                </select>
-              </div>
+    <div class="space-y-1.5">
+      <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">정렬 위치</span>
+      <select id="watermarkPosSelect" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-[#FF4747] font-semibold">
+        <option value="bottom-right">우측 하단 (기본)</option>
+        <option value="bottom-left">좌측 하단</option>
+        <option value="top-right">우측 상단</option>
+        <option value="top-left">좌측 상단</option>
+        <option value="center">중앙 대각 스포일러</option>
+      </select>
+    </div>
 
-              <div class="space-y-1">
-                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
-                  <span>투명도</span>
-                  <span id="wmOpacityVal">30%</span>
-                </div>
-                <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
-              </div>
+    <div class="space-y-1">
+      <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+        <span>투명도</span>
+        <span id="wmOpacityVal">30%</span>
+      </div>
+      <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+    </div>
 
-              <div class="space-y-1">
-                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
-                  <span>로고 크기</span>
-                  <span id="wmScaleVal">15%</span>
-                </div>
-                <input type="range" id="watermarkScaleRange" min="5" max="50" value="15" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="space-y-1">
+      <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+        <span>로고 크기</span>
+        <span id="wmScaleVal">15%</span>
+      </div>
+      <input type="range" id="watermarkScaleRange" min="5" max="50" value="15" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+    </div>
+  </div>
+</div>
+
+          
 
         <div class="space-y-2.5 border-t border-slate-200/60 pt-5">
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
