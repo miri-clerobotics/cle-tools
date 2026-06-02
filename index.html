@@ -199,8 +199,8 @@
         </div>
         
         <div id="canvasTextInputContainer" class="absolute hidden bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-3.5 shadow-2xl z-30 w-72 flex flex-col gap-2.5">
-          <span class="text-[10px] text-[#FF4747] font-bold uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="type" class="w-3.5 h-3.5 text-pink-400"></i> 설명 가이드 글귀 입력
+          <span class="text-[10px] text-slate-900 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="type" class="w-3.5 h-3.5 text-pink-400"></i> 설명 말풍선 입력
           </span>
           <textarea id="canvasTextInput" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 focus:outline-none focus:border-[#FF4747] placeholder-slate-400 resize-none font-medium" placeholder="여기에 가이드 설명을 작성하세요..."></textarea>
           <div class="flex gap-1.5 justify-end">
@@ -391,6 +391,7 @@
     let dimOpacity = 0.3; 
     let currentScalePreset = 1.0; 
     let autoScaleEnabled = true; 
+    let downloadCount = 1; // ★ 파일명 순차 증가 처리를 위한 글로벌 다운로드 카운터
 
     // 이미지 자르기(Crop)용 상태 변수
     let cropArea = null; 
@@ -817,7 +818,7 @@
     }
 
     // -------------------------------------------------------------
-    // 차세대 멀티 마스킹 & 드로잉 그래픽 엔진 핵심부
+    // 멀티 마스킹 & 드로잉 그래픽 엔진 핵심부
     // -------------------------------------------------------------
     function drawCanvas() {
       if (!bgImage) return;
@@ -1036,7 +1037,6 @@
       else if (currentTool === 'badge') {
         elements.push({ type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: badgeType, color: activeColor, text: '' });
         reindexBadges(); 
-        // ★ [도구 유지 반영] selectTool('select') 자동 전환 코드를 삭제하여 badge 툴 상태를 지속 유지합니다.
         drawCanvas();
       } 
       else if (currentTool === 'text') {
@@ -1066,10 +1066,12 @@
             
             if (selectedElement.type === 'badge') {
               focusAreas.forEach(f => {
-                if (Math.abs(nx - f.x) < 15) { nx = f.x; activeSnapGuides.push({type:'v', x:f.x}); }
-                if (Math.abs(nx - (f.x + f.w)) < 15) { nx = f.x + f.w; activeSnapGuides.push({type:'v', x:f.x+f.w}); }
-                if (Math.abs(ny - f.y) < 15) { ny = f.y; activeSnapGuides.push({type:'h', y:f.y}); }
-                if (Math.abs(ny - (f.y + f.h)) < 15) { ny = f.y + f.h; activeSnapGuides.push({type:'h', y:f.y+f.h}); }
+                // ★ [자석 정렬 개선] 임계치를 15에서 10으로 낮추어 정렬 자유도와 부드러운 반응감을 대폭 향상
+                const snapThreshold = 10;
+                if (Math.abs(nx - f.x) < snapThreshold) { nx = f.x; activeSnapGuides.push({type:'v', x:f.x}); }
+                if (Math.abs(nx - (f.x + f.w)) < snapThreshold) { nx = f.x + f.w; activeSnapGuides.push({type:'v', x:f.x+f.w}); }
+                if (Math.abs(ny - f.y) < snapThreshold) { ny = f.y; activeSnapGuides.push({type:'h', y:f.y}); }
+                if (Math.abs(ny - (f.y + f.h)) < snapThreshold) { ny = f.y + f.h; activeSnapGuides.push({type:'h', y:f.y+f.h}); }
               });
             }
             selectedElement.x = nx / canvas.width; selectedElement.y = ny / canvas.height;
@@ -1094,7 +1096,6 @@
       if (isDrawingFocus && selectedFocusArea) {
         if (selectedFocusArea.w < 0) { selectedFocusArea.x += selectedFocusArea.w; selectedFocusArea.w = Math.abs(selectedFocusArea.w); }
         if (selectedFocusArea.h < 0) { selectedFocusArea.y += selectedFocusArea.h; selectedFocusArea.h = Math.abs(selectedFocusArea.h); }
-        // ★ [도구 유지 반영] 사각형/원형 포커스 드로잉 종료 후 select 툴로 강제 전환되던 코드를 삭제했습니다.
       }
       isDragging = false; isResizingFocus = false; isResizingCrop = false; isDrawingFocus = false;
       activeSnapGuides = []; drawCanvas(); updateSelectedActionArea();
@@ -1136,9 +1137,13 @@
 
       try {
         const link = document.createElement('a');
-        link.download = `CLE_Manual_${Date.now()}.png`;
+        // ★ [파일명 변경 반영] 요구 사양 양식에 맞춰 순번(001, 002) 형태로 연속 자동 카운트 처리
+        const fileIndex = String(downloadCount).padStart(3, '0');
+        link.download = `CLE Robotics_Manual_${fileIndex}.png`;
         link.href = canvas.toDataURL('image/png');
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        
+        downloadCount++; // 다음 다운로드를 위한 순번 롤업
         selectedFocusArea = tempSelected; drawCanvas(); showToast('성공적으로 저장되었습니다!');
       } catch (e) {
         showRenderedModal(); selectedFocusArea = tempSelected; drawCanvas();
