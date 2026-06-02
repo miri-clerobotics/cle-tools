@@ -171,10 +171,21 @@
             <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
               편집 제어
             </h2>
-            <button id="clearAllBtn" class="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-850 border border-slate-200 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5 text-slate-400"></i>
-              작업 초기화
-            </button>
+            <!-- 디자이너 요청 사항: 가이드 요소만 초기화, 최초 이미지 복원, 캔버스 완전히 비우기 3단 세밀화 배치 -->
+            <div class="space-y-1.5">
+              <button id="clearGuidesBtn" class="w-full flex items-center justify-start gap-2.5 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200/60 py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all duration-300">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                <span>가이드 요소만 초기화</span>
+              </button>
+              <button id="revertImageBtn" class="w-full flex items-center justify-start gap-2.5 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200/60 py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all duration-300">
+                <i data-lucide="undo-2" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                <span>최초 이미지로 복원</span>
+              </button>
+              <button id="clearCanvasBtn" class="w-full flex items-center justify-start gap-2.5 bg-rose-50/50 hover:bg-rose-50 text-rose-500 border border-rose-100 py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all duration-300">
+                <i data-lucide="eraser" class="w-3.5 h-3.5 text-rose-400 shrink-0"></i>
+                <span>캔버스 완전히 비우기</span>
+              </button>
+            </div>
           </div>
 
           <!-- 선택 요소 제어 패널 (왼쪽 사이드바 배치 안착 및 개별 삭제 단축키 작동 완비) -->
@@ -227,7 +238,7 @@
           </div>
           <div class="flex gap-1.5 flex-1">
             <button id="cancelCropBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 px-3 rounded-xl text-xs font-semibold transition-all">취소</button>
-            <button id="applyCropBtn" class="flex-1 bg-gradient-to-r bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">자르기 완료</button>
+            <button id="applyCropBtn" class="flex-1 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">자르기 완료</button>
           </div>
         </div>
         
@@ -303,7 +314,7 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" id="watermarkToggle" class="sr-only peer">
-                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-450 after:border-slate-400 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747] peer-checked:after:bg-white"></div>
+                <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] bg-slate-400 border-slate-400 border rounded-full h-4 w-4 transition-all peer-checked:bg-[#FF4747]"></div>
               </label>
             </div>
             
@@ -357,9 +368,10 @@
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
             04. 가이드 추출
           </h2>
+          <!-- 디자이너 요청 사항: 버튼명 "완성 가이드 다운로드" -> "스크린샷 다운로드" 교체 완료 -->
           <button id="downloadBtn" class="clevis-gradient-border w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-850 py-3.5 rounded-xl text-xs font-bold transition-all shadow-md border border-slate-200">
             <i data-lucide="download" class="w-4 h-4 text-[#FF4747]"></i>
-            완성 가이드 다운로드
+            스크린샷 다운로드
           </button>
           <button id="copyClipBtn" class="w-full flex items-center justify-center gap-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 py-3 rounded-xl text-xs font-semibold border border-slate-200 transition-all">
             <i data-lucide="clipboard" class="w-3.5 h-3.5 text-[#FF4747]"></i>
@@ -471,12 +483,13 @@
 
     // 전역 상태 변수 관리
     let bgImage = null; // 배경 이미지 인스턴스
+    let originalBgImage = null; // ★ 최초 원본 이미지 백업 저장용 전역 변수
     let currentTool = 'select'; // 활성화 도구 ('select', 'crop', 'focus-rect', 'focus-circle', 'badge', 'text')
     let focusAreas = []; // 다중 포커스 영역 배열 
     let elements = []; // 배치된 인덱스 요소 모음 (번호표, 설명)
     let nextBadgeNum = 1; // 다음에 매겨질 기본 번호 (reindexBadges 호출 시 자동 재정립)
     let badgeType = 'number'; // 배치용 타겟 타입 ('number' | 'alpha-caps' | 'alpha-low')
-    let activeColor = '#FF4747'; // ★ 요청 반영: 포인트 테두리 및 인덱스 기본 포인트 색상 (#FF4747)
+    let activeColor = '#FF4747'; // ★ 포인트 테두리 및 인덱스 기본 포인트 색상 (#FF4747)
     let dimOpacity = 0.3; // 배경 딤 투명도 기본 설정값 30%
     let currentScalePreset = 1.0; // 스케일 가중치 세팅
     let autoScaleEnabled = true; // 화면 크기 비례 조절 활성화 상태
@@ -626,7 +639,57 @@
     // 클립보드(캡쳐 후 붙여넣기 Ctrl + V) 초간단 감지 연동
     window.addEventListener('paste', handlePaste);
 
-    // 전체 지우기 기능
+    // ★ 디자이너 요청 사항: 3단계 세부 초기화 이벤트 바인딩
+    const clearGuidesBtn = document.getElementById('clearGuidesBtn');
+    if (clearGuidesBtn) {
+      clearGuidesBtn.addEventListener('click', () => {
+        elements = [];
+        focusAreas = [];
+        selectedElement = null;
+        selectedFocusArea = null;
+        nextBadgeNum = 1;
+        drawCanvas();
+        updateSelectedActionArea();
+        showToast('가이드 요소들만 모두 지워졌습니다.');
+      });
+    }
+
+    const revertImageBtn = document.getElementById('revertImageBtn');
+    if (revertImageBtn) {
+      revertImageBtn.addEventListener('click', () => {
+        if (!originalBgImage) {
+          showToast('복원할 최초 이미지가 없습니다.', 'error');
+          return;
+        }
+        setupCanvasWithImage(originalBgImage, false);
+        drawCanvas();
+        showToast('최초 스크린샷 원본 이미지 크기로 복원되었습니다.');
+      });
+    }
+
+    const clearCanvasBtn = document.getElementById('clearCanvasBtn');
+    if (clearCanvasBtn) {
+      clearCanvasBtn.addEventListener('click', () => {
+        elements = [];
+        focusAreas = [];
+        cropArea = null;
+        selectedFocusArea = null;
+        selectedElement = null;
+        bgImage = null;
+        originalBgImage = null;
+        nextBadgeNum = 1;
+        hideInlineTextInput();
+        
+        // 웰컴 스크린 활성화 및 캔버스 은폐
+        if (dropzone) dropzone.classList.remove('hidden');
+        if (canvasContainer) canvasContainer.classList.add('hidden');
+        
+        updateSelectedActionArea();
+        showToast('캔버스가 완전히 비워졌습니다.');
+      });
+    }
+
+    // 전체 지우기 기능 (백업 레거시 안전 마킹)
     if (clearAllBtn) {
       clearAllBtn.addEventListener('click', () => {
         elements = [];
@@ -657,9 +720,9 @@
     dimPresetBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         dimPresetBtns.forEach(b => {
-          b.className = "dim-preset-btn flex-1 text-xs py-2 rounded-lg text-slate-400 hover:text-slate-655 transition font-semibold";
+          b.className = "dim-preset-btn flex-1 text-xs py-2 rounded-lg text-slate-400 hover:text-slate-605 transition-all font-semibold";
         });
-        btn.className = "dim-preset-btn flex-1 bg-white border border-slate-200 text-[#ff6467] transition-all font-semibold shadow-sm text-[11px] py-2 rounded-lg";
+        btn.className = "dim-preset-btn flex-1 bg-white border border-slate-200 text-[#FF4747] transition-all font-semibold shadow-sm text-[11px] py-2 rounded-lg";
         dimOpacity = parseFloat(btn.getAttribute('data-dim'));
         if (dimValue) {
           dimValue.innerText = `${dimOpacity * 100}%`;
@@ -703,10 +766,10 @@
     colorButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         colorButtons.forEach(b => {
-          b.classList.remove('border-white', 'ring-2', 'ring-[#ff6467]/40');
+          b.classList.remove('border-white', 'ring-2', 'ring-[#FF4747]/40');
           b.classList.add('border-slate-200');
         });
-        btn.classList.add('border-white', 'ring-2', 'ring-[#ff6467]/40');
+        btn.classList.add('border-white', 'ring-2', 'ring-[#FF4747]/40');
         activeColor = btn.getAttribute('data-color');
         
         // 색상 자유도 부여: 선택 대상에 따른 실시간 개별 색상 갱신
@@ -726,9 +789,9 @@
     badgeTypeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         badgeTypeBtns.forEach(b => {
-          b.className = "badge-type-btn flex-1 text-[10px] py-2 rounded-lg text-slate-400 hover:text-slate-600 font-semibold transition-all";
+          b.className = "badge-type-btn flex-1 text-[10px] py-2 rounded-lg text-slate-400 hover:text-slate-605 font-semibold transition-all";
         });
-        btn.className = "badge-type-btn flex-1 bg-white border border-slate-200 text-[#ff6467] text-[10px] py-2 rounded-lg font-semibold transition-all shadow-sm";
+        btn.className = "badge-type-btn flex-1 bg-white border border-slate-200 text-[#FF4747] text-[10px] py-1.5 rounded-lg font-semibold transition-all shadow-sm";
         badgeType = btn.getAttribute('data-type');
         
         showToast(`다음에 배치될 번호표가 '${badgeType === 'number' ? '숫자 1,2,3' : badgeType === 'alpha-low' ? '소문자 a,b,c' : '대문자 A,B,C'}'로 지정되었습니다.`);
@@ -1010,7 +1073,7 @@
       reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
-          setupCanvasWithImage(img);
+          setupCanvasWithImage(img, true);
         };
         img.src = event.target.result;
       };
@@ -1021,7 +1084,7 @@
     function loadSampleImage() {
       const img = new Image();
       img.onload = function() {
-        setupCanvasWithImage(img);
+        setupCanvasWithImage(img, true);
         
         // 다중 포커스 도형 기본 탑재 샘플링 및 빨간색(기본색) 바인딩 완료
         focusAreas = [
@@ -1113,8 +1176,11 @@
     }
 
     // 캔버스 초기 크기 렌더링 설정
-    function setupCanvasWithImage(img) {
+    function setupCanvasWithImage(img, isFreshLoad = true) {
       bgImage = img;
+      if (isFreshLoad) {
+        originalBgImage = img; // 원본 캐시 잠금
+      }
       
       dropzone.classList.add('hidden');
       canvasContainer.classList.remove('hidden');
@@ -1126,18 +1192,20 @@
       canvas.style.maxWidth = '100%';
       canvas.style.height = 'auto';
       
-      focusAreas = []; 
-      cropArea = null;
-      selectedFocusArea = null;
-      selectedElement = null; // 선택 영역 초기화
-      elements = [];
-      nextBadgeNum = 1;
+      if (isFreshLoad) {
+        focusAreas = []; 
+        cropArea = null;
+        selectedFocusArea = null;
+        selectedElement = null; // 선택 영역 초기화
+        elements = [];
+        nextBadgeNum = 1;
+      }
       hideInlineTextInput();
       drawCanvas();
     }
 
     // -------------------------------------------------------------
-    // 포커스 처리 & 렌더링 코어 엔진 (오프스크린 합집합 기반 겹치기 해결)
+    // 포커스 처리 & 렌더링 코어 엔진 (오프스크린 합집합 Union 기반 뚫기)
     // -------------------------------------------------------------
 
     function selectTool(toolKey) {
@@ -1178,9 +1246,9 @@
         
         if (key === toolKey) {
           if (key === 'crop') {
-            btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-violet-750 text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-violet-600/10 border border-violet-500/50";
+            btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-bold text-[11px] border border-[#FF4747]/20 shadow-lg shadow-[#FF4747]/15";
           } else {
-            btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-[#FF4747]/10 border border-[#FF4747]/50";
+            btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-[#FF4747]/15 border border-[#FF4747]/50";
           }
         } else {
           btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200";
@@ -1688,7 +1756,7 @@
         cropArea = null;
         cropControlArea.classList.add('hidden');
         selectedFocusArea = null;
-        selectedElement = null; // 인덱스 선택 영역 초기화
+        selectedElement = null; // 선택 영역 초기화
         selectTool('select');
         drawCanvas();
         updateSelectedActionArea();
@@ -1891,16 +1959,6 @@
     // -------------------------------------------------------------
     // 마우스 터치 & 클릭 제어 로직 (다중 포커스 및 개별 상태 분리 완료)
     // -------------------------------------------------------------
-
-    function getMousePos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = rect.width === 0 ? 1 : canvas.width / rect.width;
-      const scaleY = rect.height === 0 ? 1 : canvas.height / rect.height;
-      return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-      };
-    }
 
     canvas.addEventListener('mousedown', (e) => {
       const pos = getMousePos(e);
