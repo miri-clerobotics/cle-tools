@@ -168,12 +168,6 @@
           </div>
         </div>
       </div>
-
-      <div class="border-t border-slate-200/60 pt-4 mt-4 shrink-0">
-        <p class="text-[10px] text-slate-400 leading-relaxed font-medium">
-          💡 **CLE Tips**: 다른 프로그램에서 화면을 캡쳐한 뒤 이 페이지를 클릭하고 <kbd class="bg-slate-100 px-1 py-0.5 rounded text-slate-500 border border-slate-200 text-[9px]">Ctrl+V</kbd> 하시면 즉시 스크린샷이 불려옵니다.
-        </p>
-      </div>
     </aside>
 
     <main class="flex-1 bg-[#F1F3F6] flex items-center justify-center p-8 relative overflow-auto select-none h-full">
@@ -187,9 +181,6 @@
           화면을 클릭하여 스크린샷 이미지 파일을 직접 올리거나,<br>
           <kbd class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 mx-0.5 text-[10px]">Win + Shift + S</kbd>로 영역 캡쳐 후 <kbd class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 mx-0.5 text-[10px]">Ctrl + V</kbd>를 누르세요.
         </p>
-        <button id="loadSampleBtn" class="bg-white border border-slate-200 hover:border-[#FF4747] text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> 샘플 이미지 구동하기
-        </button>
         <input type="file" id="imageInput" accept="image/*" class="hidden">
       </div>
 
@@ -371,45 +362,6 @@
     </div>
   </div>
 
-  <div id="welcomeModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-    <div class="bg-white border border-slate-200 max-w-md w-full rounded-3xl p-6 shadow-2xl relative">
-      <button id="closeModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all">
-        <i data-lucide="x" class="w-6 h-6"></i>
-      </button>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="bg-[#FF4747]/10 p-2 rounded-xl text-[#FF4747]">
-          <i data-lucide="help-circle" class="w-6 h-6"></i>
-        </div>
-        <h3 class="text-base font-extrabold text-slate-800">디자이너 가이드 & 사용 팁</h3>
-      </div>
-      <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
-        <p>
-          매뉴얼 가공에 필요한 스크린샷 크롭, 하이라이팅, 그리고 지능형 넘버링 표기 처리를 브라우저 위에서 단 몇 초 만에 해결하는 도구입니다.
-        </p>
-        <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
-          <div class="flex gap-2">
-            <span class="text-[#FF4747] font-bold">1.</span>
-            <span>화면 영역을 캡쳐한 뒤(<kbd class="text-slate-600 bg-slate-100 px-1 py-0.5 rounded text-[10px] border border-slate-200">Win+Shift+S</kbd>), 에디터창 위에서 붙여넣기(<kbd class="text-slate-600 bg-slate-100 px-1 py-0.5 rounded text-[10px] border border-slate-200">Ctrl+V</kbd>) 하세요.</span>
-          </div>
-          <div class="flex gap-2">
-            <span class="text-[#FF4747] font-bold">2.</span>
-            <span><strong>선택 및 요소 이동</strong> 모드에서 생성한 포커스 사각/원형 라인을 클릭해 8방향 리사이즈를 정밀하게 사후 제어할 수 있습니다.</span>
-          </div>
-          <div class="flex gap-2">
-            <span class="text-[#FF4747] font-bold">3.</span>
-            <span><strong>원형 번호표 오토레이아웃</strong>: 번호표를 마우스로 잡고 포커스 외곽 부근으로 가져가면 격자 경계에 아름답게 달라붙습니다.</span>
-          </div>
-        </div>
-        <p class="text-[11px] text-slate-500">
-          * 기호 타입과 색상은 각각의 가이드 개별적으로 개성 있게 믹스하여 적용할 수 있습니다.
-        </p>
-      </div>
-      <button id="modalActionBtn" class="w-full mt-6 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#FF4747]/15">
-        에디터 가동하기
-      </button>
-    </div>
-  </div>
-
   <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-800 px-5 py-3 rounded-2xl border border-slate-200/80 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.08)] flex items-center gap-3 text-xs font-semibold transition-all duration-300 opacity-0 translate-y-4 pointer-events-none z-50">
     <i data-lucide="check" class="w-4 h-4 text-emerald-500" id="toastIcon"></i>
     <span id="toastMessage">안내 메시지</span>
@@ -477,9 +429,6 @@
     const canvas = document.getElementById('editorCanvas');
     const ctx = canvas.getContext('2d');
     const helpBtn = document.getElementById('helpBtn');
-    const welcomeModal = document.getElementById('welcomeModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const modalActionBtn = document.getElementById('modalActionBtn');
     
     const tools = {
       'select': document.getElementById('toolSelect'),
@@ -522,7 +471,7 @@
     const copyClipBtn = document.getElementById('copyClipBtn');
 
     // -------------------------------------------------------------
-    // 토스트 알림창 시스템 함수 탑재
+    // 토스트 알림창 시스템 함수
     // -------------------------------------------------------------
     let toastTimeout;
     function showToast(message, type = 'success') {
@@ -556,9 +505,6 @@
     // -------------------------------------------------------------
     if (closePreviewModalBtn) closePreviewModalBtn.addEventListener('click', hideRenderedModal);
     if (previewModalCloseBtn) previewModalCloseBtn.addEventListener('click', hideRenderedModal);
-    if (helpBtn) helpBtn.addEventListener('click', () => welcomeModal.classList.remove('hidden'));
-    if (closeModalBtn) closeModalBtn.addEventListener('click', () => welcomeModal.classList.add('hidden'));
-    if (modalActionBtn) modalActionBtn.addEventListener('click', () => welcomeModal.classList.add('hidden'));
 
     function showRenderedModal() {
       try {
@@ -580,13 +526,6 @@
       imageInput.addEventListener('click', (e) => e.stopPropagation());
       imageInput.addEventListener('change', handleFileSelect);
     }
-    
-    // 샘플 이미지 바인딩
-    const loadSampleBtn = document.getElementById('loadSampleBtn');
-    if (loadSampleBtn) loadSampleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      loadSampleImage();
-    });
 
     window.addEventListener('paste', handlePaste);
 
@@ -595,7 +534,7 @@
     if (copyClipBtn) copyClipBtn.addEventListener('click', copyToClipboard);
     if (deleteSelectedBtn) deleteSelectedBtn.addEventListener('click', executeDeleteSelected);
 
-    // 초기화 파트 3종 연동 완료
+    // 초기화 파트 3종 연동
     const clearGuidesBtn = document.getElementById('clearGuidesBtn');
     if (clearGuidesBtn) {
       clearGuidesBtn.addEventListener('click', () => {
@@ -709,6 +648,7 @@
       if (e.key === 'Delete' || e.key === 'Backspace') executeDeleteSelected();
     });
 
+    // 개별 삭제 모듈
     function executeDeleteSelected() {
       if (selectedElement) {
         elements = elements.filter(el => el !== selectedElement);
@@ -843,34 +783,6 @@
       reader.readAsDataURL(file);
     }
 
-    function loadSampleImage() {
-      const img = new Image();
-      img.onload = function() {
-        setupCanvasWithImage(img, true);
-        focusAreas = [
-          { id: 'f-1', type: 'rect', x: img.width * 0.40, y: img.height * 0.20, w: img.width * 0.48, h: img.height * 0.22, color: '#FF4747' },
-          { id: 'f-2', type: 'circle', x: img.width * 0.10, y: img.height * 0.50, w: img.width * 0.18, h: img.width * 0.18, color: '#10B981' }
-        ];
-        elements = [
-          { type: 'badge', x: 0.40, y: 0.16, badgeStyle: 'number', color: '#FF4747', text: '1' },
-          { type: 'badge', x: 0.10, y: 0.46, badgeStyle: 'number', color: '#10B981', text: '2' },
-          { type: 'text', x: 0.60, y: 0.55, color: '#FF4747', text: '선택 툴로 포커스 영역의 모서리를 당기면 정밀 리사이징이 가능합니다.' }
-        ];
-        reindexBadges(); drawCanvas(); showToast('테스트용 샘플 대시보드가 성공적으로 로드되었습니다.');
-      };
-
-      const mockCanvas = document.createElement('canvas');
-      mockCanvas.width = 1200; mockCanvas.height = 750;
-      const mctx = mockCanvas.getContext('2d');
-      mctx.fillStyle = '#f8fafc'; mctx.fillRect(0,0,1200,750);
-      mctx.fillStyle = '#e2e8f0'; mctx.fillRect(0,0,1200,60);
-      mctx.fillStyle = '#94a3b8'; mctx.fillRect(30,20,120,20); mctx.fillRect(180,20,80,20);
-      mctx.fillStyle = '#ffffff'; mctx.fillRect(50, 100, 320, 580); mctx.fillRect(400, 100, 750, 420);
-      mctx.fillStyle = '#f1f5f9'; mctx.fillRect(440, 150, 670, 320);
-      mctx.fillStyle = '#FF4747'; mctx.fillRect(480, 220, 220, 150);
-      img.src = mockCanvas.toDataURL();
-    }
-
     function setupCanvasWithImage(img, isFreshLoad = true) {
       bgImage = img;
       if (isFreshLoad) originalBgImage = img;
@@ -920,7 +832,7 @@
         ctx.beginPath(); ctx.rect(0, 0, canvas.width, canvas.height); ctx.rect(rx, ry, rw, rh); ctx.fill('evenodd');
         ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 2; ctx.strokeRect(rx, ry, rw, rh);
         
-        // 크롭 8방향 핸들
+        // 크롭 4방향 모서리 조절기 핸들
         const hs = 12 * (canvas.width / canvas.getBoundingClientRect().width), hhs = hs / 2;
         ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 2;
         [{x:rx, y:ry}, {x:rx+rw, y:ry}, {x:rx, y:ry+rh}, {x:rx+rw, y:ry+rh}].forEach(h => {
@@ -962,7 +874,7 @@
         ctx.restore();
       }
 
-      // 피그마식 리사이즈 가이드선 및 스냅 라인
+      // 리사이즈 및 선택 가이드라인 박스
       if (currentTool === 'select' && selectedFocusArea) {
         ctx.save(); ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 2]);
         ctx.strokeRect(selectedFocusArea.x, selectedFocusArea.y, selectedFocusArea.w, selectedFocusArea.h);
@@ -986,7 +898,7 @@
         ctx.restore();
       }
 
-      // 워터마크 렌더링
+      // 로고 워터마크
       if (watermarkEnabled && watermarkImage) {
         ctx.save(); ctx.globalAlpha = watermarkOpacity;
         let wmWidth = canvas.width * watermarkSize;
@@ -999,7 +911,7 @@
         ctx.drawImage(watermarkImage, wx, wy, wmWidth, wmHeight); ctx.restore();
       }
 
-      // 가이드 엘리먼트 그리기
+      // 인덱스 요소 드로잉
       elements.forEach(elem => {
         const pxX = elem.x * canvas.width; const pxY = elem.y * canvas.height;
         const elemColor = elem.color || '#FF4747';
@@ -1043,7 +955,7 @@
     function drawRoundRect(c, x, y, width, height, radius) { c.beginPath(); drawRoundRectPath(c, x, y, width, height, radius); c.closePath(); }
 
     // -------------------------------------------------------------
-    // 💥 [핵심 기능 수정] 실시간 마우스 제어 이벤트 리스너 추가
+    // 마우스 이벤트 연산 엔진
     // -------------------------------------------------------------
     function getMousePos(e) {
       const rect = canvas.getBoundingClientRect();
@@ -1059,7 +971,7 @@
         const pxX = el.x * canvas.width, pxY = el.y * canvas.height;
         if (el.type === 'badge' && Math.hypot(pxX - x, pxY - y) < calculateScaledSize(24)) return el;
         if (el.type === 'text') {
-          const bw = calculateScaledSize(120), bh = calculateScaledSize(30); // 핫스팟 바운더리 검사
+          const bw = calculateScaledSize(120), bh = calculateScaledSize(30); 
           if (x >= pxX - bw/2 && x <= pxX + bw/2 && y >= pxY - bh/2 && y <= pxY + bh/2) return el;
         }
       }
@@ -1123,7 +1035,9 @@
       } 
       else if (currentTool === 'badge') {
         elements.push({ type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: badgeType, color: activeColor, text: '' });
-        reindexBadges(); selectTool('select'); drawCanvas();
+        reindexBadges(); 
+        // ★ [도구 유지 반영] selectTool('select') 자동 전환 코드를 삭제하여 badge 툴 상태를 지속 유지합니다.
+        drawCanvas();
       } 
       else if (currentTool === 'text') {
         pendingTextPos = pos; showInlineTextInput(e.clientX, e.clientY);
@@ -1149,7 +1063,7 @@
           if (selectedElement) {
             let nx = selectedElement.x * canvas.width + dx; let ny = selectedElement.y * canvas.height + dy;
             activeSnapGuides = [];
-            // 자석식 오토레이아웃 스냅 로직
+            
             if (selectedElement.type === 'badge') {
               focusAreas.forEach(f => {
                 if (Math.abs(nx - f.x) < 15) { nx = f.x; activeSnapGuides.push({type:'v', x:f.x}); }
@@ -1180,15 +1094,13 @@
       if (isDrawingFocus && selectedFocusArea) {
         if (selectedFocusArea.w < 0) { selectedFocusArea.x += selectedFocusArea.w; selectedFocusArea.w = Math.abs(selectedFocusArea.w); }
         if (selectedFocusArea.h < 0) { selectedFocusArea.y += selectedFocusArea.h; selectedFocusArea.h = Math.abs(selectedFocusArea.h); }
-        selectTool('select');
+        // ★ [도구 유지 반영] 사각형/원형 포커스 드로잉 종료 후 select 툴로 강제 전환되던 코드를 삭제했습니다.
       }
       isDragging = false; isResizingFocus = false; isResizingCrop = false; isDrawingFocus = false;
       activeSnapGuides = []; drawCanvas(); updateSelectedActionArea();
     });
 
-    // -------------------------------------------------------------
-    // 이미지 파일 자르기 및 저장/추출 가공 엔진
-    // -------------------------------------------------------------
+    // 크롭 가공 함수
     function executeCrop() {
       if (!bgImage || !cropArea) return;
       let rx = cropArea.x, ry = cropArea.y, rw = cropArea.w, rh = cropArea.h;
@@ -1215,6 +1127,7 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
+    // 결과물 내보내기 핵심 연산
     function downloadResult() {
       if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
       const tempSelected = selectedFocusArea; selectedFocusArea = null; drawCanvas();
