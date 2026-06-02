@@ -362,6 +362,31 @@
     </div>
   </div>
 
+  <div id="infoModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white border border-slate-200 max-w-md w-full rounded-2xl p-6 shadow-2xl relative">
+      <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="bg-[#FF4747]/10 p-2 rounded-xl text-[#FF4747]">
+          <i data-lucide="help-circle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-base font-extrabold text-slate-800">도움말 및 안내</h3>
+      </div>
+      <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+        <p>
+          클레로보틱스 내에서 제작되는 매뉴얼 내의 이미지 통일성을 위하여 제작된 툴입니다.
+        </p>
+        <p class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-slate-500 font-medium">
+          💡 아직 완벽한 버전이 아니므로 추가적인 기능 제안이나 시스템 오류를 발견하시면 <span class="text-[#FF4747] font-bold">DM(이미리)</span> 주시기 바랍니다. 감사합니다.
+        </p>
+      </div>
+      <button id="confirmInfoModalBtn" class="w-full mt-5 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#FF4747]/15">
+        확인
+      </button>
+    </div>
+  </div>
+
   <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-800 px-5 py-3 rounded-2xl border border-slate-200/80 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.08)] flex items-center gap-3 text-xs font-semibold transition-all duration-300 opacity-0 translate-y-4 pointer-events-none z-50">
     <i data-lucide="check" class="w-4 h-4 text-emerald-500" id="toastIcon"></i>
     <span id="toastMessage">안내 메시지</span>
@@ -423,6 +448,11 @@
     const canvas = document.getElementById('editorCanvas');
     const ctx = canvas.getContext('2d');
     const helpBtn = document.getElementById('helpBtn');
+    
+    // 도움말 모달용 변수 선언 추가
+    const infoModal = document.getElementById('infoModal');
+    const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
+    const confirmInfoModalBtn = document.getElementById('confirmInfoModalBtn');
     
     const tools = {
       'select': document.getElementById('toolSelect'),
@@ -500,6 +530,23 @@
     if (closePreviewModalBtn) closePreviewModalBtn.addEventListener('click', hideRenderedModal);
     if (previewModalCloseBtn) previewModalCloseBtn.addEventListener('click', hideRenderedModal);
 
+    // ★ [기능 추가]: helpBtn 클릭 시 도움말 모달 인터랙션 핸들링
+    if (helpBtn && infoModal) {
+      helpBtn.addEventListener('click', () => {
+        infoModal.classList.remove('hidden');
+      });
+    }
+    if (closeInfoModalBtn) {
+      closeInfoModalBtn.addEventListener('click', () => {
+        infoModal.classList.add('hidden');
+      });
+    }
+    if (confirmInfoModalBtn) {
+      confirmInfoModalBtn.addEventListener('click', () => {
+        infoModal.classList.add('hidden');
+      });
+    }
+
     function showRenderedModal() {
       try {
         renderedModalImg.src = canvas.toDataURL('image/png');
@@ -526,7 +573,6 @@
     // -------------------------------------------------------------
     // ★ [기능 추가 파트]: 드래그 앤 드롭(Drag & Drop) 파일 제어 시스템
     // -------------------------------------------------------------
-    // 브라우저가 dropped 파일을 만났을 때 원래 파일 경로로 창 이동을 차단하는 가드 설치
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       window.addEventListener(eventName, (e) => {
         e.preventDefault();
@@ -535,14 +581,12 @@
     });
 
     if (dropzone) {
-      // 이미지 파일을 끌고 중앙 영역에 들어왔을 때 테두리 색상 하이라이트 활성화
       ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, () => {
           dropzone.classList.add('border-[#FF4747]', 'bg-slate-100/50');
         }, false);
       });
 
-      // 영역을 벗어나거나 파일을 떨궜을 때 데코레이션 롤백
       ['dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, () => {
           dropzone.classList.remove('border-[#FF4747]', 'bg-slate-100/50');
@@ -550,7 +594,6 @@
       });
     }
 
-    // 윈도우 중앙 영역 어디든 이미지 파일을 가져다 놓으면 로드 유도
     window.addEventListener('drop', (e) => {
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
@@ -1161,7 +1204,7 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
-    // GitHub 원본 Raw 이미지 주소를 바인딩하여 자동화 연동 완료
+    // GitHub 원본 Raw 이미지 주소를 바인딩하여 자동화 연동
     const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/miri-clerobotics/manual-tool/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
 
     function loadDefaultGitHubWatermark() {
