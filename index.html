@@ -141,7 +141,7 @@
       </div>
     </aside>
 
-    <main class="flex-1 bg-[#F1F3F6] p-8 relative overflow-auto select-none h-full text-left">
+    <main class="flex-1 bg-[#F1F3F6] p-8 relative overflow-auto select-none h-full flex text-left">
       
       <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
         <i id="toastIcon" data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
@@ -160,7 +160,7 @@
         <input type="file" id="imageInput" accept="image/*" class="hidden">
       </div>
 
-      <div id="canvasContainer" class="hidden relative inline-flex shadow-[0_24px_70px_rgba(0,0,0,0.06)] border border-slate-200 bg-white rounded-none">
+      <div id="canvasContainer" class="m-auto hidden relative inline-flex shadow-[0_24px_70px_rgba(0,0,0,0.06)] border border-slate-200 bg-white rounded-none">
         <canvas id="editorCanvas" class="block object-contain rounded-none"></canvas>
         
         <div id="cropControlArea" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xl z-20 flex items-center gap-4 min-w-[340px]">
@@ -546,12 +546,12 @@
           const width = textMetrics.width + (paddingX * 2);
           const height = calculateScaledSize(16) + (paddingY * 2);
           
-          ctx.fillStyle = 'rgba(255,255,255,0.95)';
-          ctx.strokeStyle = el.color; ctx.lineWidth = calculateScaledSize(2);
+          ctx.fillStyle = el.color; // 바탕색을 테마(빨간색 등) 색상으로 변경
           ctx.beginPath(); ctx.roundRect(px - width/2, py - height/2, width, height, calculateScaledSize(8));
-          ctx.fill(); ctx.stroke();
+          ctx.fill();
           
-          ctx.fillStyle = '#1e293b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#ffffff'; // 글자색 하얀색 고정
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(el.text, px, py + calculateScaledSize(1));
           
           if (selectedElement === el) drawHandles(px - width/2, py - height/2, width, height, '#3b82f6');
@@ -560,13 +560,13 @@
 
       // 6. 크롭 오버레이 그리기 (evenodd를 이용해 안쪽을 완벽하게 투명하게 뚫음)
       if (currentTool === 'crop' && cropArea) {
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.beginPath();
         // 전체 영역 덮기
         ctx.rect(0, 0, canvas.width, canvas.height);
         // 잘라낼 영역 (구멍 뚫기)
         ctx.rect(cropArea.x, cropArea.y, cropArea.w, cropArea.h);
-        // evenodd 방식으로 채우면 겹친 부분(cropArea)이 투명해집니다.
+        // evenodd 방식으로 채우면 겹친 부분(cropArea)이 완전히 투명해집니다.
         ctx.fill('evenodd');
         
         ctx.strokeStyle = '#a78bfa';
@@ -646,7 +646,14 @@
 
     function getCropHandleAt(pos) {
       if (!cropArea) return null;
-      return getFocusHandleAt(pos, cropArea);
+      // 자르기 시 핸들 선택(Hit Box) 영역을 3배(30)로 대폭 넓혀서 잡기 쉽도록 개선
+      const size = calculateScaledSize(30); 
+      const f = cropArea;
+      if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - f.y) < size) return 'tl';
+      if (Math.abs(pos.x - (f.x + f.w)) < size && Math.abs(pos.y - f.y) < size) return 'tr';
+      if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - (f.y + f.h)) < size) return 'bl';
+      if (Math.abs(pos.x - (f.x + f.w)) < size && Math.abs(pos.y - (f.y + f.h)) < size) return 'br';
+      return null;
     }
 
     function findFocusAreaAt(x, y) {
@@ -699,26 +706,34 @@
     if (cancelTextInputBtn) cancelTextInputBtn.addEventListener('click', hideInlineTextInput);
 
     function saveHistoryState() {
-      const snapshot = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height };
+      // 배경 이미지 객체도 함께 저장하여 자르기 Undo 지원
+      const snapshot = { 
+        focusAreas: JSON.parse(JSON.stringify(focusAreas)), 
+        elements: JSON.parse(JSON.stringify(elements)), 
+        canvasWidth: canvas.width, 
+        canvasHeight: canvas.height,
+        bgImage: bgImage 
+      };
       history.push(snapshot); if (history.length > 40) history.shift(); redoStack = []; 
     }
 
     function handleUndo() {
       if (history.length <= 1) { showToast("실행 취소할 이전 내역이 없습니다.", "error"); return; }
-      const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height };
+      const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height, bgImage: bgImage };
       redoStack.push(current); history.pop(); applySnapshot(history[history.length - 1]); showToast("이전 작업을 실행 취소했습니다.");
     }
 
     function handleRedo() {
       if (redoStack.length === 0) { showToast("다시 실행할 내역이 없습니다.", "error"); return; }
       const next = redoStack.pop();
-      const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height };
+      const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height, bgImage: bgImage };
       history.push(current); applySnapshot(next); showToast("작업을 다시 실행했습니다.");
     }
 
     function applySnapshot(state) {
       focusAreas = JSON.parse(JSON.stringify(state.focusAreas)); elements = JSON.parse(JSON.stringify(state.elements));
       canvas.width = state.canvasWidth; canvas.height = state.canvasHeight;
+      bgImage = state.bgImage; // 자르기 전 원본 이미지 복원
       
       // CSS 해상도 동기화 보장
       canvas.style.width = state.canvasWidth + 'px';
@@ -948,8 +963,10 @@
       
       if (isFreshLoad) {
         focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; elements = []; drawingLineInstance = null;
-        history = []; redoStack = []; saveHistoryState(); 
+        history = []; redoStack = []; 
       }
+      // 상태 저장 타이밍: 이미지 로드 완료 직후 첫 상태 캡처
+      saveHistoryState(); 
       hideInlineTextInput(); drawCanvas();
     }
 
@@ -1054,8 +1071,11 @@
         });
 
         focusAreas = focusAreas.map(f => { f.x -= rx; f.y -= ry; return f; }).filter(f => f.x + f.w > 0 && f.x < rw && f.y + f.h > 0 && f.y < rh);
-        bgImage = croppedImage; setupCanvasWithImage(croppedImage, false);
-        saveHistoryState(); selectTool('select'); showToast('이미지가 성공적으로 자르기 되었습니다.');
+        bgImage = croppedImage; 
+        
+        // 크롭 완료 후 캔버스 리로딩
+        setupCanvasWithImage(croppedImage, false);
+        selectTool('select'); showToast('이미지가 성공적으로 자르기 되었습니다.');
       };
       croppedImage.src = tempCanvas.toDataURL();
     }
@@ -1156,10 +1176,34 @@
 
       if (currentTool === 'select') {
         if (isResizingFocus && selectedFocusArea) {
+          let origX = selectedFocusArea.x; let origY = selectedFocusArea.y;
+          let origW = selectedFocusArea.w; let origH = selectedFocusArea.h;
+
           if (activeFocusHandle === 'br') { selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
           else if (activeFocusHandle === 'tl') { const x2 = selectedFocusArea.x + selectedFocusArea.w, y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.x = pos.x; selectedFocusArea.y = pos.y; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = y2 - pos.y; }
           else if (activeFocusHandle === 'tr') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = y2 - pos.y; }
           else if (activeFocusHandle === 'bl') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
+
+          // 정원형(Perfect Circle) 강제 보정 로직
+          if (selectedFocusArea.type === 'circle') {
+             let size = Math.max(Math.abs(selectedFocusArea.w), Math.abs(selectedFocusArea.h));
+             let signW = selectedFocusArea.w < 0 ? -1 : 1;
+             let signH = selectedFocusArea.h < 0 ? -1 : 1;
+             
+             if (activeFocusHandle === 'br') {
+                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+             } else if (activeFocusHandle === 'tl') {
+                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+                 selectedFocusArea.x = (origX + origW) - selectedFocusArea.w;
+                 selectedFocusArea.y = (origY + origH) - selectedFocusArea.h;
+             } else if (activeFocusHandle === 'tr') {
+                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+                 selectedFocusArea.y = (origY + origH) - selectedFocusArea.h;
+             } else if (activeFocusHandle === 'bl') {
+                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+                 selectedFocusArea.x = (origX + origW) - selectedFocusArea.w;
+             }
+          }
           drawCanvas();
         } 
         else if (isDragging) {
@@ -1181,6 +1225,8 @@
       else if (currentTool === 'crop' && isResizingCrop && cropArea) {
         if (activeCropHandle === 'br') { cropArea.w = pos.x - cropArea.x; cropArea.h = pos.y - cropArea.y; }
         else if (activeCropHandle === 'tl') { const x2 = cropArea.x + cropArea.w, y2 = cropArea.y + cropArea.h; cropArea.x = pos.x; cropArea.y = pos.y; cropArea.w = x2 - pos.x; cropArea.h = y2 - pos.y; }
+        else if (activeCropHandle === 'tr') { const y2 = cropArea.y + cropArea.h; cropArea.y = pos.y; cropArea.w = pos.x - cropArea.x; cropArea.h = y2 - pos.y; }
+        else if (activeCropHandle === 'bl') { const x2 = cropArea.x + cropArea.w; cropArea.x = pos.x; cropArea.w = x2 - pos.x; cropArea.h = pos.y - cropArea.y; }
         drawCanvas();
       } 
       else if (currentTool === 'line' && drawingLineInstance) {
@@ -1193,7 +1239,17 @@
         drawCanvas();
       }
       else if (isDrawingFocus && selectedFocusArea) {
-        selectedFocusArea.w = pos.x - focusStartX; selectedFocusArea.h = pos.y - focusStartY;
+        let dw = pos.x - focusStartX;
+        let dh = pos.y - focusStartY;
+
+        if (selectedFocusArea.type === 'circle') {
+          let size = Math.max(Math.abs(dw), Math.abs(dh));
+          selectedFocusArea.w = dw < 0 ? -size : size;
+          selectedFocusArea.h = dh < 0 ? -size : size;
+        } else {
+          selectedFocusArea.w = dw;
+          selectedFocusArea.h = dh;
+        }
         drawCanvas();
       }
     });
