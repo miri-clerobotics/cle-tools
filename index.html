@@ -398,31 +398,6 @@
     </div>
   </div>
 
-  <div id="infoModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white border border-slate-200 max-w-md w-full rounded-2xl p-6 shadow-2xl relative">
-      <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="bg-[#FF4747]/10 p-2 rounded-xl text-[#FF4747]">
-          <i data-lucide="help-circle" class="w-6 h-6"></i>
-        </div>
-        <h3 class="text-base font-extrabold text-slate-800">도움말 및 안내</h3>
-      </div>
-      <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
-        <p>
-          클레로보틱스 내에서 제작되는 매뉴얼 내의 이미지 통일성을 위하여 제작된 툴입니다.
-        </p>
-        <p class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs text-slate-500 font-medium">
-          💡 아직 완벽한 버전이 아니므로 추가적인 기능 제안이나 시스템 오류를 발견하시면 <span class="text-[#FF4747] font-bold">DM(이미리)</span> 주시기 바랍니다. 감사합니다.
-        </p>
-      </div>
-      <button id="confirmInfoModalBtn" class="w-full mt-5 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-[#FF4747]/15">
-        확인
-      </button>
-    </div>
-  </div>
-
   <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white text-slate-800 px-5 py-3 rounded-2xl border border-slate-200/80 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.08)] flex items-center gap-3 text-xs font-semibold transition-all duration-300 opacity-0 translate-y-4 pointer-events-none z-50">
     <i data-lucide="check" class="w-4 h-4 text-emerald-500" id="toastIcon"></i>
     <span id="toastMessage">안내 메시지</span>
@@ -441,7 +416,7 @@
     // 전역 상태 변수 관리
     let bgImage = null; 
     let originalBgImage = null; 
-    let currentTool = 'select'; 
+    let currentTool = 'select'; // 'select', 'crop', 'focus-rect', 'focus-circle', 'badge', 'text', 'line'
     let focusAreas = []; 
     let elements = []; 
     let nextBadgeNum = 1; 
@@ -536,7 +511,7 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const copyClipBtn = document.getElementById('copyClipBtn');
 
-    // Undo / Redo 내역 세션 저장 시스템
+    // Undo / Redo 상태 기록기
     function saveHistoryState() {
       const currentLayer = imageLayers.find(l => l.id === activeImageId);
       if (!currentLayer) return;
@@ -1005,7 +980,6 @@
       c.lineTo(points[points.length - 1].x, points[points.length - 1].y); c.stroke();
     }
 
-    // ★ [완벽 복구]: 화면 렌더링 그래픽 구역
     function drawCanvas() {
       if (!bgImage) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1092,7 +1066,6 @@
         ctx.drawImage(watermarkImage, wx, wy, wmWidth, wmHeight); ctx.restore();
       }
 
-      // 인덱스 및 요소 그리기 파트 복구 완료
       elements.forEach(elem => {
         const pxX = elem.x * canvas.width; const pxY = elem.y * canvas.height;
         const elemColor = elem.color || '#FF4747';
@@ -1130,31 +1103,22 @@
       });
     }
 
-    function findFocusAreaAt(x, y) {
-      for (let i = focusAreas.length - 1; i >= 0; i--) {
-        const f = focusAreas[i];
-        if (x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h) return f;
+    function findElementAt(x, y) {
+      for (let i = elements.length - 1; i >= 0; i--) {
+        const el = elements[i];
+        if (el.type === 'line') {
+          for (let pt of el.points) {
+            if (Math.hypot(pt.x - x, pt.y - y) < calculateScaledSize(20)) return el;
+          }
+        } else {
+          const pxX = el.x * canvas.width, pxY = el.y * canvas.height;
+          if (el.type === 'badge' && Math.hypot(pxX - x, pxY - y) < calculateScaledSize(24)) return el;
+          if (el.type === 'text') {
+            const bw = calculateScaledSize(120), bh = calculateScaledSize(30); 
+            if (x >= pxX - bw/2 && x <= pxX + bw/2 && y >= pxY - bh/2 && y <= pxY + bh/2) return el;
+          }
+        }
       }
-      return null;
-    }
-
-    function getFocusHandleAt(pos, f) {
-      if (!f) return null;
-      const size = 20 * (canvas.width / canvas.getBoundingClientRect().width);
-      if (Math.hypot(f.x - pos.x, f.y - pos.y) < size) return 'tl';
-      if (Math.hypot(f.x + f.w - pos.x, f.y - pos.y) < size) return 'tr';
-      if (Math.hypot(f.x - pos.x, f.y + f.h - pos.y) < size) return 'bl';
-      if (Math.hypot(f.x + f.w - pos.x, f.y + f.h - pos.y) < size) return 'br';
-      return null;
-    }
-
-    function getCropHandleAt(pos) {
-      if (!cropArea) return null;
-      const size = 20 * (canvas.width / canvas.getBoundingClientRect().width);
-      if (Math.hypot(cropArea.x - pos.x, cropArea.y - pos.y) < size) return 'tl';
-      if (Math.hypot(cropArea.x + cropArea.w - pos.x, cropArea.y - pos.y) < size) return 'tr';
-      if (Math.hypot(cropArea.x - pos.x, cropArea.y + cropArea.h - pos.y) < size) return 'bl';
-      if (Math.hypot(cropArea.x + cropArea.w - pos.x, cropArea.y + cropArea.h - pos.y) < size) return 'br';
       return null;
     }
 
