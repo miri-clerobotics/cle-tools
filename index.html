@@ -441,7 +441,7 @@
     // 전역 상태 변수 관리
     let bgImage = null; 
     let originalBgImage = null; 
-    let currentTool = 'select'; // 'select', 'crop', 'focus-rect', 'focus-circle', 'badge', 'text', 'line'
+    let currentTool = 'select'; 
     let focusAreas = []; 
     let elements = []; 
     let nextBadgeNum = 1; 
@@ -537,7 +537,7 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const copyClipBtn = document.getElementById('copyClipBtn');
 
-    // Undo / Redo 상태 기록기
+    // Undo / Redo 상태 관리 기법
     function saveHistoryState() {
       const currentLayer = imageLayers.find(l => l.id === activeImageId);
       if (!currentLayer) return;
@@ -726,6 +726,7 @@
         bgImage = null; originalBgImage = null; nextBadgeNum = 1; hideInlineTextInput();
         imageLayers = []; activeImageId = null; updateImageDropdown();
         if (dropzone) dropzone.classList.remove('hidden');
+        if (canvasContainer) canvasContainer.style.width = 'auto';
         if (canvasContainer) canvasContainer.classList.add('hidden');
         updateSelectedActionArea(); showToast('캔버스가 완전히 비워졌습니다.');
       });
@@ -856,7 +857,6 @@
       reader.readAsDataURL(file);
     }
 
-    // ★ [핵심 패치]: 최초 로드 시 물리 CSS 너비를 명시하여 레이아웃 축소 버그 원천 차단
     function setupCanvasWithImage(img, isFreshLoad = true, fileName = "스냅샷") {
       bgImage = img;
       if (isFreshLoad) originalBgImage = img;
@@ -864,11 +864,10 @@
       dropzone.classList.add('hidden');
       canvasContainer.classList.remove('hidden');
       
-      // 내장 그래픽 해상도 정비
       canvas.width = img.width; 
       canvas.height = img.height;
       
-      // ★ 브라우저 구속 조건 지정: 원본이 너무 크면 800px, 작으면 원본 크기로 자동 고정 및 싱크 일치
+      // ★ [핵심 수리 완료]: 최초 주입 시 레이아웃 폭 지정 매핑 가동
       let initialDisplayWidth = Math.min(img.width, 800);
       canvasContainer.style.width = initialDisplayWidth + 'px';
       canvas.style.width = '100%';
@@ -1045,7 +1044,7 @@
       if (currentTool === 'select' && selectedFocusArea) {
         ctx.save(); ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 2]);
         ctx.strokeRect(selectedFocusArea.x, selectedFocusArea.y, selectedFocusArea.w, selectedFocusArea.h);
-        const hs = 10 * (canvas.width / canvas.getBoundingClientRect().width), hhs = hs/2;
+        const hs = 10 * (canvas.width / canvas.getBoundingClientRect().width), hhs = hs / 2;
         ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#0ea5e9'; ctx.setLineDash([]);
         let fx = selectedFocusArea.x, fy = selectedFocusArea.y, fw = selectedFocusArea.w, fh = selectedFocusArea.h;
         [{x:fx, y:fy}, {x:fx+fw, y:fy}, {x:fx, y:fy+fh}, {x:fx+fw, y:fy+fh}].forEach(h => {
@@ -1073,7 +1072,7 @@
         if (watermarkPos === 'bottom-left') { wx = 20; wy = canvas.height - wmHeight - 20; }
         else if (watermarkPos === 'top-right') { wx = canvas.width - wmWidth - 20; wy = 20; }
         else if (watermarkPos === 'top-left') { wx = 20; wy = 20; }
-        else if (watermarkPos === 'center') { wx = (canvas.width - wmWidth)/2; wy = (canvas.height - wmHeight)/2; }
+        else if (watermarkPos === 'center') { wx = (canvas.width - wmWidth) / 2; wy = (canvas.height - wmHeight) / 2; }
         ctx.drawImage(watermarkImage, wx, wy, wmWidth, wmHeight); ctx.restore();
       }
 
@@ -1114,21 +1113,6 @@
       });
     }
 
-    function calculateScaledSize(baseValue) {
-      if (!autoScaleEnabled) return baseValue * currentScalePreset;
-      return baseValue * (canvas.width / 1200) * currentScalePreset;
-    }
-
-    function drawRoundRectPath(c, x, y, width, height, radius) {
-      c.moveTo(x + radius, y); c.lineTo(x + width - radius, y);
-      c.quadraticCurveTo(x + width, y, x + width, y + radius); c.lineTo(x + width, y + height - radius);
-      c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); c.lineTo(x + radius, y + height);
-      c.quadraticCurveTo(x, y + height, x, y + height - radius); c.lineTo(x, y + radius);
-      c.quadraticCurveTo(x, y, x + radius, y);
-    }
-
-    function drawRoundRect(c, x, y, width, height, radius) { c.beginPath(); drawRoundRectPath(c, x, y, width, height, radius); c.closePath(); }
-
     function findElementAt(x, y) {
       for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
@@ -1146,6 +1130,54 @@
         }
       }
       return null;
+    }
+
+    if (watermarkToggle) {
+      watermarkToggle.addEventListener('change', (e) => {
+        watermarkEnabled = e.target.checked;
+        watermarkConfig.classList.toggle('hidden', !watermarkEnabled);
+        drawCanvas();
+      });
+    }
+
+    const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/miri-clerobotics/manual-tool/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
+    function loadDefaultGitHubWatermark() {
+      const img = new Image(); img.crossOrigin = "anonymous"; 
+      img.onload = function() { watermarkImage = img; if (bgImage) drawCanvas(); };
+      img.src = GITHUB_LOGO_URL;
+    }
+    loadDefaultGitHubWatermark();
+
+    function downloadResult() {
+      if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
+      const tempSelected = selectedFocusArea; selectedFocusArea = null; drawCanvas();
+      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; drawCanvas(); return; }
+      try {
+        const link = document.createElement('a');
+        const fileIndex = String(downloadCount).padStart(3, '0');
+        link.download = `CLE Robotics_Manual_${fileIndex}.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        downloadCount++; selectedFocusArea = tempSelected; drawCanvas(); showToast('성공적으로 저장되었습니다!');
+      } catch (e) {
+        showRenderedModal(); selectedFocusArea = tempSelected; drawCanvas();
+      }
+    }
+
+    function copyToClipboard() {
+      if (!bgImage) { showToast('복사 대상이 없습니다.', 'error'); return; }
+      const tempSelected = selectedFocusArea; selectedFocusArea = null; drawCanvas();
+      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; drawCanvas(); return; }
+      try {
+        canvas.toBlob((blob) => {
+          const item = new ClipboardItem({ "image/png": blob });
+          navigator.clipboard.write([item]).then(() => {
+            selectedFocusArea = tempSelected; drawCanvas(); showToast('클립보드에 이미지가 복사되었습니다!');
+          }).catch(() => { showRenderedModal(); selectedFocusArea = tempSelected; drawCanvas(); });
+        }, 'image/png');
+      } catch (e) {
+        showRenderedModal(); selectedFocusArea = tempSelected; drawCanvas();
+      }
     }
   </script>
 </body>
