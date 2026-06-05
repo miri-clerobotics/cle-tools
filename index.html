@@ -28,6 +28,7 @@
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden selection:bg-[#FF4747]/20 selection:text-[#FF4747]">
 
+  <!-- 상단 헤더 -->
   <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 flex items-center justify-between z-10 relative shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.01)]">
     <div class="flex items-center gap-3">
       <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#e5e7eb] to-gray-500 flex items-center justify-center text-white">
@@ -50,6 +51,7 @@
 
   <div class="flex-1 flex overflow-hidden">
     
+    <!-- 왼쪽 사이드바 (도구 패널) -->
     <aside class="w-64 bg-white/90 backdrop-blur-xl border-r border-slate-200/60 p-5 flex flex-col gap-5 overflow-y-auto z-10 h-full shrink-0">
       <div class="space-y-5 flex-1">
         <div class="space-y-3">
@@ -141,8 +143,10 @@
       </div>
     </aside>
 
+    <!-- 중앙 작업 영역 (캔버스 중앙 정렬 및 스크롤 지원 flex) -->
     <main class="flex-1 bg-[#F1F3F6] p-8 relative overflow-auto select-none h-full flex text-left">
       
+      <!-- 토스트 알림창 -->
       <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
         <i id="toastIcon" data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
         <span id="toastMessage" class="text-xs font-semibold">알림 메시지</span>
@@ -160,6 +164,7 @@
         <input type="file" id="imageInput" accept="image/*" class="hidden">
       </div>
 
+      <!-- 모서리 둥글기 효과 완전 제거(rounded-none) 및 중앙 정렬(m-auto) -->
       <div id="canvasContainer" class="m-auto hidden relative inline-flex shadow-[0_24px_70px_rgba(0,0,0,0.06)] border border-slate-200 bg-white rounded-none">
         <canvas id="editorCanvas" class="block object-contain rounded-none"></canvas>
         
@@ -188,6 +193,7 @@
       </div>
     </main>
 
+    <!-- 오른쪽 사이드바 (디자인 컨트롤러) -->
     <aside class="w-72 bg-white/90 backdrop-blur-xl border-l border-slate-200/60 p-5 flex flex-col justify-between overflow-y-auto z-10 h-full shrink-0">
       <div class="space-y-6 flex-1">
         <div class="space-y-5">
@@ -226,18 +232,19 @@
             </div>
           </div>
 
+          <!-- 로고 워터마크 영역 (기본 OFF) -->
           <div class="space-y-3 border-t border-[#FF4747]/10 pt-4">
             <div class="flex justify-between items-center">
               <div class="flex items-center gap-1.5">
                 <span class="text-xs text-slate-500 font-semibold">로고 워터마크</span>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="watermarkToggle" class="sr-only peer" checked>
+                <input type="checkbox" id="watermarkToggle" class="sr-only peer">
                 <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747]"></div>
               </label>
             </div>
             
-            <div id="watermarkConfig" class="space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+            <div id="watermarkConfig" class="hidden space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
               <div id="wmImageGroup" class="space-y-1.5">
                 <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
                 <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
@@ -294,6 +301,7 @@
     </aside>
   </div>
 
+  <!-- 모달 창 (미리보기, 안내) -->
   <div id="imagePreviewModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-50 flex flex-col items-center justify-center hidden p-4">
     <div class="bg-white border border-slate-200 max-w-4xl w-full rounded-2xl p-6 shadow-2xl relative flex flex-col max-h-[90vh]">
       <button id="closePreviewModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -362,8 +370,8 @@
     let bgInitialFocus = [];
     let bgInitialElements = [];
 
-    // 워터마크 상태
-    let watermarkEnabled = true;
+    // 워터마크 상태 초기값 off
+    let watermarkEnabled = false;
     let watermarkImage = null; 
     let watermarkOpacity = 0.3;
     let watermarkSize = 0.15;
@@ -546,11 +554,11 @@
           const width = textMetrics.width + (paddingX * 2);
           const height = calculateScaledSize(16) + (paddingY * 2);
           
-          ctx.fillStyle = el.color; // 바탕색을 테마(빨간색 등) 색상으로 변경
+          ctx.fillStyle = el.color; 
           ctx.beginPath(); ctx.roundRect(px - width/2, py - height/2, width, height, calculateScaledSize(8));
           ctx.fill();
           
-          ctx.fillStyle = '#ffffff'; // 글자색 하얀색 고정
+          ctx.fillStyle = '#ffffff'; 
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(el.text, px, py + calculateScaledSize(1));
           
@@ -646,7 +654,6 @@
 
     function getCropHandleAt(pos) {
       if (!cropArea) return null;
-      // 자르기 시 핸들 선택(Hit Box) 영역을 3배(30)로 대폭 넓혀서 잡기 쉽도록 개선
       const size = calculateScaledSize(30); 
       const f = cropArea;
       if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - f.y) < size) return 'tl';
@@ -706,7 +713,6 @@
     if (cancelTextInputBtn) cancelTextInputBtn.addEventListener('click', hideInlineTextInput);
 
     function saveHistoryState() {
-      // 배경 이미지 객체도 함께 저장하여 자르기 Undo 지원
       const snapshot = { 
         focusAreas: JSON.parse(JSON.stringify(focusAreas)), 
         elements: JSON.parse(JSON.stringify(elements)), 
@@ -733,7 +739,7 @@
     function applySnapshot(state) {
       focusAreas = JSON.parse(JSON.stringify(state.focusAreas)); elements = JSON.parse(JSON.stringify(state.elements));
       canvas.width = state.canvasWidth; canvas.height = state.canvasHeight;
-      bgImage = state.bgImage; // 자르기 전 원본 이미지 복원
+      bgImage = state.bgImage; 
       
       // CSS 해상도 동기화 보장
       canvas.style.width = state.canvasWidth + 'px';
@@ -937,7 +943,6 @@
       dropzone.classList.add('hidden');
       canvasContainer.classList.remove('hidden');
 
-      // 로드될 때 브라우저 뷰포트에 맞게 초기 리사이징
       let startW = img.width;
       let startH = img.height;
 
@@ -953,7 +958,6 @@
           }
       }
 
-      // 실제 캔버스 내부 해상도와 CSS 디스플레이 크기를 모두 일치시켜 화질 유지
       canvas.width = startW; 
       canvas.height = startH;
       canvas.style.width = startW + 'px';
@@ -965,7 +969,7 @@
         focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; elements = []; drawingLineInstance = null;
         history = []; redoStack = []; 
       }
-      // 상태 저장 타이밍: 이미지 로드 완료 직후 첫 상태 캡처
+      
       saveHistoryState(); 
       hideInlineTextInput(); drawCanvas();
     }
@@ -1073,14 +1077,12 @@
         focusAreas = focusAreas.map(f => { f.x -= rx; f.y -= ry; return f; }).filter(f => f.x + f.w > 0 && f.x < rw && f.y + f.h > 0 && f.y < rh);
         bgImage = croppedImage; 
         
-        // 크롭 완료 후 캔버스 리로딩
         setupCanvasWithImage(croppedImage, false);
         selectTool('select'); showToast('이미지가 성공적으로 자르기 되었습니다.');
       };
       croppedImage.src = tempCanvas.toDataURL();
     }
 
-    // 마우스 이벤트 리스너 (배경 사이즈 조절 로직 추가)
     canvas.addEventListener('mousedown', (e) => {
       if (!bgImage) return;
       const pos = getMousePos(e);
@@ -1091,7 +1093,6 @@
         const logicalMouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
         const logicalMouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-        // 배경(이미지) 우하단 크기조절 핸들러 클릭 여부
         if (selectedElement === 'background') {
           const size = calculateScaledSize(24);
           if (logicalMouseX > canvas.width - size && logicalMouseY > canvas.height - size) {
@@ -1114,7 +1115,6 @@
         const clickedFocus = findFocusAreaAt(pos.x, pos.y);
         if (clickedFocus) { selectedFocusArea = clickedFocus; selectedElement = null; isDragging = true; drawCanvas(); updateSelectedActionArea(); return; }
         
-        // 아무것도 클릭되지 않았을 때 배경 이미지를 선택
         selectedElement = 'background';
         selectedFocusArea = null; updateSelectedActionArea(); drawCanvas();
       } 
@@ -1150,20 +1150,16 @@
       if (!bgImage) return;
       const pos = getMousePos(e);
 
-      // 배경 이미지 리사이징 (비율 유지)
       if (isResizingBackground) {
         const physicalDx = e.clientX - bgInitialClientX;
-        
         let newW = Math.max(100, bgInitialW + physicalDx);
         let scale = newW / bgInitialW;
         let newH = bgInitialH * scale;
         
-        // CSS 및 캔버스 해상도 업데이트
         canvas.width = newW; canvas.height = newH;
         canvas.style.width = newW + 'px'; canvas.style.height = newH + 'px';
         canvasContainer.style.width = newW + 'px'; canvasContainer.style.height = newH + 'px';
         
-        // 가이드 요소 비율에 맞게 재배치 (비율 오차 방지)
         focusAreas = bgInitialFocus.map(f => ({ ...f, x: f.x * scale, y: f.y * scale, w: f.w * scale, h: f.h * scale }));
         elements = bgInitialElements.map(el => {
             if (el.type === 'line') { return { ...el, points: el.points.map(p => ({ x: p.x * scale, y: p.y * scale })) }; }
@@ -1184,7 +1180,6 @@
           else if (activeFocusHandle === 'tr') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = y2 - pos.y; }
           else if (activeFocusHandle === 'bl') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
 
-          // 정원형(Perfect Circle) 강제 보정 로직
           if (selectedFocusArea.type === 'circle') {
              let size = Math.max(Math.abs(selectedFocusArea.w), Math.abs(selectedFocusArea.h));
              let signW = selectedFocusArea.w < 0 ? -1 : 1;
