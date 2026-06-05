@@ -232,23 +232,50 @@
                 <span class="text-xs text-slate-500 font-semibold">로고 워터마크</span>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="watermarkToggle" class="sr-only peer">
+                <input type="checkbox" id="watermarkToggle" class="sr-only peer" checked>
                 <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#FF4747]"></div>
               </label>
             </div>
             
-            <div id="watermarkConfig" class="hidden space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+            <div id="watermarkConfig" class="space-y-3 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
               <div id="wmImageGroup" class="space-y-1.5">
                 <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">로고 이미지 등록</span>
                 <label class="flex items-center justify-center border border-dashed border-slate-200 hover:border-[#FF4747] rounded-lg p-2.5 cursor-pointer bg-white hover:bg-slate-50 transition-all text-center text-xs group shadow-sm">
                   <i data-lucide="image" class="w-4 h-4 text-slate-400 mr-2 group-hover:text-[#FF4747]"></i>
-                  <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">로고 선택</span>
+                  <span id="wmFileName" class="text-slate-600 truncate max-w-[150px] font-semibold">CLE_Robotics_Logo(기본)</span>
                   <input type="file" id="watermarkFileInput" accept="image/*" class="hidden">
                 </label>
               </div>
+
+              <div class="space-y-1.5">
+                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">정렬 위치</span>
+                <select id="watermarkPosSelect" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:border-[#FF4747] font-semibold">
+                  <option value="bottom-right">우측 하단 (기본)</option>
+                  <option value="bottom-left">좌측 하단</option>
+                  <option value="top-right">우측 상단</option>
+                  <option value="top-left">좌측 상단</option>
+                  <option value="center">중앙 배치</option>
+                </select>
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                  <span>투명도</span>
+                  <span id="wmOpacityVal">30%</span>
+                </div>
+                <input type="range" id="watermarkOpacityRange" min="5" max="100" value="30" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                  <span>로고 크기</span>
+                  <span id="wmScaleVal">15%</span>
+                </div>
+                <input type="range" id="watermarkScaleRange" min="5" max="50" value="15" class="w-full h-1 bg-slate-200 rounded appearance-none cursor-pointer accent-[#FF4747]">
+              </div>
             </div>
           </div>
-        </div>
+          </div>
 
         <div class="space-y-2.5 border-t border-slate-200/60 pt-5">
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">04. 가이드 추출</h2>
@@ -327,9 +354,12 @@
     let activeCropHandle = null;
     const isIframe = window !== window.parent;
 
-    // 워터마크 상태
-    let watermarkEnabled = false;
+    // 워터마크 상태 (UI 기본값이 Checked 이므로 true)
+    let watermarkEnabled = true;
     let watermarkImage = null; 
+    let watermarkOpacity = 0.3;
+    let watermarkSize = 0.15;
+    let watermarkPos = 'bottom-right';
 
     // 상호작용 변수
     let selectedElement = null; 
@@ -372,15 +402,22 @@
     const renderedModalImg = document.getElementById('renderedModalImg');
     const closePreviewModalBtn = document.getElementById('closePreviewModalBtn');
     const previewModalCloseBtn = document.getElementById('previewModalCloseBtn');
-    const watermarkToggle = document.getElementById('watermarkToggle');
-    const watermarkConfig = document.getElementById('watermarkConfig');
-    const watermarkFileInput = document.getElementById('watermarkFileInput');
-    const wmFileName = document.getElementById('wmFileName');
     const dimValue = document.getElementById('dimValue');
     const autoScaleCheckbox = document.getElementById('autoScaleCheckbox');
     const scaleModeLabel = document.getElementById('scaleModeLabel');
     const downloadBtn = document.getElementById('downloadBtn');
     const copyClipBtn = document.getElementById('copyClipBtn');
+    
+    // 워터마크 관련 바인딩 추가
+    const watermarkToggle = document.getElementById('watermarkToggle');
+    const watermarkConfig = document.getElementById('watermarkConfig');
+    const watermarkFileInput = document.getElementById('watermarkFileInput');
+    const wmFileName = document.getElementById('wmFileName');
+    const watermarkPosSelect = document.getElementById('watermarkPosSelect');
+    const watermarkOpacityRange = document.getElementById('watermarkOpacityRange');
+    const watermarkScaleRange = document.getElementById('watermarkScaleRange');
+    const wmOpacityVal = document.getElementById('wmOpacityVal');
+    const wmScaleVal = document.getElementById('wmScaleVal');
 
     const tools = {
       'select': document.getElementById('toolSelect'),
@@ -392,7 +429,6 @@
       'line': document.getElementById('toolLine')
     };
 
-    // --- (수정됨: 렌더링 방식 변경으로 구멍 뚫기 정상화) ---
     function drawCanvas() {
       if (!bgImage) return;
 
@@ -443,7 +479,6 @@
         }
         ctx.stroke();
 
-        // 선택되었을 때 핸들러
         if (selectedFocusArea === f) {
           drawHandles(f.x, f.y, f.w, f.h, '#3b82f6');
         }
@@ -521,12 +556,27 @@
         drawHandles(cropArea.x, cropArea.y, cropArea.w, cropArea.h, '#a78bfa');
       }
 
-      // 6. 워터마크 그리기
+      // 6. 워터마크 그리기 (업데이트 된 동적 옵션 적용)
       if (watermarkEnabled && watermarkImage) {
-        const wmWidth = canvas.width * 0.15; // 기본 15% 크기
+        const wmWidth = canvas.width * watermarkSize; 
         const wmHeight = wmWidth * (watermarkImage.height / watermarkImage.width);
-        ctx.globalAlpha = 0.3;
-        ctx.drawImage(watermarkImage, canvas.width - wmWidth - 20, canvas.height - wmHeight - 20, wmWidth, wmHeight);
+        ctx.globalAlpha = watermarkOpacity;
+        
+        const padding = calculateScaledSize(20);
+        let wx = canvas.width - wmWidth - padding;
+        let wy = canvas.height - wmHeight - padding;
+
+        if (watermarkPos === 'bottom-left') {
+          wx = padding; wy = canvas.height - wmHeight - padding;
+        } else if (watermarkPos === 'top-right') {
+          wx = canvas.width - wmWidth - padding; wy = padding;
+        } else if (watermarkPos === 'top-left') {
+          wx = padding; wy = padding;
+        } else if (watermarkPos === 'center') {
+          wx = canvas.width / 2 - wmWidth / 2; wy = canvas.height / 2 - wmHeight / 2;
+        }
+
+        ctx.drawImage(watermarkImage, wx, wy, wmWidth, wmHeight);
         ctx.globalAlpha = 1.0;
       }
     }
@@ -601,8 +651,55 @@
       hideInlineTextInput();
     }
 
+    // --- 워터마크 컨트롤러 이벤트 연동 ---
+    if (watermarkToggle) {
+      watermarkToggle.addEventListener('change', (e) => {
+        watermarkEnabled = e.target.checked;
+        watermarkConfig.classList.toggle('hidden', !watermarkEnabled);
+        drawCanvas();
+      });
+    }
+    
+    if (watermarkFileInput) {
+      watermarkFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(file){
+          wmFileName.innerText = file.name;
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() { watermarkImage = img; drawCanvas(); };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
-    // --- 이벤트 연동 ---
+    if (watermarkPosSelect) {
+      watermarkPosSelect.addEventListener('change', (e) => {
+        watermarkPos = e.target.value;
+        drawCanvas();
+      });
+    }
+
+    if (watermarkOpacityRange) {
+      watermarkOpacityRange.addEventListener('input', (e) => {
+        watermarkOpacity = e.target.value / 100;
+        if (wmOpacityVal) wmOpacityVal.innerText = `${e.target.value}%`;
+        drawCanvas();
+      });
+    }
+
+    if (watermarkScaleRange) {
+      watermarkScaleRange.addEventListener('input', (e) => {
+        watermarkSize = e.target.value / 100;
+        if (wmScaleVal) wmScaleVal.innerText = `${e.target.value}%`;
+        drawCanvas();
+      });
+    }
+
+    // --- 기타 이벤트 연동 ---
     if (applyCropBtn) applyCropBtn.addEventListener('click', executeCrop);
     if (cancelCropBtn) cancelCropBtn.addEventListener('click', () => { selectTool('select'); showToast('자르기를 취소했습니다.'); });
     if (saveTextInputBtn) saveTextInputBtn.addEventListener('click', createTextElementFromOverlay);
@@ -962,30 +1059,6 @@
       return { x: (e.clientX - rect.left) * (canvas.width / rect.width), y: (e.clientY - rect.top) * (canvas.height / rect.height) };
     }
 
-    if (watermarkToggle) {
-      watermarkToggle.addEventListener('change', (e) => {
-        watermarkEnabled = e.target.checked;
-        watermarkConfig.classList.toggle('hidden', !watermarkEnabled);
-        drawCanvas();
-      });
-    }
-    
-    if(watermarkFileInput){
-        watermarkFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(file){
-                wmFileName.innerText = file.name;
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() { watermarkImage = img; drawCanvas(); };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
     function executeCrop() {
       if (!bgImage || !cropArea) return;
       let rx = cropArea.x, ry = cropArea.y, rw = cropArea.w, rh = cropArea.h;
@@ -1121,7 +1194,6 @@
       if (wasActionActive && currentTool !== 'crop') saveHistoryState(); 
     });
 
-    // --- (수정됨: 캔버스 더블 클릭 시 가이드 라인 그리기 종료) ---
     canvas.addEventListener('dblclick', (e) => {
       if (currentTool === 'line' && drawingLineInstance) {
         finishDrawingLine();
@@ -1181,6 +1253,16 @@
         showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas();
       }
     }
+
+    // 기본 로고 세팅
+    const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/miri-clerobotics/manual-tool/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png";
+    function loadDefaultGitHubWatermark() {
+      const img = new Image(); img.crossOrigin = "anonymous"; 
+      img.onload = function() { watermarkImage = img; if (bgImage) drawCanvas(); };
+      img.src = GITHUB_LOGO_URL;
+    }
+    loadDefaultGitHubWatermark();
+
   </script>
 </body>
 </html>
