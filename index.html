@@ -141,7 +141,7 @@
       </div>
     </aside>
 
-    <main class="flex-1 bg-[#F1F3F6] flex items-center justify-center p-8 relative overflow-auto select-none h-full">
+    <main class="flex-1 bg-[#F1F3F6] p-8 relative overflow-auto select-none h-full text-left">
       
       <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
         <i id="toastIcon" data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
@@ -160,8 +160,8 @@
         <input type="file" id="imageInput" accept="image/*" class="hidden">
       </div>
 
-      <div id="canvasContainer" class="hidden relative shadow-[0_24px_70px_rgba(0,0,0,0.06)] rounded-2xl border border-slate-200 bg-white max-w-full max-h-full overflow-hidden flex items-center justify-center">
-        <canvas id="editorCanvas" class="block max-w-full max-h-[75vh] object-contain"></canvas>
+      <div id="canvasContainer" class="hidden relative inline-flex shadow-[0_24px_70px_rgba(0,0,0,0.06)] border border-slate-200 bg-white rounded-none">
+        <canvas id="editorCanvas" class="block object-contain rounded-none"></canvas>
         
         <div id="cropControlArea" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xl z-20 flex items-center gap-4 min-w-[340px]">
           <div class="flex items-center gap-1.5 text-slate-500 font-semibold text-xs shrink-0 select-none">
@@ -275,7 +275,8 @@
               </div>
             </div>
           </div>
-          </div>
+
+        </div>
 
         <div class="space-y-2.5 border-t border-slate-200/60 pt-5">
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">04. 가이드 추출</h2>
@@ -304,7 +305,7 @@
         </div>
       </div>
       <div class="flex-1 overflow-auto flex items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-200 mb-4 select-text">
-        <img id="renderedModalImg" class="max-w-full max-h-[50vh] object-contain shadow-2xl rounded border border-slate-200 cursor-pointer" src="" alt="완성본 이미지">
+        <img id="renderedModalImg" class="max-w-full max-h-[50vh] object-contain shadow-2xl border border-slate-200 cursor-pointer rounded-none" src="" alt="완성본 이미지">
       </div>
       <div class="space-y-2 text-center text-xs text-slate-600">
         <p class="font-extrabold text-[#FF4747] flex items-center justify-center gap-1.5 animate-pulse">
@@ -354,7 +355,14 @@
     let activeCropHandle = null;
     const isIframe = window !== window.parent;
 
-    // 워터마크 상태 (UI 기본값이 Checked 이므로 true)
+    // 이미지(배경) 자체 스케일 관련 제어 변수들
+    let isResizingBackground = false;
+    let bgInitialW = 0, bgInitialH = 0;
+    let bgInitialClientX = 0;
+    let bgInitialFocus = [];
+    let bgInitialElements = [];
+
+    // 워터마크 상태
     let watermarkEnabled = true;
     let watermarkImage = null; 
     let watermarkOpacity = 0.3;
@@ -362,7 +370,7 @@
     let watermarkPos = 'bottom-right';
 
     // 상호작용 변수
-    let selectedElement = null; 
+    let selectedElement = null; // 'background' 도 들어갈 수 있음
     let selectedFocusArea = null; 
     let isResizingFocus = false; 
     let activeFocusHandle = null; 
@@ -408,7 +416,7 @@
     const downloadBtn = document.getElementById('downloadBtn');
     const copyClipBtn = document.getElementById('copyClipBtn');
     
-    // 워터마크 관련 바인딩 추가
+    // 워터마크 관련 바인딩
     const watermarkToggle = document.getElementById('watermarkToggle');
     const watermarkConfig = document.getElementById('watermarkConfig');
     const watermarkFileInput = document.getElementById('watermarkFileInput');
@@ -436,23 +444,21 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-      // 2. 임시 캔버스를 이용해 Dim 효과에만 구멍 뚫어 합성하기
+      // 2. 임시 캔버스를 이용해 Dim 효과 합성하기
       if (dimOpacity > 0 || focusAreas.length > 0) {
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
 
-        // Dim 그리기
         if (dimOpacity > 0) {
           tempCtx.fillStyle = `rgba(0, 0, 0, ${dimOpacity})`;
           tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
         }
 
-        // 포커스 영역만큼 Dim 도려내기
         focusAreas.forEach(f => {
           tempCtx.globalCompositeOperation = 'destination-out';
-          tempCtx.fillStyle = '#000'; // 색상은 무관 (알파 채널만 사용됨)
+          tempCtx.fillStyle = '#000'; 
           tempCtx.beginPath();
           if (f.type === 'rect') {
             tempCtx.rect(f.x, f.y, f.w, f.h);
@@ -460,10 +466,8 @@
             tempCtx.ellipse(f.x + f.w/2, f.y + f.h/2, Math.abs(f.w/2), Math.abs(f.h/2), 0, 0, Math.PI * 2);
           }
           tempCtx.fill();
-          tempCtx.globalCompositeOperation = 'source-over'; // 원복
+          tempCtx.globalCompositeOperation = 'source-over'; 
         });
-
-        // 잘라낸 Dim 레이어를 원본 캔버스 위에 덮어씌움
         ctx.drawImage(tempCanvas, 0, 0);
       }
 
@@ -479,12 +483,34 @@
         }
         ctx.stroke();
 
-        if (selectedFocusArea === f) {
-          drawHandles(f.x, f.y, f.w, f.h, '#3b82f6');
-        }
+        if (selectedFocusArea === f) drawHandles(f.x, f.y, f.w, f.h, '#3b82f6');
       });
 
-      // 4. 가이드 요소들(선, 번호표, 텍스트) 그리기
+      // 4. 배경 이미지 자체 선택 시 Resize 핸들러(박스) 그려주기
+      if (currentTool === 'select' && selectedElement === 'background') {
+        const lw = calculateScaledSize(4);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = lw;
+        ctx.strokeRect(lw/2, lw/2, canvas.width - lw, canvas.height - lw);
+        
+        // 우측 하단 앵커 (크기조절용)
+        const size = calculateScaledSize(16);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(canvas.width - size, canvas.height - size, size, size);
+        
+        // 해상도 안내 문구
+        ctx.font = `bold ${calculateScaledSize(16)}px Pretendard`;
+        const text = `${Math.round(canvas.width)} x ${Math.round(canvas.height)}`;
+        const tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(canvas.width/2 - tw/2 - 10, canvas.height - calculateScaledSize(36), tw + 20, calculateScaledSize(24));
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvas.width/2, canvas.height - calculateScaledSize(24));
+      }
+
+      // 5. 가이드 요소들(선, 번호표, 텍스트) 그리기
       elements.forEach(el => {
         if (el.type === 'line') {
           ctx.strokeStyle = el.color;
@@ -492,25 +518,19 @@
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
           drawRoundedPolyline(ctx, el.points, calculateScaledSize(10));
-          
-          if (selectedElement === el) {
-            el.points.forEach(pt => drawSingleHandle(pt.x, pt.y, '#3b82f6'));
-          }
+          if (selectedElement === el) el.points.forEach(pt => drawSingleHandle(pt.x, pt.y, '#3b82f6'));
         } 
         else if (el.type === 'badge') {
           const px = el.x * canvas.width;
           const py = el.y * canvas.height;
           const radius = calculateScaledSize(14);
           
-          ctx.beginPath();
-          ctx.arc(px, py, radius, 0, Math.PI * 2);
-          ctx.fillStyle = el.color;
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.fillStyle = el.color; ctx.fill();
           
           ctx.fillStyle = '#ffffff';
           ctx.font = `bold ${calculateScaledSize(14)}px Pretendard`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(el.text, px, py + calculateScaledSize(1));
           
           if (selectedElement === el) drawSingleHandle(px, py, '#3b82f6');
@@ -527,28 +547,27 @@
           const height = calculateScaledSize(16) + (paddingY * 2);
           
           ctx.fillStyle = 'rgba(255,255,255,0.95)';
-          ctx.strokeStyle = el.color;
-          ctx.lineWidth = calculateScaledSize(2);
+          ctx.strokeStyle = el.color; ctx.lineWidth = calculateScaledSize(2);
+          ctx.beginPath(); ctx.roundRect(px - width/2, py - height/2, width, height, calculateScaledSize(8));
+          ctx.fill(); ctx.stroke();
           
-          ctx.beginPath();
-          ctx.roundRect(px - width/2, py - height/2, width, height, calculateScaledSize(8));
-          ctx.fill();
-          ctx.stroke();
-          
-          ctx.fillStyle = '#1e293b';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#1e293b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(el.text, px, py + calculateScaledSize(1));
           
           if (selectedElement === el) drawHandles(px - width/2, py - height/2, width, height, '#3b82f6');
         }
       });
 
-      // 5. 크롭(자르기) 오버레이 그리기
+      // 6. 크롭 오버레이 그리기 (evenodd를 이용해 안쪽을 완벽하게 투명하게 뚫음)
       if (currentTool === 'crop' && cropArea) {
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.clearRect(cropArea.x, cropArea.y, cropArea.w, cropArea.h);
+        ctx.beginPath();
+        // 전체 영역 덮기
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        // 잘라낼 영역 (구멍 뚫기)
+        ctx.rect(cropArea.x, cropArea.y, cropArea.w, cropArea.h);
+        // evenodd 방식으로 채우면 겹친 부분(cropArea)이 투명해집니다.
+        ctx.fill('evenodd');
         
         ctx.strokeStyle = '#a78bfa';
         ctx.lineWidth = calculateScaledSize(2);
@@ -556,7 +575,7 @@
         drawHandles(cropArea.x, cropArea.y, cropArea.w, cropArea.h, '#a78bfa');
       }
 
-      // 6. 워터마크 그리기 (업데이트 된 동적 옵션 적용)
+      // 7. 워터마크 그리기
       if (watermarkEnabled && watermarkImage) {
         const wmWidth = canvas.width * watermarkSize; 
         const wmHeight = wmWidth * (watermarkImage.height / watermarkImage.width);
@@ -604,10 +623,10 @@
     function drawHandles(x, y, w, h, color) {
       const size = calculateScaledSize(8);
       ctx.fillStyle = color;
-      ctx.fillRect(x - size/2, y - size/2, size, size); // tl
-      ctx.fillRect(x + w - size/2, y - size/2, size, size); // tr
-      ctx.fillRect(x - size/2, y + h - size/2, size, size); // bl
-      ctx.fillRect(x + w - size/2, y + h - size/2, size, size); // br
+      ctx.fillRect(x - size/2, y - size/2, size, size); 
+      ctx.fillRect(x + w - size/2, y - size/2, size, size); 
+      ctx.fillRect(x - size/2, y + h - size/2, size, size); 
+      ctx.fillRect(x + w - size/2, y + h - size/2, size, size); 
     }
 
     function drawSingleHandle(x, y, color) {
@@ -633,10 +652,8 @@
     function findFocusAreaAt(x, y) {
       for (let i = focusAreas.length - 1; i >= 0; i--) {
         const f = focusAreas[i];
-        const minX = Math.min(f.x, f.x + f.w);
-        const maxX = Math.max(f.x, f.x + f.w);
-        const minY = Math.min(f.y, f.y + f.h);
-        const maxY = Math.max(f.y, f.y + f.h);
+        const minX = Math.min(f.x, f.x + f.w); const maxX = Math.max(f.x, f.x + f.w);
+        const minY = Math.min(f.y, f.y + f.h); const maxY = Math.max(f.y, f.y + f.h);
         if (x >= minX && x <= maxX && y >= minY && y <= maxY) return f;
       }
       return null;
@@ -651,15 +668,13 @@
       hideInlineTextInput();
     }
 
-    // --- 워터마크 컨트롤러 이벤트 연동 ---
+    // --- 워터마크 컨트롤러 이벤트 ---
     if (watermarkToggle) {
       watermarkToggle.addEventListener('change', (e) => {
         watermarkEnabled = e.target.checked;
-        watermarkConfig.classList.toggle('hidden', !watermarkEnabled);
-        drawCanvas();
+        watermarkConfig.classList.toggle('hidden', !watermarkEnabled); drawCanvas();
       });
     }
-    
     if (watermarkFileInput) {
       watermarkFileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -667,37 +682,15 @@
           wmFileName.innerText = file.name;
           const reader = new FileReader();
           reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() { watermarkImage = img; drawCanvas(); };
-            img.src = event.target.result;
+            const img = new Image(); img.onload = function() { watermarkImage = img; drawCanvas(); }; img.src = event.target.result;
           };
           reader.readAsDataURL(file);
         }
       });
     }
-
-    if (watermarkPosSelect) {
-      watermarkPosSelect.addEventListener('change', (e) => {
-        watermarkPos = e.target.value;
-        drawCanvas();
-      });
-    }
-
-    if (watermarkOpacityRange) {
-      watermarkOpacityRange.addEventListener('input', (e) => {
-        watermarkOpacity = e.target.value / 100;
-        if (wmOpacityVal) wmOpacityVal.innerText = `${e.target.value}%`;
-        drawCanvas();
-      });
-    }
-
-    if (watermarkScaleRange) {
-      watermarkScaleRange.addEventListener('input', (e) => {
-        watermarkSize = e.target.value / 100;
-        if (wmScaleVal) wmScaleVal.innerText = `${e.target.value}%`;
-        drawCanvas();
-      });
-    }
+    if (watermarkPosSelect) { watermarkPosSelect.addEventListener('change', (e) => { watermarkPos = e.target.value; drawCanvas(); }); }
+    if (watermarkOpacityRange) { watermarkOpacityRange.addEventListener('input', (e) => { watermarkOpacity = e.target.value / 100; if (wmOpacityVal) wmOpacityVal.innerText = `${e.target.value}%`; drawCanvas(); }); }
+    if (watermarkScaleRange) { watermarkScaleRange.addEventListener('input', (e) => { watermarkSize = e.target.value / 100; if (wmScaleVal) wmScaleVal.innerText = `${e.target.value}%`; drawCanvas(); }); }
 
     // --- 기타 이벤트 연동 ---
     if (applyCropBtn) applyCropBtn.addEventListener('click', executeCrop);
@@ -706,41 +699,34 @@
     if (cancelTextInputBtn) cancelTextInputBtn.addEventListener('click', hideInlineTextInput);
 
     function saveHistoryState() {
-      const snapshot = {
-        focusAreas: JSON.parse(JSON.stringify(focusAreas)),
-        elements: JSON.parse(JSON.stringify(elements)),
-        canvasWidth: canvas.width,
-        canvasHeight: canvas.height
-      };
-      history.push(snapshot);
-      if (history.length > 40) history.shift();
-      redoStack = []; 
+      const snapshot = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height };
+      history.push(snapshot); if (history.length > 40) history.shift(); redoStack = []; 
     }
 
     function handleUndo() {
       if (history.length <= 1) { showToast("실행 취소할 이전 내역이 없습니다.", "error"); return; }
       const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height };
-      redoStack.push(current);
-      history.pop();
-      applySnapshot(history[history.length - 1]);
-      showToast("이전 작업을 실행 취소했습니다.");
+      redoStack.push(current); history.pop(); applySnapshot(history[history.length - 1]); showToast("이전 작업을 실행 취소했습니다.");
     }
 
     function handleRedo() {
       if (redoStack.length === 0) { showToast("다시 실행할 내역이 없습니다.", "error"); return; }
       const next = redoStack.pop();
       const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height };
-      history.push(current);
-      applySnapshot(next);
-      showToast("작업을 다시 실행했습니다.");
+      history.push(current); applySnapshot(next); showToast("작업을 다시 실행했습니다.");
     }
 
     function applySnapshot(state) {
-      focusAreas = JSON.parse(JSON.stringify(state.focusAreas));
-      elements = JSON.parse(JSON.stringify(state.elements));
+      focusAreas = JSON.parse(JSON.stringify(state.focusAreas)); elements = JSON.parse(JSON.stringify(state.elements));
       canvas.width = state.canvasWidth; canvas.height = state.canvasHeight;
-      selectedFocusArea = null; selectedElement = null;
-      updateSelectedActionArea(); drawCanvas();
+      
+      // CSS 해상도 동기화 보장
+      canvas.style.width = state.canvasWidth + 'px';
+      canvas.style.height = state.canvasHeight + 'px';
+      canvasContainer.style.width = state.canvasWidth + 'px';
+      canvasContainer.style.height = state.canvasHeight + 'px';
+
+      selectedFocusArea = null; selectedElement = null; updateSelectedActionArea(); drawCanvas();
     }
 
     if (undoBtn) undoBtn.addEventListener('click', handleUndo);
@@ -748,29 +734,15 @@
 
     let toastTimeout;
     function showToast(message, type = 'success') {
-      const toast = document.getElementById('toast');
-      const toastMessage = document.getElementById('toastMessage');
-      const toastIcon = document.getElementById('toastIcon');
+      const toast = document.getElementById('toast'); const toastMessage = document.getElementById('toastMessage'); const toastIcon = document.getElementById('toastIcon');
       if (!toast || !toastMessage) return;
-
       toastMessage.innerText = message;
-      if (type === 'error') {
-        toastIcon.setAttribute('data-lucide', 'alert-circle');
-        toastIcon.className = "w-4 h-4 text-rose-500";
-      } else {
-        toastIcon.setAttribute('data-lucide', 'check');
-        toastIcon.className = "w-4 h-4 text-emerald-500";
-      }
+      if (type === 'error') { toastIcon.setAttribute('data-lucide', 'alert-circle'); toastIcon.className = "w-4 h-4 text-rose-500"; } 
+      else { toastIcon.setAttribute('data-lucide', 'check'); toastIcon.className = "w-4 h-4 text-emerald-500"; }
       lucide.createIcons();
-
-      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
-      toast.classList.add('opacity-100', 'translate-y-0');
-
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none'); toast.classList.add('opacity-100', 'translate-y-0');
       clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
-        toast.classList.remove('opacity-100', 'translate-y-0');
-      }, 2300);
+      toastTimeout = setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none'); toast.classList.remove('opacity-100', 'translate-y-0'); }, 2300);
     }
 
     if (closePreviewModalBtn) closePreviewModalBtn.addEventListener('click', hideRenderedModal);
@@ -780,44 +752,27 @@
     if (confirmInfoModalBtn) { confirmInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
 
     function showRenderedModal() {
-      try {
-        renderedModalImg.src = canvas.toDataURL('image/png');
-        imagePreviewModal.classList.remove('hidden');
-      } catch (e) { showToast('우회 가이드 생성 도중 오류가 발생했습니다.', 'error'); }
+      try { renderedModalImg.src = canvas.toDataURL('image/png'); imagePreviewModal.classList.remove('hidden'); } catch (e) { showToast('우회 가이드 생성 도중 오류가 발생했습니다.', 'error'); }
     }
-
-    function hideRenderedModal() {
-      if (imagePreviewModal) imagePreviewModal.classList.add('hidden');
-    }
+    function hideRenderedModal() { if (imagePreviewModal) imagePreviewModal.classList.add('hidden'); }
 
     if (dropzone && imageInput) { dropzone.addEventListener('click', () => imageInput.click()); }
-    if (imageInput) {
-      imageInput.addEventListener('click', (e) => e.stopPropagation());
-      imageInput.addEventListener('change', handleFileSelect);
-    }
+    if (imageInput) { imageInput.addEventListener('click', (e) => e.stopPropagation()); imageInput.addEventListener('change', handleFileSelect); }
 
     window.addEventListener('paste', handlePaste);
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      window.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
-    });
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { window.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false); });
 
     if (dropzone) {
-      ['dragenter', 'dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, () => { dropzone.classList.add('border-[#FF4747]', 'bg-slate-100/50'); }, false);
-      });
-      ['dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, () => { dropzone.classList.remove('border-[#FF4747]', 'bg-slate-100/50'); }, false);
-      });
+      ['dragenter', 'dragover'].forEach(eventName => { dropzone.addEventListener(eventName, () => { dropzone.classList.add('border-[#FF4747]', 'bg-slate-100/50'); }, false); });
+      ['dragleave', 'drop'].forEach(eventName => { dropzone.addEventListener(eventName, () => { dropzone.classList.remove('border-[#FF4747]', 'bg-slate-100/50'); }, false); });
     }
 
     window.addEventListener('drop', (e) => {
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         const file = files[0];
-        if (file.type.startsWith('image/')) {
-          loadImageFromFile(file);
-          showToast('드래그 앤 드롭으로 스크린샷 화면을 로드했습니다!');
-        } else { showToast('이미지 형태의 파일만 등록할 수 있습니다.', 'error'); }
+        if (file.type.startsWith('image/')) { loadImageFromFile(file); showToast('드래그 앤 드롭으로 스크린샷 화면을 로드했습니다!'); } 
+        else { showToast('이미지 형태의 파일만 등록할 수 있습니다.', 'error'); }
       }
     });
 
@@ -837,8 +792,8 @@
     if (revertImageBtn) {
       revertImageBtn.addEventListener('click', () => {
         if (!originalBgImage) { showToast('복원할 최초 이미지가 없습니다.', 'error'); return; }
-        setupCanvasWithImage(originalBgImage, false); 
-        saveHistoryState(); drawCanvas(); showToast('최초 스크린샷 원본 이미지 크기로 복원되었습니다.');
+        setupCanvasWithImage(originalBgImage, true); 
+        showToast('최초 스크린샷 원본 이미지 크기로 복원되었습니다.');
       });
     }
 
@@ -874,11 +829,9 @@
         autoScaleEnabled = e.target.checked;
         if (scaleModeLabel) {
           if (autoScaleEnabled) {
-            scaleModeLabel.innerText = "자동비례 ON";
-            scaleModeLabel.className = "text-[9px] text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
+            scaleModeLabel.innerText = "자동비례 ON"; scaleModeLabel.className = "text-[9px] text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
           } else {
-            scaleModeLabel.innerText = "자동비례 OFF";
-            scaleModeLabel.className = "text-[9px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
+            scaleModeLabel.innerText = "자동비례 OFF"; scaleModeLabel.className = "text-[9px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
           }
         }
         saveHistoryState(); drawCanvas();
@@ -902,7 +855,7 @@
         btn.classList.add('border-white', 'ring-2', 'ring-[#FF4747]/40');
         activeColor = btn.getAttribute('data-color');
         if (selectedFocusArea) selectedFocusArea.color = activeColor;
-        if (selectedElement) selectedElement.color = activeColor;
+        if (selectedElement && selectedElement !== 'background') selectedElement.color = activeColor;
         drawCanvas();
       });
     });
@@ -947,13 +900,9 @@
           const file = item.getAsFile();
           const reader = new FileReader();
           reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() { setupCanvasWithImage(img, true); };
-            img.src = event.target.result;
+            const img = new Image(); img.onload = function() { setupCanvasWithImage(img, true); }; img.src = event.target.result;
           };
-          reader.readAsDataURL(file);
-          showToast('클립보드에서 캡쳐 화면을 로드했습니다!');
-          return;
+          reader.readAsDataURL(file); showToast('클립보드에서 캡쳐 화면을 로드했습니다!'); return;
         }
       }
     }
@@ -961,9 +910,7 @@
     function loadImageFromFile(file) {
       const reader = new FileReader();
       reader.onload = function(event) {
-        const img = new Image();
-        img.onload = function() { setupCanvasWithImage(img, true); };
-        img.src = event.target.result;
+        const img = new Image(); img.onload = function() { setupCanvasWithImage(img, true); }; img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -974,9 +921,30 @@
       
       dropzone.classList.add('hidden');
       canvasContainer.classList.remove('hidden');
-      
-      canvas.width = img.width; 
-      canvas.height = img.height;
+
+      // 로드될 때 브라우저 뷰포트에 맞게 초기 리사이징
+      let startW = img.width;
+      let startH = img.height;
+
+      if (isFreshLoad) {
+          const mainElement = document.querySelector('main');
+          const maxW = mainElement.clientWidth - 64; 
+          const maxH = mainElement.clientHeight - 64;
+
+          if (startW > maxW || startH > maxH) {
+              const ratio = Math.min(maxW / startW, maxH / startH);
+              startW = startW * ratio;
+              startH = startH * ratio;
+          }
+      }
+
+      // 실제 캔버스 내부 해상도와 CSS 디스플레이 크기를 모두 일치시켜 화질 유지
+      canvas.width = startW; 
+      canvas.height = startH;
+      canvas.style.width = startW + 'px';
+      canvas.style.height = startH + 'px';
+      canvasContainer.style.width = startW + 'px';
+      canvasContainer.style.height = startH + 'px';
       
       if (isFreshLoad) {
         focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; elements = []; drawingLineInstance = null;
@@ -1020,7 +988,7 @@
     }
 
     function executeDeleteSelected() {
-      if (selectedElement) {
+      if (selectedElement && selectedElement !== 'background') {
         elements = elements.filter(el => el !== selectedElement);
         if (selectedElement.type === 'badge') reindexBadges();
         selectedElement = null; drawingLineInstance = null; saveHistoryState(); drawCanvas(); updateSelectedActionArea(); showToast('선택 가이드 요소를 삭제했습니다.');
@@ -1033,8 +1001,11 @@
     function updateSelectedActionArea() {
       const area = document.getElementById('selectedActionArea');
       if (!area) return;
-      if (currentTool === 'select' && (selectedFocusArea || selectedElement)) { area.classList.remove('hidden'); }
-      else { area.classList.add('hidden'); }
+      if (currentTool === 'select' && (selectedFocusArea || (selectedElement && selectedElement !== 'background'))) { 
+        area.classList.remove('hidden'); 
+      } else { 
+        area.classList.add('hidden'); 
+      }
     }
 
     function findElementAt(x, y) {
@@ -1089,13 +1060,31 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
-    // 마우스 이벤트 리스너
+    // 마우스 이벤트 리스너 (배경 사이즈 조절 로직 추가)
     canvas.addEventListener('mousedown', (e) => {
       if (!bgImage) return;
       const pos = getMousePos(e);
       dragStartX = pos.x; dragStartY = pos.y;
 
       if (currentTool === 'select') {
+        const rect = canvas.getBoundingClientRect();
+        const logicalMouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const logicalMouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        // 배경(이미지) 우하단 크기조절 핸들러 클릭 여부
+        if (selectedElement === 'background') {
+          const size = calculateScaledSize(24);
+          if (logicalMouseX > canvas.width - size && logicalMouseY > canvas.height - size) {
+            isResizingBackground = true;
+            bgInitialW = canvas.width;
+            bgInitialH = canvas.height;
+            bgInitialClientX = e.clientX;
+            bgInitialFocus = JSON.parse(JSON.stringify(focusAreas));
+            bgInitialElements = JSON.parse(JSON.stringify(elements));
+            return;
+          }
+        }
+
         if (selectedFocusArea) {
           const handle = getFocusHandleAt(pos, selectedFocusArea);
           if (handle) { isResizingFocus = true; activeFocusHandle = handle; return; }
@@ -1104,7 +1093,10 @@
         if (clickedElem) { selectedElement = clickedElem; selectedFocusArea = null; isDragging = true; drawCanvas(); updateSelectedActionArea(); return; }
         const clickedFocus = findFocusAreaAt(pos.x, pos.y);
         if (clickedFocus) { selectedFocusArea = clickedFocus; selectedElement = null; isDragging = true; drawCanvas(); updateSelectedActionArea(); return; }
-        selectedElement = null; selectedFocusArea = null; updateSelectedActionArea(); drawCanvas();
+        
+        // 아무것도 클릭되지 않았을 때 배경 이미지를 선택
+        selectedElement = 'background';
+        selectedFocusArea = null; updateSelectedActionArea(); drawCanvas();
       } 
       else if (currentTool === 'crop') {
         const handle = getCropHandleAt(pos);
@@ -1138,6 +1130,30 @@
       if (!bgImage) return;
       const pos = getMousePos(e);
 
+      // 배경 이미지 리사이징 (비율 유지)
+      if (isResizingBackground) {
+        const physicalDx = e.clientX - bgInitialClientX;
+        
+        let newW = Math.max(100, bgInitialW + physicalDx);
+        let scale = newW / bgInitialW;
+        let newH = bgInitialH * scale;
+        
+        // CSS 및 캔버스 해상도 업데이트
+        canvas.width = newW; canvas.height = newH;
+        canvas.style.width = newW + 'px'; canvas.style.height = newH + 'px';
+        canvasContainer.style.width = newW + 'px'; canvasContainer.style.height = newH + 'px';
+        
+        // 가이드 요소 비율에 맞게 재배치 (비율 오차 방지)
+        focusAreas = bgInitialFocus.map(f => ({ ...f, x: f.x * scale, y: f.y * scale, w: f.w * scale, h: f.h * scale }));
+        elements = bgInitialElements.map(el => {
+            if (el.type === 'line') { return { ...el, points: el.points.map(p => ({ x: p.x * scale, y: p.y * scale })) }; }
+            return el;
+        });
+        
+        drawCanvas();
+        return;
+      }
+
       if (currentTool === 'select') {
         if (isResizingFocus && selectedFocusArea) {
           if (activeFocusHandle === 'br') { selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
@@ -1149,7 +1165,7 @@
         else if (isDragging) {
           const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
           dragStartX = pos.x; dragStartY = pos.y;
-          if (selectedElement) {
+          if (selectedElement && selectedElement !== 'background') {
             if (selectedElement.type === 'line') {
               selectedElement.points.forEach(pt => { pt.x += dx; pt.y += dy; });
             } else {
@@ -1172,8 +1188,7 @@
         const lastFixedPt = points[points.length - 2];
         const dx = pos.x - lastFixedPt.x; const dy = pos.y - lastFixedPt.y;
         let orthogonalPos = { x: pos.x, y: pos.y };
-        if (Math.abs(dx) > Math.abs(dy)) orthogonalPos.y = lastFixedPt.y;
-        else orthogonalPos.x = lastFixedPt.x;
+        if (Math.abs(dx) > Math.abs(dy)) orthogonalPos.y = lastFixedPt.y; else orthogonalPos.x = lastFixedPt.x;
         points[points.length - 1] = orthogonalPos;
         drawCanvas();
       }
@@ -1184,6 +1199,9 @@
     });
 
     canvas.addEventListener('mouseup', () => {
+      if (isResizingBackground) {
+        isResizingBackground = false; saveHistoryState(); return;
+      }
       let wasActionActive = isDragging || isResizingFocus || isDrawingFocus || isResizingCrop;
       if (isDrawingFocus && selectedFocusArea) {
         if (selectedFocusArea.w < 0) { selectedFocusArea.x += selectedFocusArea.w; selectedFocusArea.w = Math.abs(selectedFocusArea.w); }
@@ -1195,21 +1213,16 @@
     });
 
     canvas.addEventListener('dblclick', (e) => {
-      if (currentTool === 'line' && drawingLineInstance) {
-        finishDrawingLine();
-      }
+      if (currentTool === 'line' && drawingLineInstance) { finishDrawingLine(); }
     });
 
     function showInlineTextInput(clientX, clientY) {
       const containerRect = canvasContainer.getBoundingClientRect();
-      const localX = clientX - containerRect.left;
-      const localY = clientY - containerRect.top;
+      const localX = clientX - containerRect.left; const localY = clientY - containerRect.top;
       const safeLeft = Math.max(10, Math.min(containerRect.width - 300, localX));
       const safeTop = Math.max(10, Math.min(containerRect.height - 140, localY));
-      canvasTextInputContainer.style.left = `${safeLeft}px`;
-      canvasTextInputContainer.style.top = `${safeTop}px`;
-      canvasTextInputContainer.classList.remove('hidden');
-      canvasTextInput.value = '';
+      canvasTextInputContainer.style.left = `${safeLeft}px`; canvasTextInputContainer.style.top = `${safeTop}px`;
+      canvasTextInputContainer.classList.remove('hidden'); canvasTextInput.value = '';
       setTimeout(() => canvasTextInput.focus(), 80);
     }
 
@@ -1231,9 +1244,7 @@
         link.href = canvas.toDataURL('image/png');
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
         downloadCount++; selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); showToast('성공적으로 저장되었습니다!');
-      } catch (e) {
-        showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas();
-      }
+      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); }
     }
 
     function copyToClipboard() {
@@ -1249,9 +1260,7 @@
             selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); showToast('클립보드에 이미지가 복사되었습니다!');
           }).catch(() => { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); });
         }, 'image/png');
-      } catch (e) {
-        showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas();
-      }
+      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); }
     }
 
     // 기본 로고 세팅
