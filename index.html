@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+ <link rel="icon" href="./favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CLE Robotics Manual Edit Tool</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -31,13 +32,17 @@
   <!-- 상단 헤더 -->
   <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-6 py-4 flex items-center justify-between z-10 relative shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.01)]">
     <div class="flex items-center gap-3">
-      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#e5e7eb] to-gray-500 flex items-center justify-center text-white">
-        <i data-lucide="book-key" class="w-5 h-5"></i>
-      </div>
+<div class="h-10 w-10 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex items-center justify-center shrink-0">
+  <img
+    src="./favicon.ico"
+    alt="Logo"
+    class="w-full h-full object-cover"
+  />
+</div>
+      
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">CLE Robotics</span>
-          <span class="text-sm font-semibold text-slate-500">Manual Edit Tool</span>
+          <span class="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Manual Edit Tool</span>
         </div>
         <p class="text-[10px] text-slate-400 font-medium">매뉴얼용 이미지 캡쳐&편집기</p>
       </div>
