@@ -354,7 +354,7 @@
 
             <div className="space-y-4.5 flex-1">
               {/* 서명 언어 선택 */}
-              <div className="space-y-8">
+              <div className="space-y-2 mt-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">서명 언어 선택</label>
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
                   <button onClick={() => setSigLang("ko")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${sigLang === "ko" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>
@@ -392,7 +392,7 @@
                 </div>
 
                 {/* 소속 파트 그룹 */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-4">
                   <div className="flex justify-between items-end">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">파트명 (Department)</label>
                     <select 
@@ -416,7 +416,7 @@
                 </div>
 
                 {/* 직급 그룹 */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-4">
                   <div className="flex justify-between items-end">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">직급명 (Position)</label>
                     <select 
@@ -440,7 +440,7 @@
                 </div>
 
                 {/* 휴대폰 번호 */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-4">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">휴대폰 번호 (Mobile)</label>
                   <div className="relative flex items-center">
                     <span className="absolute left-3 text-xs font-bold text-slate-400 select-none pointer-events-none">+82.</span>
@@ -449,7 +449,7 @@
                 </div>
 
                 {/* 이메일 주소 */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-4">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이메일 주소 (Email)</label>
                   <div className="relative flex items-center">
                     <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="miri" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-28 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold text-right transition-all" />
