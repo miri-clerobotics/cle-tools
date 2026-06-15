@@ -409,7 +409,7 @@
                       {deptPresets.map(p => <option key={p.label} value={p.label}>{p.label}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <input type="text" value={deptKo} onChange={(e) => setDeptKo(e.target.value)} placeholder="국문 소속 파트 (직접입력 가능)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                     <input type="text" value={deptEn} onChange={(e) => setDeptEn(e.target.value)} placeholder="영문 소속 파트 (직접입력 가능)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                   </div>
