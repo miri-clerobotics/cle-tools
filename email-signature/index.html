@@ -505,9 +505,16 @@
 
               {/* 메인 미리보기 박스 */}
               <div className="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 overflow-auto flex items-start justify-center">
-                <div className="border border-slate-100 rounded-2xl p-6 shadow-sm bg-white select-text w-full max-w-[850px] overflow-x-auto flex justify-center">
-                  <div dangerouslySetInnerHTML={{ __html: signatureHTML }} />
-                </div>
+                <div className="border border-slate-100 rounded-2xl p-6 shadow-sm bg-white select-text overflow-x-auto flex justify-start">
+  <div
+    style={{
+      width: "840px",
+      minWidth: "840px",
+      flexShrink: 0
+    }}
+    dangerouslySetInnerHTML={{ __html: signatureHTML }}
+  />
+</div>
               </div>
 
               {/* 하단 팁 */}
