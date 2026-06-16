@@ -50,6 +50,7 @@
       const currentLogoUrl = sigLang === "ko" ? logoUrlKo : logoUrlEn;
 
       const [copiedSign, setCopiedSign] = useState(false);
+      const [showExtraDisclaimer, setShowExtraDisclaimer] = useState(false);
 
       // 부서명 프리셋 데이터
       const deptPresets = [
@@ -168,12 +169,26 @@
         `;
       };
 
-      const renderDisclaimer = () => {
-        if (sigLang === "ko") {
-          return `<strong>[비밀유지 고지]</strong> 본 메일의 본문 및 첨부 자료 등 모든 내용은 지정된 수신인만을 위한 것으로, 그 외의 사람에게 공개되어서는 안 됩니다. 귀하가 지정된 수신인이 아닐 경우, 본 메일의 내용을 무단으로 배포하거나 복제하실 수 없습니다. 만약 착오로 본 메일을 수신하셨다면, 즉시 발신인에게 알려주시고 본 메일을 시스템에서 삭제하여 주시기 바랍니다.`;
-        }
-        return `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
-      };
+  const renderDisclaimer = () => {
+  const koDisclaimer = `<strong>[비밀유지 고지]</strong> 본 메일의 본문 및 첨부 자료 등 모든 내용은 지정된 수신인만을 위한 것으로, 그 외의 사람에게 공개되어서는 안 됩니다. 귀하가 지정된 수신인이 아닐 경우, 본 메일의 내용을 무단으로 배포하거나 복제하실 수 없습니다. 만약 착오로 본 메일을 수신하셨다면, 즉시 발신인에게 알려주시고 본 메일을 시스템에서 삭제하여 주시기 바랍니다.`;
+
+  const enDisclaimer = `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
+
+  // 기본 언어 문구
+  const primary = sigLang === "ko"
+    ? koDisclaimer
+    : enDisclaimer;
+
+  // 추가 언어 문구
+  const secondary = sigLang === "ko"
+    ? enDisclaimer
+    : koDisclaimer;
+
+  // ON이면 둘 다 보여줌
+  return showExtraDisclaimer
+    ? `${primary}<br><br>${secondary}`
+    : primary;
+};
 
       // 서명 HTML 템플릿
       const signatureHTML = `<style>
@@ -384,6 +399,31 @@ border:0;">
                   </button>
                 </div>
               </div>
+{/* 추가 비밀유지 고지 */}
+<div className="space-y-2 mt-4">
+  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+    추가 비밀유지 고지
+  </label>
+
+  <button
+    onClick={() =>
+      setShowExtraDisclaimer(!showExtraDisclaimer)
+    }
+    className={`w-full py-2 rounded-xl text-xs font-bold transition-all border ${
+      showExtraDisclaimer
+        ? "bg-[#FF4747] text-white border-[#FF4747]"
+        : "bg-slate-50 text-slate-500 border-slate-200"
+    }`}
+  >
+    {showExtraDisclaimer
+      ? sigLang === "ko"
+        ? "영문 비밀유지 고지 포함됨"
+        : "국문 비밀유지 고지 포함됨"
+      : sigLang === "ko"
+      ? "영문 비밀유지 고지 추가"
+      : "국문 비밀유지 고지 추가"}
+  </button>
+</div>
 
               {/* 근무지 선택 */}
               <div className="space-y-2 mt-4">
