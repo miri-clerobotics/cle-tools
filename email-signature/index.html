@@ -178,6 +178,10 @@
       // 서명 HTML 템플릿
       const signatureHTML = `<style>
       @media only screen and (max-width: 520px) {
+        #signature-table-target {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
         .mobile-logo-wrap {
           display: block !important;
           max-width: 100% !important;
@@ -187,7 +191,7 @@
         }
         .mobile-logo-td {
           text-align: left !important;
-          padding-bottom: 12px !important;
+          padding-bottom: 24px !important;
         }
         .mobile-logo-td img {
           float: none !important;
@@ -202,7 +206,7 @@
         }
       }
       </style>
-      <table id="signature-table-target" width="840" cellpadding="0" cellspacing="0" border="0" style="max-width:840px; width:100%; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left;">
+      <table id="signature-table-target" width="840" cellpadding="0" cellspacing="0" border="0" style="max-width:840px; width:100%; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
         <tr>
           <td style="padding:16px; text-align: left;">
 
@@ -211,12 +215,12 @@
                 <td style="padding:0; text-align: left; font-size:0;">
                   
                   <!-- Logo Section (Top Left) -->
-                  <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 12px;">
+                  <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 24px;">
                     <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
                       <tr>
                         <td class="mobile-logo-td" style="vertical-align:top; text-align: left; padding:0;">
                           <!-- currentLogoUrl 변수가 현재 설정된 언어에 맞는 로고를 자동으로 불러옵니다 -->
-                          <img src="${currentLogoUrl}" width="300" height="68" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:300px; max-height:68px; border:0;">
+                          <img src="${currentLogoUrl}" width="340" height="77" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:340px; max-height:77px; border:0;">
                         </td>
                       </tr>
                     </table>
@@ -280,12 +284,12 @@
               </tr>
             </table>
 
-            <!-- Divider Line Area: 모바일 이메일 클라이언트의 완벽한 렌더링 호환성을 위해 border 인라인 스타일로 교정 -->
+            <!-- Divider Line Area: 모바일 이메일 클라이언트의 완벽한 렌더링 호환성을 위해 background 색상 방식으로 변경 (선 누락 100% 방지) -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
               <tr>
                 <td style="padding: 16px 0; text-align: left; width: 100%;">
-                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-top: 1px solid #cccccc;">
-                    <tr><td style="font-size:0; line-height:0; height:1px;">&nbsp;</td></tr>
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                    <tr><td style="font-size:0; line-height:0; height:1px; background-color:#cccccc;">&nbsp;</td></tr>
                   </table>
                 </td>
               </tr>
