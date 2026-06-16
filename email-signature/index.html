@@ -196,6 +196,8 @@
         .mobile-logo-td img {
           float: none !important;
           margin: 0 !important;
+          max-width: 100% !important;
+          height: auto !important;
         }
         .mobile-info-wrap {
           display: block !important;
@@ -206,7 +208,8 @@
         }
       }
       </style>
-      <table id="signature-table-target" width="840" cellpadding="0" cellspacing="0" border="0" style="max-width:840px; width:100%; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+      <!-- HTML width 속성을 100%로 변경하여 모바일에서의 강제 축소를 완벽히 방지합니다. -->
+      <table id="signature-table-target" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:840px; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
         <tr>
           <td style="padding:16px; text-align: left;">
 
@@ -219,8 +222,8 @@
                     <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
                       <tr>
                         <td class="mobile-logo-td" style="vertical-align:top; text-align: left; padding:0;">
-                          <!-- currentLogoUrl 변수가 현재 설정된 언어에 맞는 로고를 자동으로 불러옵니다 -->
-                          <img src="${currentLogoUrl}" width="340" height="77" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:340px; max-height:77px; border:0;">
+                          <!-- 로고 크기 강제 고정 340px, 77px 적용 및 반응형 auto 결합 -->
+                          <img src="${currentLogoUrl}" width="340" height="77" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:340px; width:100%; height:auto; border:0;">
                         </td>
                       </tr>
                     </table>
