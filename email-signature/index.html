@@ -175,140 +175,139 @@
         return `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
       };
 
-      // 서명 HTML 템플릿
-      const signatureHTML = `<style>
-      @media only screen and (max-width: 520px) {
-        #signature-table-target {
-          width: 100% !important;
-          max-width: 100% !important;
+      // 서명 HTML 템플릿: 복사 시 <style> 태그가 함께 복사되도록 부모 div에 ID 부여
+      const signatureHTML = `
+      <div id="signature-table-target">
+        <style>
+        @media only screen and (max-width: 520px) {
+          .mobile-logo-wrap {
+            display: block !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            text-align: left !important;
+            direction: ltr !important;
+          }
+          .mobile-logo-td {
+            text-align: left !important;
+            padding-bottom: 24px !important;
+          }
+          .mobile-logo-td img {
+            float: none !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          .mobile-info-wrap {
+            display: block !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            text-align: left !important;
+            direction: ltr !important;
+          }
         }
-        .mobile-logo-wrap {
-          display: block !important;
-          max-width: 100% !important;
-          width: 100% !important;
-          text-align: left !important;
-          direction: ltr !important;
-        }
-        .mobile-logo-td {
-          text-align: left !important;
-          padding-bottom: 24px !important;
-        }
-        .mobile-logo-td img {
-          float: none !important;
-          margin: 0 !important;
-          max-width: 100% !important;
-          height: auto !important;
-        }
-        .mobile-info-wrap {
-          display: block !important;
-          max-width: 100% !important;
-          width: 100% !important;
-          text-align: left !important;
-          direction: ltr !important;
-        }
-      }
-      </style>
-      <!-- HTML width 속성을 100%로 변경하여 모바일에서의 강제 축소를 완벽히 방지합니다. -->
-      <table id="signature-table-target" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:840px; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-        <tr>
-          <td style="padding:16px; text-align: left;">
+        </style>
+        <!-- HTML width, min-width, table-layout, word-break 속성을 결합하여 강제 축소 원천 방지 -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; min-width:100%; max-width:840px; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; table-layout: fixed; box-sizing: border-box; word-break: break-word; overflow-wrap: break-word;">
+          <tr>
+            <td style="padding:16px; text-align: left; box-sizing: border-box;">
 
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left; border-collapse:collapse;" dir="ltr">
-              <tr>
-                <td style="padding:0; text-align: left; font-size:0;">
-                  
-                  <!-- Logo Section (Top Left) -->
-                  <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 24px;">
-                    <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
-                      <tr>
-                        <td class="mobile-logo-td" style="vertical-align:top; text-align: left; padding:0;">
-                          <!-- 로고 크기 강제 고정 340px, 77px 적용 및 반응형 auto 결합 -->
-                          <img src="${currentLogoUrl}" width="340" height="77" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:340px; width:100%; height:auto; border:0;">
-                        </td>
-                      </tr>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left; border-collapse:collapse;" dir="ltr">
+                <tr>
+                  <td style="padding:0; text-align: left; font-size:0;">
+                    
+                    <!-- Logo Section (Top Left) -->
+                    <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 24px;">
+                      <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
+                        <tr>
+                          <td class="mobile-logo-td" style="vertical-align:top; text-align: left; padding:0;">
+                            <!-- 로고 사이즈 340x77 지정 및 width:100%로 모바일 넘침 방지 -->
+                            <img src="${currentLogoUrl}" width="340" height="77" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:340px; width:100%; height:auto; border:0;">
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Personal Info Section (Below Logo) -->
+                    <div class="mobile-info-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left;">
+                      <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
+                        <tr>
+                          <td style="padding:0; text-align: left;">
+                            <table cellpadding="0" cellspacing="0" border="0" style="text-align: left;">
+                              <tr>
+                                ${renderNameRow()}
+                              </tr>
+                            </table>
+                            ${renderDeptRow()}
+                            ${renderTitleRow()}
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td height="16" style="font-size:0; line-height:0;">&nbsp;</td></tr>
+              </table>
+
+              <table cellpadding="0" cellspacing="0" border="0" style="font-size:12px; color:#000000; text-align: left; width: 100%;">
+                <tr>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">M</td>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top; word-break: break-word;">+82.${mobile}</td>
+                </tr>
+                <tr>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">E</td>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top; word-break: break-word;"><a href="mailto:${email}@clerobotics.com" style="color:#000000; text-decoration:none;">${email}@clerobotics.com</a></td>
+                </tr>
+                <tr>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">T</td>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top; word-break: break-word;">+82.${activeLocation.t}</td>
+                </tr>
+                <tr>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">F</td>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top; word-break: break-word;">+82.${activeLocation.f}</td>
+                </tr>
+                <tr>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">H</td>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top; word-break: break-word;">
+                    <a href="https://www.clerobotics.com" target="_blank" style="color:#000000; text-decoration:none;">www.clerobotics.com</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; width:16px; vertical-align:top; line-height:1.6;">A</td>
+                  <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-left:4px; line-height:1.6; vertical-align:top; word-break: break-word;">
+                    <a href="${activeLocation.mapUrl}" target="_blank" style="color:#000000; text-decoration:none;">
+                      ${sigLang === "ko" ? `${activeLocation.aKo}<br>${activeLocation.aEn}` : activeLocation.aEn}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider Line Area: 모바일 이메일 클라이언트의 완벽한 렌더링 호환성을 위해 background 색상 방식으로 유지 -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
+                <tr>
+                  <td style="padding: 16px 0; text-align: left; width: 100%;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                      <tr><td style="font-size:0; line-height:0; height:1px; background-color:#cccccc;">&nbsp;</td></tr>
                     </table>
-                  </div>
+                  </td>
+                </tr>
+              </table>
 
-                  <!-- Personal Info Section (Below Logo) -->
-                  <div class="mobile-info-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left;">
-                    <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
-                      <tr>
-                        <td style="padding:0; text-align: left;">
-                          <table cellpadding="0" cellspacing="0" border="0" style="text-align: left;">
-                            <tr>
-                              ${renderNameRow()}
-                            </tr>
-                          </table>
-                          ${renderDeptRow()}
-                          ${renderTitleRow()}
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left;">
+                <tr>
+                  <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#707070; line-height:1.6; text-align: left; padding-bottom: 6px; word-break: break-word;">
+                    ${renderDisclaimer()}
+                  </td>
+                </tr>
+              </table>
 
-                </td>
-              </tr>
-            </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td height="16" style="font-size:0; line-height:0;">&nbsp;</td></tr>
-            </table>
-
-            <table cellpadding="0" cellspacing="0" border="0" style="font-size:12px; color:#000000; text-align: left; width: 100%;">
-              <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">M</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">+82.${mobile}</td>
-              </tr>
-              <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">E</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;"><a href="mailto:${email}@clerobotics.com" style="color:#000000; text-decoration:none;">${email}@clerobotics.com</a></td>
-              </tr>
-              <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">T</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">+82.${activeLocation.t}</td>
-              </tr>
-              <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">F</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">+82.${activeLocation.f}</td>
-              </tr>
-              <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">H</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">
-                  <a href="https://www.clerobotics.com" target="_blank" style="color:#000000; text-decoration:none;">www.clerobotics.com</a>
-                </td>
-              </tr>
-              <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; width:16px; vertical-align:top; line-height:1.6;">A</td>
-                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-left:4px; line-height:1.6; vertical-align:top;">
-                  <a href="${activeLocation.mapUrl}" target="_blank" style="color:#000000; text-decoration:none;">
-                    ${sigLang === "ko" ? `${activeLocation.aKo}<br>${activeLocation.aEn}` : activeLocation.aEn}
-                  </a>
-                </td>
-              </tr>
-            </table>
-
-            <!-- Divider Line Area: 모바일 이메일 클라이언트의 완벽한 렌더링 호환성을 위해 background 색상 방식으로 변경 (선 누락 100% 방지) -->
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
-              <tr>
-                <td style="padding: 16px 0; text-align: left; width: 100%;">
-                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
-                    <tr><td style="font-size:0; line-height:0; height:1px; background-color:#cccccc;">&nbsp;</td></tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left;">
-              <tr>
-                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#707070; line-height:1.6; text-align: left; padding-bottom: 6px;">
-                  ${renderDisclaimer()}
-                </td>
-              </tr>
-            </table>
-
-          </td>
-        </tr>
-      </table>`;
+            </td>
+          </tr>
+        </table>
+      </div>`;
 
       const handleCopySignature = () => {
         const tableEl = document.getElementById("signature-table-target");
