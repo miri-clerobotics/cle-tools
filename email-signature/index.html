@@ -390,7 +390,13 @@
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이름</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="text" value={nameKo} onChange={(e) => setNameKo(e.target.value)} placeholder="한글 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
-                    <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value)} placeholder="영문 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
+                    <input
+  type="text"
+  value={nameEn}
+  onChange={(e) => setNameEn(e.target.value.toUpperCase())}
+  placeholder="영문 이름"
+  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all"
+/>
                   </div>
                 </div>
 
