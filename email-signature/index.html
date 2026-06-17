@@ -34,11 +34,9 @@
       const [mobile, setMobile] = useState("10.1234.5678");
       const [email, setEmail] = useState("kimcle");
 
-      // 3. 한/영 로고 URL 분리 상태 (깃허브 절대 주소 직접 입력)
       const [logoUrlKo, setLogoUrlKo] = useState("https://github.com/miri-clerobotics/cle-tools/blob/main/logo-ko.png?raw=true");
       const [logoUrlEn, setLogoUrlEn] = useState("https://github.com/miri-clerobotics/cle-tools/blob/main/logo-en.png?raw=true");
 
-      // 현재 선택된 언어에 따라 보여줄 로고 URL을 결정합니다.
       const currentLogoUrl = sigLang === "ko" ? logoUrlKo : logoUrlEn;
 
       const [copiedSign, setCopiedSign] = useState(false);
@@ -67,7 +65,7 @@
 
       const handleLocationChange = (loc) => {
         setLocationType(loc);
-        if (loc === "hq") {
+        if (loc === "hq" || loc === "both") {
           setDeptKo("소프트웨어 연구개발");
           setDeptEn("Software R&D");
           setTitleKo("연구원");
@@ -80,20 +78,34 @@
         }
       };
 
+      const hqKo = "<strong>본사 (기술연구소)</strong> 04778 서울 성동구 왕십리로 58, 511호-514호, 517호";
+      const hqEn = "<strong>Headquarters (Technology R&D Center)</strong> #511-514, #517, FORHU, 58, Wangsimni-ro, Seongdong-gu, Seoul, Republic of Korea";
+      const labKo = "<strong>시스템연구소 (데모/전시)</strong> 15847 경기 군포시 공단로 117, 1층";
+      const labEn = "<strong>System R&D Center (Demo/Exhibition)</strong> 1F, 117, Gongdan-ro, Gunpo-si, Gyeonggi-do, Republic of Korea";
+
       const locationDetails = {
         hq: {
           t: "2.468.1114",
           f: "2.2284.0135",
-          aKo: "<strong>본사 (기술연구소)</strong> 04778 서울 성동구 왕십리로 58, 511호-514호, 517호",
-          aEn: "<strong>Headquarters (Technology R&D Center)</strong> #511-514, #517, FORHU, 58, Wangsimni-ro, Seongdong-gu, Seoul, Republic of Korea",
-          mapUrl: "https://maps.app.goo.gl/sxscgrSPKt3NAc3p9"
+          getAddress: (lang) => lang === "ko" ? `${hqKo}<br>${hqEn}` : `${hqEn}<br>${hqKo}`
         },
         lab: {
           t: "31.427.0314",
           f: "31.427.0315",
-          aKo: "<strong>시스템연구소 (데모/전시)</strong> 15847 경기 군포시 공단로 117, 1층",
-          aEn: "<strong>System R&D Center (Demo/Exhibition)</strong> 1F, 117, Gongdan-ro, Gunpo-si, Gyeonggi-do, Republic of Korea",
-          mapUrl: "https://maps.app.goo.gl/XCz3NN1Hi7jwPjAMA"
+          getAddress: (lang) => lang === "ko" ? `${labKo}<br>${labEn}` : `${labEn}<br>${labKo}`
+        },
+        both: {
+          t: "2.468.1114",
+          f: "2.2284.0135",
+          getAddress: (lang) => {
+            if (lang === "ko") {
+              // 본사KO -> 본사EN -> 시스템KO -> 시스템EN
+              return `${hqKo}<br>${hqEn}<br>${labKo}<br>${labEn}`;
+            } else {
+              // 본사EN -> 본사KO -> 시스템EN -> 시스템KO
+              return `${hqEn}<br>${hqKo}<br>${labEn}<br>${labKo}`;
+            }
+          }
         }
       };
 
@@ -154,26 +166,15 @@
         `;
       };
 
-  const renderDisclaimer = () => {
-  const koDisclaimer = `<strong>[비밀유지 고지]</strong> 본 메일의 본문 및 첨부 자료 등 모든 내용은 지정된 수신인만을 위한 것으로, 그 외의 사람에게 공개되어서는 안 됩니다. 귀하가 지정된 수신인이 아닐 경우, 본 메일의 내용을 무단으로 배포하거나 복제하실 수 없습니다. 만약 착오로 본 메일을 수신하셨다면, 즉시 발신인에게 알려주시고 본 메일을 시스템에서 삭제하여 주시기 바랍니다.`;
+      const renderDisclaimer = () => {
+        const koDisclaimer = `<strong>[비밀유지 고지]</strong> 본 메일의 본문 및 첨부 자료 등 모든 내용은 지정된 수신인만을 위한 것으로, 그 외의 사람에게 공개되어서는 안 됩니다. 귀하가 지정된 수신인이 아닐 경우, 본 메일의 내용을 무단으로 배포하거나 복제하실 수 없습니다. 만약 착오로 본 메일을 수신하셨다면, 즉시 발신인에게 알려주시고 본 메일을 시스템에서 삭제하여 주시기 바랍니다.`;
+        const enDisclaimer = `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
 
-  const enDisclaimer = `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
+        const primary = sigLang === "ko" ? koDisclaimer : enDisclaimer;
+        const secondary = sigLang === "ko" ? enDisclaimer : koDisclaimer;
 
-  // 기본 언어 문구
-  const primary = sigLang === "ko"
-    ? koDisclaimer
-    : enDisclaimer;
-
-  // 추가 언어 문구
-  const secondary = sigLang === "ko"
-    ? enDisclaimer
-    : koDisclaimer;
-
-  // ON이면 둘 다 보여줌
-  return showExtraDisclaimer
-    ? `${primary}<br><br>${secondary}`
-    : primary;
-};
+        return showExtraDisclaimer ? `${primary}<br><br>${secondary}` : primary;
+      };
 
       const signatureHTML = `<style>
       @media only screen and (max-width: 520px) {
@@ -224,23 +225,20 @@ text-align: left;">
               <tr>
                 <td style="padding: 16px 0; text-align: left; width: 100%;">
                   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-top: 1px solid #cccccc;">
-                    <tr><td style="font-size:0; line-height:0; height:1px;">&nbsp;</td></tr>
+                    <tr><td style="font-size:0; line-height:0; height:1px;"> </td></tr>
                   </table>
                 </td>
               </tr>
             </table>
 
-
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left; border-collapse:collapse;" dir="ltr">
               <tr>
                 <td style="padding:0; text-align: left; font-size:0;">
                   
-                  <!-- Logo Section (Top Left) -->
                   <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 24px;">
                     <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
                       <tr>
                         <td class="mobile-logo-td" style="vertical-align:top; text-align: left; padding:0;">
-                          <!-- currentLogoUrl 변수가 현재 설정된 언어에 맞는 로고를 자동으로 불러옵니다 -->
 <img src="${currentLogoUrl}"
 width="240"
 height="54"
@@ -294,17 +292,15 @@ border:0;">
               </tr>
               <tr>
                 <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">H</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">  www.clerobotics.com</td>
+                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">   www.clerobotics.com</td>
               </tr>
               <tr>
                 <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; width:16px; vertical-align:top; line-height:1.6;">A</td>
              <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-left:4px; line-height:1.6; vertical-align:top;">
-  ${sigLang === "ko" ? `${activeLocation.aKo}<br>${activeLocation.aEn}` : activeLocation.aEn}
+  ${activeLocation.getAddress(sigLang)}
 </td>
               </tr>
             </table>
-
-            <!-- Divider Line Area: 모바일 이메일 클라이언트의 완벽한 렌더링 호환성을 위해 border 인라인 스타일로 교정 -->
           </td>
         </tr>
       </table>`;
@@ -349,12 +345,9 @@ border:0;">
           <aside className="w-[380px] bg-white border-r border-slate-200/80 p-5 flex flex-col gap-6 overflow-y-auto h-full shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.01)] z-10">
             <div>
               <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex items-center justify-center shrink-0">  <img
-    src="/favicon.ico"
-    alt="Logo"
-    className="w-full h-full object-cover"
-  />
-</div>
+                <div className="h-10 w-10 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex items-center justify-center shrink-0">
+                  <img src="/favicon.ico" alt="Logo" className="w-full h-full object-cover" />
+                </div>
                 <div>
                   <span className="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Email Signature Tool</span>
                   <p className="text-[10px] text-slate-400 font-medium">클레로보틱스 메일 서명</p>
@@ -371,38 +364,14 @@ border:0;">
                   <button onClick={() => setSigLang("en")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${sigLang === "en" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>영어</button>
                 </div>
               </div>
-{/* 추가 비밀유지 고지 */}
-<div className="space-y-2 mt-4">
-  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-    추가 비밀유지 고지
-  </label>
-
-  <button
-    onClick={() =>
-      setShowExtraDisclaimer(!showExtraDisclaimer)
-    }
-    className={`w-full py-2 rounded-xl text-xs font-bold transition-all border ${
-      showExtraDisclaimer
-        ? "bg-[#FF4747] text-white border-[#FF4747]"
-        : "bg-slate-50 text-slate-500 border-slate-200"
-    }`}
-  >
-    {showExtraDisclaimer
-      ? sigLang === "ko"
-        ? "영문 비밀유지 고지 포함됨"
-        : "국문 비밀유지 고지 포함됨"
-      : sigLang === "ko"
-      ? "영문 비밀유지 고지 추가"
-      : "국문 비밀유지 고지 추가"}
-  </button>
-</div>
 
               {/* 근무지 선택 */}
               <div className="space-y-2 mt-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">근무지 선택</label>
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
-                  <button onClick={() => handleLocationChange("hq")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${locationType === "hq" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>본사 (기술연구소)</button>
-                  <button onClick={() => handleLocationChange("lab")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${locationType === "lab" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>시스템연구소</button>
+                <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl">
+                  <button onClick={() => handleLocationChange("hq")} className={`py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-center ${locationType === "hq" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>본사</button>
+                  <button onClick={() => handleLocationChange("lab")} className={`py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-center ${locationType === "lab" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>시스템연구소</button>
+                  <button onClick={() => handleLocationChange("both")} className={`py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap text-center ${locationType === "both" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>본사&시스템연구소</button>
                 </div>
               </div>
 
@@ -413,13 +382,7 @@ border:0;">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이름</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="text" value={nameKo} onChange={(e) => setNameKo(e.target.value)} placeholder="한글 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
-                    <input
-  type="text"
-  value={nameEn}
-  onChange={(e) => setNameEn(e.target.value.toUpperCase())}
-  placeholder="영문 이름"
-  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all"
-/>
+                    <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value.toUpperCase())} placeholder="영문 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                   </div>
                 </div>
 
@@ -442,8 +405,8 @@ border:0;">
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <input type="text" value={deptKo} onChange={(e) => setDeptKo(e.target.value)} placeholder="국문 소속 파트 (직접입력 가능)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
-                    <input type="text" value={deptEn} onChange={(e) => setDeptEn(e.target.value)} placeholder="영문 소속 파트 (직접입력 가능)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
+                    <input type="text" value={deptKo} onChange={(e) => setDeptKo(e.target.value)} placeholder="국문 소속 파트" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
+                    <input type="text" value={deptEn} onChange={(e) => setDeptEn(e.target.value)} placeholder="영문 소속 파트" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                   </div>
                 </div>
 
@@ -512,6 +475,26 @@ border:0;">
                   </div>
                 </div>
               </div>
+
+              {/* [최하단 이동] 그외 옵션 (추가 비밀유지 고지) */}
+              <div className="space-y-2 border-t border-slate-100 pt-3.5 mt-4">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                  그외 옵션
+                </label>
+                <button
+                  onClick={() => setShowExtraDisclaimer(!showExtraDisclaimer)}
+                  className={`w-full py-2 rounded-xl text-xs font-bold transition-all border ${
+                    showExtraDisclaimer
+                      ? "bg-[#FF4747] text-white border-[#FF4747]"
+                      : "bg-slate-50 text-slate-500 border-slate-200"
+                  }`}
+                >
+                  {showExtraDisclaimer
+                    ? sigLang === "ko" ? "영문 비밀유지 고지 포함됨" : "국문 비밀유지 고지 포함됨"
+                    : sigLang === "ko" ? "영문 비밀유지 고지 추가" : "국문 비밀유지 고지 추가"}
+                </button>
+              </div>
+
             </div>
           </aside>
 
@@ -530,15 +513,15 @@ border:0;">
 
               <div className="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 overflow-auto flex items-start justify-center">
                 <div className="border border-slate-100 rounded-2xl p-6 shadow-sm bg-white select-text overflow-x-auto flex justify-start">
-  <div
-    style={{
-      width: "690px",
-      minWidth: "690px",
-      flexShrink: 0
-    }}
-    dangerouslySetInnerHTML={{ __html: signatureHTML }}
-  />
-</div>
+                  <div
+                    style={{
+                      width: "690px",
+                      minWidth: "690px",
+                      flexShrink: 0
+                    }}
+                    dangerouslySetInnerHTML={{ __html: signatureHTML }}
+                  />
+                </div>
               </div>
 
               <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-4 text-xs text-slate-600 leading-normal shrink-0 flex gap-2">
