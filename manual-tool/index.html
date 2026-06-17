@@ -149,9 +149,10 @@
               </span>
             </div>
             <button id="deleteSelectedBtn" class="w-full flex items-center justify-center gap-2 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 선택 요소 1개 삭제
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span id="deleteSelCount">선택 요소 1개 삭제</span>
             </button>
             <p class="text-[9px] text-slate-400 text-center font-medium mt-1">💡 단축키: 요소를 클릭하고 <kbd class="bg-slate-100 px-1 py-0.5 rounded text-slate-500 border border-slate-200">Delete</kbd> 키 입력</p>
+            <p class="text-[9px] text-slate-400 text-center font-medium">⬆️⬇️⬅️➡️ <kbd class="bg-slate-100 px-1 py-0.5 rounded text-slate-500 border border-slate-200">화살표</kbd> 키로 위치 이동 (<kbd class="bg-slate-100 px-1 py-0.5 rounded text-slate-500 border border-slate-200">Shift</kbd>+화살표: 10px)</p>
           </div>
         </div>
       </div>
@@ -362,7 +363,9 @@
     // 전역 상태 변수
     let bgImage = null; 
     let originalBgImage = null; 
-    let currentTool = 'select'; 
+    let currentTool = 'select';
+    let lockedTool = null; // 두 번 눌러 잠근(연속 생성) 도구
+    const LOCKABLE_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
     let focusAreas = []; 
     let elements = []; 
     let badgeType = 'number'; 
@@ -393,8 +396,13 @@
 
     // 상호작용 변수
     let selectedElement = null; // 'background' 도 들어갈 수 있음
-    let selectedFocusArea = null; 
-    let isResizingFocus = false; 
+    let selectedFocusArea = null;
+    // 다중 선택(드래그 박스) 상태
+    let multiSel = [];            // 선택된 포커스 영역 / 요소 객체들의 배열
+    let isMarqueeSelecting = false;
+    let marqueeRect = null;
+    let marqueeMoved = false;
+    let isResizingFocus = false;
     let activeFocusHandle = null; 
     let isDragging = false;
     let dragStartX = 0, dragStartY = 0;
@@ -505,7 +513,10 @@
         }
         ctx.stroke();
 
-        if (selectedFocusArea === f) drawHandles(f.x, f.y, f.w, f.h, '#3b82f6');
+        if (selectedFocusArea === f) {
+          drawHandles(f.x, f.y, f.w, f.h, '#3b82f6');
+          if (f.type === 'rect') drawEdgeHandles(f.x, f.y, f.w, f.h, '#3b82f6');
+        }
       });
 
       // 4. 배경 이미지 자체 선택 시 Resize 핸들러(박스) 그려주기
@@ -580,6 +591,39 @@
         }
       });
 
+      // 5-1. 다중 선택 하이라이트 (점선 박스)
+      if (multiSel.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = calculateScaledSize(2);
+        ctx.setLineDash([calculateScaledSize(6), calculateScaledSize(4)]);
+        multiSel.forEach(item => {
+          if (item.type === 'rect' || item.type === 'circle') {
+            ctx.strokeRect(Math.min(item.x, item.x + item.w), Math.min(item.y, item.y + item.h), Math.abs(item.w), Math.abs(item.h));
+          } else if (item.type === 'badge') {
+            const px = item.x * canvas.width, py = item.y * canvas.height, r = calculateScaledSize(16);
+            ctx.strokeRect(px - r, py - r, r * 2, r * 2);
+          } else if (item.type === 'text') {
+            const px = item.x * canvas.width, py = item.y * canvas.height;
+            const w = calculateScaledSize(120), h = calculateScaledSize(34);
+            ctx.strokeRect(px - w / 2, py - h / 2, w, h);
+          }
+        });
+        ctx.restore();
+      }
+
+      // 5-2. 드래그 선택 박스(마퀴) 그리기
+      if (isMarqueeSelecting && marqueeRect) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(59,130,246,0.12)';
+        ctx.fillRect(marqueeRect.x, marqueeRect.y, marqueeRect.w, marqueeRect.h);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = calculateScaledSize(1.5);
+        ctx.setLineDash([calculateScaledSize(5), calculateScaledSize(3)]);
+        ctx.strokeRect(marqueeRect.x, marqueeRect.y, marqueeRect.w, marqueeRect.h);
+        ctx.restore();
+      }
+
       // 6. 크롭 오버레이 그리기 (evenodd를 이용해 안쪽을 완벽하게 투명하게 뚫음)
       if (currentTool === 'crop' && cropArea) {
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -595,6 +639,7 @@
         ctx.lineWidth = calculateScaledSize(2);
         ctx.strokeRect(cropArea.x, cropArea.y, cropArea.w, cropArea.h);
         drawHandles(cropArea.x, cropArea.y, cropArea.w, cropArea.h, '#a78bfa');
+        drawEdgeHandles(cropArea.x, cropArea.y, cropArea.w, cropArea.h, '#a78bfa');
       }
 
       // 7. 워터마크 그리기
@@ -657,23 +702,50 @@
       ctx.fillRect(x - size/2, y - size/2, size, size);
     }
 
+    // 상하좌우 엣지(변 중앙) 핸들 그리기
+    function drawEdgeHandles(x, y, w, h, color) {
+      const size = calculateScaledSize(8);
+      ctx.fillStyle = color;
+      ctx.fillRect(x + w/2 - size/2, y - size/2, size, size);       // 상
+      ctx.fillRect(x + w/2 - size/2, y + h - size/2, size, size);   // 하
+      ctx.fillRect(x - size/2, y + h/2 - size/2, size, size);       // 좌
+      ctx.fillRect(x + w - size/2, y + h/2 - size/2, size, size);   // 우
+    }
+
     function getFocusHandleAt(pos, f) {
       const size = calculateScaledSize(10);
       if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - f.y) < size) return 'tl';
       if (Math.abs(pos.x - (f.x + f.w)) < size && Math.abs(pos.y - f.y) < size) return 'tr';
       if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - (f.y + f.h)) < size) return 'bl';
       if (Math.abs(pos.x - (f.x + f.w)) < size && Math.abs(pos.y - (f.y + f.h)) < size) return 'br';
+      // 사각형 포커스: 상하좌우 변 핸들 (각 변을 개별적으로 조절)
+      if (f.type === 'rect') {
+        const inX = pos.x > Math.min(f.x, f.x + f.w) - size && pos.x < Math.max(f.x, f.x + f.w) + size;
+        const inY = pos.y > Math.min(f.y, f.y + f.h) - size && pos.y < Math.max(f.y, f.y + f.h) + size;
+        if (Math.abs(pos.y - f.y) < size && inX) return 't';
+        if (Math.abs(pos.y - (f.y + f.h)) < size && inX) return 'b';
+        if (Math.abs(pos.x - f.x) < size && inY) return 'l';
+        if (Math.abs(pos.x - (f.x + f.w)) < size && inY) return 'r';
+      }
       return null;
     }
 
     function getCropHandleAt(pos) {
       if (!cropArea) return null;
-      const size = calculateScaledSize(30); 
+      const size = calculateScaledSize(30);
       const f = cropArea;
+      // 코너 핸들 우선 감지
       if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - f.y) < size) return 'tl';
       if (Math.abs(pos.x - (f.x + f.w)) < size && Math.abs(pos.y - f.y) < size) return 'tr';
       if (Math.abs(pos.x - f.x) < size && Math.abs(pos.y - (f.y + f.h)) < size) return 'bl';
       if (Math.abs(pos.x - (f.x + f.w)) < size && Math.abs(pos.y - (f.y + f.h)) < size) return 'br';
+      // 상하좌우 엣지 핸들 (각 변을 개별적으로 자르기)
+      const inX = pos.x > Math.min(f.x, f.x + f.w) - size && pos.x < Math.max(f.x, f.x + f.w) + size;
+      const inY = pos.y > Math.min(f.y, f.y + f.h) - size && pos.y < Math.max(f.y, f.y + f.h) + size;
+      if (Math.abs(pos.y - f.y) < size && inX) return 't';
+      if (Math.abs(pos.y - (f.y + f.h)) < size && inX) return 'b';
+      if (Math.abs(pos.x - f.x) < size && inY) return 'l';
+      if (Math.abs(pos.x - (f.x + f.w)) < size && inY) return 'r';
       return null;
     }
 
@@ -761,7 +833,7 @@
       canvasContainer.style.width = state.canvasWidth + 'px';
       canvasContainer.style.height = state.canvasHeight + 'px';
 
-      selectedFocusArea = null; selectedElement = null; updateSelectedActionArea(); drawCanvas();
+      selectedFocusArea = null; selectedElement = null; multiSel = []; updateSelectedActionArea(); drawCanvas();
     }
 
     if (undoBtn) undoBtn.addEventListener('click', handleUndo);
@@ -818,7 +890,7 @@
     const clearGuidesBtn = document.getElementById('clearGuidesBtn');
     if (clearGuidesBtn) {
       clearGuidesBtn.addEventListener('click', () => {
-        elements = []; focusAreas = []; selectedElement = null; selectedFocusArea = null; drawingLineInstance = null;
+        elements = []; focusAreas = []; selectedElement = null; selectedFocusArea = null; multiSel = []; drawingLineInstance = null;
         saveHistoryState(); drawCanvas(); updateSelectedActionArea(); showToast('가이드 요소들만 모두 지워졌습니다.');
       });
     }
@@ -835,7 +907,7 @@
     const clearCanvasBtn = document.getElementById('clearCanvasBtn');
     if (clearCanvasBtn) {
       clearCanvasBtn.addEventListener('click', () => {
-        elements = []; focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; drawingLineInstance = null;
+        elements = []; focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; multiSel = []; drawingLineInstance = null;
         bgImage = null; originalBgImage = null; hideInlineTextInput(); history = []; redoStack = [];
         if (dropzone) dropzone.classList.remove('hidden');
         if (canvasContainer) canvasContainer.classList.add('hidden');
@@ -845,7 +917,16 @@
 
     Object.keys(tools).forEach(toolKey => {
       const toolEl = tools[toolKey];
-      if (toolEl) toolEl.addEventListener('click', () => selectTool(toolKey));
+      if (toolEl) toolEl.addEventListener('click', () => {
+        // 이미 활성화된 도구를 다시 누르면 잠금 토글 (연속 생성 모드)
+        if (currentTool === toolKey && LOCKABLE_TOOLS.includes(toolKey)) {
+          lockedTool = (lockedTool === toolKey) ? null : toolKey;
+          refreshToolButtons();
+          showToast(lockedTool ? '연속 생성 잠금 ON — 계속 생성됩니다.' : '연속 생성 잠금 OFF');
+          return;
+        }
+        selectTool(toolKey);
+      });
     });
 
     const dimPresetBtns = document.querySelectorAll('.dim-preset-btn');
@@ -889,8 +970,7 @@
         colorButtons.forEach(b => b.classList.remove('border-white', 'ring-2', 'ring-[#FF4747]/40'));
         btn.classList.add('border-white', 'ring-2', 'ring-[#FF4747]/40');
         activeColor = btn.getAttribute('data-color');
-        if (selectedFocusArea) selectedFocusArea.color = activeColor;
-        if (selectedElement && selectedElement !== 'background') selectedElement.color = activeColor;
+        getSelectionList().forEach(item => { item.color = activeColor; });
         drawCanvas();
       });
     });
@@ -910,6 +990,16 @@
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); handleUndo(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); handleRedo(); return; }
       if (e.key === 'Escape') { if (currentTool === 'line' && drawingLineInstance) finishDrawingLine(); }
+      // 화살표 키로 선택 컴포넌트 이동 (Shift 누르면 10px씩)
+      if (e.key.startsWith('Arrow')) {
+        const step = e.shiftKey ? 10 : 1;
+        let moved = false;
+        if (e.key === 'ArrowUp') moved = nudgeSelected(0, -step);
+        else if (e.key === 'ArrowDown') moved = nudgeSelected(0, step);
+        else if (e.key === 'ArrowLeft') moved = nudgeSelected(-step, 0);
+        else if (e.key === 'ArrowRight') moved = nudgeSelected(step, 0);
+        if (moved) { e.preventDefault(); return; }
+      }
       if (e.key === 'Delete' || e.key === 'Backspace') executeDeleteSelected();
     });
 
@@ -980,8 +1070,8 @@
       canvasContainer.style.height = startH + 'px';
       
       if (isFreshLoad) {
-        focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; elements = []; drawingLineInstance = null;
-        history = []; redoStack = []; 
+        focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; multiSel = []; elements = []; drawingLineInstance = null;
+        history = []; redoStack = [];
       }
       
       saveHistoryState(); 
@@ -999,17 +1089,36 @@
       } else {
         cropArea = null; cropControlArea.classList.add('hidden');
       }
-      if (toolKey !== 'select') { selectedFocusArea = null; selectedElement = null; activeSnapGuides = []; }
+      if (toolKey !== 'select') { selectedFocusArea = null; selectedElement = null; multiSel = []; activeSnapGuides = []; }
+      // 다른 도구로 전환하면 잠금 해제
+      if (lockedTool && lockedTool !== toolKey) lockedTool = null;
 
+      refreshToolButtons();
+      drawCanvas(); updateSelectedActionArea();
+    }
+
+    // 도구 버튼 외형 및 잠금 표시 갱신
+    function refreshToolButtons() {
       Object.keys(tools).forEach(key => {
         const btn = tools[key]; if (!btn) return;
-        if (key === toolKey) {
-          btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-[#FF4747]/10 border border-[#FF4747]/50";
-        } else {
-          btn.className = "tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200";
+        const active = (key === currentTool);
+        btn.className = active
+          ? "tool-btn relative w-full h-16 flex flex-col items-center justify-center gap-1 bg-[#FF4747] text-white px-2 rounded-xl font-bold text-[11px] shadow-lg shadow-[#FF4747]/10 border border-[#FF4747]/50"
+          : "tool-btn relative w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200";
+
+        let lockEl = btn.querySelector('.tool-lock-indicator');
+        if (lockedTool === key) {
+          if (!lockEl) {
+            lockEl = document.createElement('span');
+            lockEl.className = 'tool-lock-indicator absolute top-1 right-1 bg-amber-400 text-white rounded-full w-4 h-4 flex items-center justify-center shadow ring-1 ring-white';
+            lockEl.innerHTML = '<i data-lucide="lock" class="w-2.5 h-2.5"></i>';
+            btn.appendChild(lockEl);
+            lucide.createIcons();
+          }
+        } else if (lockEl) {
+          lockEl.remove();
         }
       });
-      drawCanvas(); updateSelectedActionArea();
     }
 
     function drawRoundedPolyline(c, points, radius) {
@@ -1022,24 +1131,82 @@
       c.lineTo(points[points.length - 1].x, points[points.length - 1].y); c.stroke();
     }
 
+    // 현재 선택된(이동 가능한) 객체 목록 — 다중 선택 우선, 없으면 단일 선택
+    function getSelectionList() {
+      if (multiSel.length > 0) return multiSel;
+      if (selectedElement && selectedElement !== 'background') return [selectedElement];
+      if (selectedFocusArea) return [selectedFocusArea];
+      return [];
+    }
+
+    // 객체 1개를 dx,dy 만큼 이동 (포커스/라인은 픽셀, 번호표/텍스트는 정규화 좌표)
+    function moveItemBy(item, dx, dy) {
+      if (item.type === 'rect' || item.type === 'circle') { item.x += dx; item.y += dy; }
+      else if (item.type === 'line') { item.points.forEach(pt => { pt.x += dx; pt.y += dy; }); }
+      else { item.x += dx / canvas.width; item.y += dy / canvas.height; }
+    }
+
+    // 드래그 박스(마퀴) 안에 들어오는 포커스 영역 / 번호표·텍스트 선택
+    function selectInMarquee(rect) {
+      const x1 = Math.min(rect.x, rect.x + rect.w), x2 = Math.max(rect.x, rect.x + rect.w);
+      const y1 = Math.min(rect.y, rect.y + rect.h), y2 = Math.max(rect.y, rect.y + rect.h);
+      const picked = [];
+      focusAreas.forEach(f => {
+        const fx1 = Math.min(f.x, f.x + f.w), fx2 = Math.max(f.x, f.x + f.w);
+        const fy1 = Math.min(f.y, f.y + f.h), fy2 = Math.max(f.y, f.y + f.h);
+        if (fx1 < x2 && fx2 > x1 && fy1 < y2 && fy2 > y1) picked.push(f); // 교차 시 선택
+      });
+      elements.forEach(el => {
+        if (el.type === 'badge' || el.type === 'text') {
+          const px = el.x * canvas.width, py = el.y * canvas.height;
+          if (px >= x1 && px <= x2 && py >= y1 && py <= y2) picked.push(el);
+        }
+      });
+      return picked;
+    }
+
+    function clearSelection() {
+      multiSel = []; selectedElement = null; selectedFocusArea = null;
+    }
+
+    // 화살표 키로 선택된 컴포넌트 위치 이동 (히스토리는 디바운스 저장)
+    let arrowSaveTimeout = null;
+    function nudgeSelected(dx, dy) {
+      if (currentTool !== 'select') return false;
+      const list = getSelectionList();
+      if (list.length === 0) return false;
+      list.forEach(item => moveItemBy(item, dx, dy));
+      drawCanvas();
+      clearTimeout(arrowSaveTimeout);
+      arrowSaveTimeout = setTimeout(() => saveHistoryState(), 400);
+      return true;
+    }
+
     function executeDeleteSelected() {
-      if (selectedElement && selectedElement !== 'background') {
-        elements = elements.filter(el => el !== selectedElement);
-        if (selectedElement.type === 'badge') reindexBadges();
-        selectedElement = null; drawingLineInstance = null; saveHistoryState(); drawCanvas(); updateSelectedActionArea(); showToast('선택 가이드 요소를 삭제했습니다.');
-      } else if (selectedFocusArea) {
-        focusAreas = focusAreas.filter(f => f !== selectedFocusArea);
-        selectedFocusArea = null; saveHistoryState(); drawCanvas(); updateSelectedActionArea(); showToast('선택 포커스 영역을 삭제했습니다.');
-      }
+      const list = getSelectionList();
+      if (list.length === 0) return;
+      const focusSet = new Set(list.filter(i => i.type === 'rect' || i.type === 'circle'));
+      const elemSet = new Set(list.filter(i => i.type === 'line' || i.type === 'badge' || i.type === 'text'));
+      if (focusSet.size) focusAreas = focusAreas.filter(f => !focusSet.has(f));
+      if (elemSet.size) elements = elements.filter(el => !elemSet.has(el));
+      const hadBadge = [...elemSet].some(e => e.type === 'badge');
+      if (hadBadge) reindexBadges();
+      const count = list.length;
+      clearSelection(); drawingLineInstance = null;
+      saveHistoryState(); drawCanvas(); updateSelectedActionArea();
+      showToast(`선택한 ${count}개 요소를 삭제했습니다.`);
     }
 
     function updateSelectedActionArea() {
       const area = document.getElementById('selectedActionArea');
       if (!area) return;
-      if (currentTool === 'select' && (selectedFocusArea || (selectedElement && selectedElement !== 'background'))) { 
-        area.classList.remove('hidden'); 
-      } else { 
-        area.classList.add('hidden'); 
+      const count = getSelectionList().length;
+      if (currentTool === 'select' && count > 0) {
+        area.classList.remove('hidden');
+        const label = document.getElementById('deleteSelCount');
+        if (label) label.innerText = `선택 요소 ${count}개 삭제`;
+      } else {
+        area.classList.add('hidden');
       }
     }
 
@@ -1125,13 +1292,27 @@
           if (handle) { isResizingFocus = true; activeFocusHandle = handle; return; }
         }
         const clickedElem = findElementAt(pos.x, pos.y);
-        if (clickedElem) { selectedElement = clickedElem; selectedFocusArea = null; isDragging = true; drawCanvas(); updateSelectedActionArea(); return; }
-        const clickedFocus = findFocusAreaAt(pos.x, pos.y);
-        if (clickedFocus) { selectedFocusArea = clickedFocus; selectedElement = null; isDragging = true; drawCanvas(); updateSelectedActionArea(); return; }
-        
-        selectedElement = 'background';
-        selectedFocusArea = null; updateSelectedActionArea(); drawCanvas();
-      } 
+        const clickedFocus = clickedElem ? null : findFocusAreaAt(pos.x, pos.y);
+        const clicked = clickedElem || clickedFocus;
+
+        if (clicked) {
+          // 이미 다중 선택된 항목을 잡으면 그룹 전체를 함께 이동
+          if (multiSel.length > 0 && multiSel.includes(clicked)) {
+            isDragging = true; drawCanvas(); updateSelectedActionArea(); return;
+          }
+          // 단일 선택
+          multiSel = [];
+          if (clickedElem) { selectedElement = clickedElem; selectedFocusArea = null; }
+          else { selectedFocusArea = clickedFocus; selectedElement = null; }
+          isDragging = true; drawCanvas(); updateSelectedActionArea(); return;
+        }
+
+        // 빈 공간 → 드래그 박스(마퀴) 선택 시작 (떼는 순간 클릭이면 배경 선택)
+        clearSelection();
+        isMarqueeSelecting = true; marqueeMoved = false;
+        marqueeRect = { x: pos.x, y: pos.y, w: 0, h: 0 };
+        updateSelectedActionArea(); drawCanvas();
+      }
       else if (currentTool === 'crop') {
         const handle = getCropHandleAt(pos);
         if (handle) { isResizingCrop = true; activeCropHandle = handle; }
@@ -1142,9 +1323,19 @@
         focusAreas.push(newFocus); selectedFocusArea = newFocus;
       } 
       else if (currentTool === 'badge') {
-        elements.push({ type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: badgeType, color: activeColor, text: '' });
-        reindexBadges(); saveHistoryState(); drawCanvas();
-      } 
+        const newBadge = { type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: badgeType, color: activeColor, text: '' };
+        elements.push(newBadge);
+        reindexBadges(); saveHistoryState();
+        // 번호표를 놓으면 선택 모드로 전환하고 방금 놓은 번호표를 선택 상태로 둠 (바로 위치 수정 가능)
+        // (단, 도구가 잠겨 있으면 그대로 유지하여 연속 생성)
+        if (lockedTool === currentTool) {
+          drawCanvas();
+        } else {
+          selectTool('select');
+          selectedElement = newBadge; selectedFocusArea = null;
+          drawCanvas(); updateSelectedActionArea();
+        }
+      }
       else if (currentTool === 'line') {
         if (!drawingLineInstance) {
           drawingLineInstance = { type: 'line', points: [pos, {x: pos.x, y: pos.y}], color: activeColor };
@@ -1185,6 +1376,13 @@
       }
 
       if (currentTool === 'select') {
+        if (isMarqueeSelecting && marqueeRect) {
+          marqueeRect.w = pos.x - marqueeRect.x;
+          marqueeRect.h = pos.y - marqueeRect.y;
+          if (Math.abs(marqueeRect.w) > 3 || Math.abs(marqueeRect.h) > 3) marqueeMoved = true;
+          drawCanvas();
+          return;
+        }
         if (isResizingFocus && selectedFocusArea) {
           let origX = selectedFocusArea.x; let origY = selectedFocusArea.y;
           let origW = selectedFocusArea.w; let origH = selectedFocusArea.h;
@@ -1193,6 +1391,11 @@
           else if (activeFocusHandle === 'tl') { const x2 = selectedFocusArea.x + selectedFocusArea.w, y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.x = pos.x; selectedFocusArea.y = pos.y; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = y2 - pos.y; }
           else if (activeFocusHandle === 'tr') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = y2 - pos.y; }
           else if (activeFocusHandle === 'bl') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
+          // 사각형 포커스: 상하좌우 변 개별 조절
+          else if (activeFocusHandle === 't') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.h = y2 - pos.y; }
+          else if (activeFocusHandle === 'b') { selectedFocusArea.h = pos.y - selectedFocusArea.y; }
+          else if (activeFocusHandle === 'l') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; }
+          else if (activeFocusHandle === 'r') { selectedFocusArea.w = pos.x - selectedFocusArea.x; }
 
           if (selectedFocusArea.type === 'circle') {
              let size = Math.max(Math.abs(selectedFocusArea.w), Math.abs(selectedFocusArea.h));
@@ -1218,16 +1421,7 @@
         else if (isDragging) {
           const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
           dragStartX = pos.x; dragStartY = pos.y;
-          if (selectedElement && selectedElement !== 'background') {
-            if (selectedElement.type === 'line') {
-              selectedElement.points.forEach(pt => { pt.x += dx; pt.y += dy; });
-            } else {
-              let nx = selectedElement.x * canvas.width + dx; let ny = selectedElement.y * canvas.height + dy;
-              selectedElement.x = nx / canvas.width; selectedElement.y = ny / canvas.height;
-            }
-          } else if (selectedFocusArea) {
-            selectedFocusArea.x += dx; selectedFocusArea.y += dy;
-          }
+          getSelectionList().forEach(item => moveItemBy(item, dx, dy));
           drawCanvas();
         }
       } 
@@ -1236,6 +1430,11 @@
         else if (activeCropHandle === 'tl') { const x2 = cropArea.x + cropArea.w, y2 = cropArea.y + cropArea.h; cropArea.x = pos.x; cropArea.y = pos.y; cropArea.w = x2 - pos.x; cropArea.h = y2 - pos.y; }
         else if (activeCropHandle === 'tr') { const y2 = cropArea.y + cropArea.h; cropArea.y = pos.y; cropArea.w = pos.x - cropArea.x; cropArea.h = y2 - pos.y; }
         else if (activeCropHandle === 'bl') { const x2 = cropArea.x + cropArea.w; cropArea.x = pos.x; cropArea.w = x2 - pos.x; cropArea.h = pos.y - cropArea.y; }
+        // 상하좌우 변 개별 조절
+        else if (activeCropHandle === 't') { const y2 = cropArea.y + cropArea.h; cropArea.y = pos.y; cropArea.h = y2 - pos.y; }
+        else if (activeCropHandle === 'b') { cropArea.h = pos.y - cropArea.y; }
+        else if (activeCropHandle === 'l') { const x2 = cropArea.x + cropArea.w; cropArea.x = pos.x; cropArea.w = x2 - pos.x; }
+        else if (activeCropHandle === 'r') { cropArea.w = pos.x - cropArea.x; }
         drawCanvas();
       } 
       else if (currentTool === 'line' && drawingLineInstance) {
@@ -1267,14 +1466,49 @@
       if (isResizingBackground) {
         isResizingBackground = false; saveHistoryState(); return;
       }
+      // 드래그 박스(마퀴) 선택 종료
+      if (isMarqueeSelecting) {
+        isMarqueeSelecting = false;
+        if (marqueeMoved && marqueeRect) {
+          multiSel = selectInMarquee(marqueeRect);
+          selectedElement = null; selectedFocusArea = null;
+          if (multiSel.length > 0) showToast(`${multiSel.length}개 요소를 선택했습니다.`);
+        } else {
+          // 단순 클릭 → 배경 선택(기존 동작)
+          selectedElement = 'background'; selectedFocusArea = null; multiSel = [];
+        }
+        marqueeRect = null; marqueeMoved = false;
+        drawCanvas(); updateSelectedActionArea();
+        return;
+      }
       let wasActionActive = isDragging || isResizingFocus || isDrawingFocus || isResizingCrop;
+      let justDrewFocus = false;
       if (isDrawingFocus && selectedFocusArea) {
         if (selectedFocusArea.w < 0) { selectedFocusArea.x += selectedFocusArea.w; selectedFocusArea.w = Math.abs(selectedFocusArea.w); }
         if (selectedFocusArea.h < 0) { selectedFocusArea.y += selectedFocusArea.h; selectedFocusArea.h = Math.abs(selectedFocusArea.h); }
+        // 클릭만 해서 거의 0px로 그려진 경우 생성 취소
+        if (selectedFocusArea.w < 5 || selectedFocusArea.h < 5) {
+          focusAreas = focusAreas.filter(f => f !== selectedFocusArea);
+          selectedFocusArea = null;
+        } else {
+          justDrewFocus = true;
+        }
       }
       isDragging = false; isResizingFocus = false; isResizingCrop = false; isDrawingFocus = false;
-      activeSnapGuides = []; drawCanvas(); updateSelectedActionArea();
-      if (wasActionActive && currentTool !== 'crop') saveHistoryState(); 
+      activeSnapGuides = [];
+      // 포커스 도형을 다 그리면 선택 모드로 전환하고 방금 그린 도형을 선택 상태로 둠
+      // (단, 도구가 잠겨 있으면 그대로 유지하여 연속 생성)
+      if (justDrewFocus) {
+        if (lockedTool === currentTool) {
+          selectedFocusArea = null;
+        } else {
+          const drawn = selectedFocusArea;
+          selectTool('select');
+          selectedFocusArea = drawn;
+        }
+      }
+      drawCanvas(); updateSelectedActionArea();
+      if (wasActionActive && currentTool !== 'crop') saveHistoryState();
     });
 
     canvas.addEventListener('dblclick', (e) => {
@@ -1298,34 +1532,36 @@
 
     function downloadResult() {
       if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
-      const tempSelected = selectedFocusArea; selectedFocusArea = null; 
+      const tempSelected = selectedFocusArea; selectedFocusArea = null;
       const tempElement = selectedElement; selectedElement = null;
+      const tempMulti = multiSel; multiSel = [];
       drawCanvas();
-      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); return; }
+      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); return; }
       try {
         const link = document.createElement('a');
         const fileIndex = String(downloadCount).padStart(3, '0');
         link.download = `CLE Robotics_Manual_${fileIndex}.png`;
         link.href = canvas.toDataURL('image/png');
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        downloadCount++; selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); showToast('성공적으로 저장되었습니다!');
-      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); }
+        downloadCount++; selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); showToast('성공적으로 저장되었습니다!');
+      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); }
     }
 
     function copyToClipboard() {
       if (!bgImage) { showToast('복사 대상이 없습니다.', 'error'); return; }
-      const tempSelected = selectedFocusArea; selectedFocusArea = null; 
+      const tempSelected = selectedFocusArea; selectedFocusArea = null;
       const tempElement = selectedElement; selectedElement = null;
+      const tempMulti = multiSel; multiSel = [];
       drawCanvas();
-      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); return; }
+      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); return; }
       try {
         canvas.toBlob((blob) => {
           const item = new ClipboardItem({ "image/png": blob });
           navigator.clipboard.write([item]).then(() => {
-            selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); showToast('클립보드에 이미지가 복사되었습니다!');
-          }).catch(() => { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); });
+            selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); showToast('클립보드에 이미지가 복사되었습니다!');
+          }).catch(() => { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); });
         }, 'image/png');
-      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; drawCanvas(); }
+      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); }
     }
 
     // 기본 로고 세팅
