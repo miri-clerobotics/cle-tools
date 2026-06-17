@@ -5,34 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CLE Robotics - 이메일 서명 생성기</title>
   
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- React & ReactDOM CDN -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  
-  <!-- Babel CDN (JSX 문법을 브라우저가 읽게 해줌) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
 
   <style>
     body { font-family: 'Noto Sans KR', sans-serif; }
   </style>
 </head>
 <body>
-  <!-- React 앱이 그려질 도화지 -->
   <div id="root"></div>
 
-  <!-- 여기서부터 우리가 만든 React 로직 -->
   <script type="text/babel">
     const { useState, useEffect } = React;
 
     function App() {
-      // 1. 서명 언어 및 근무지 상태 설정
-      const [sigLang, setSigLang] = useState("ko"); // "ko" | "en"
-      const [locationType, setLocationType] = useState("hq"); // "hq" | "lab"
+      const [sigLang, setSigLang] = useState("ko");
+      const [locationType, setLocationType] = useState("hq");
 
-      // 2. 임직원 정보 입력 관련 상태 (State) - 요구된 기본값으로 변경
       const [nameKo, setNameKo] = useState("김클레");
       const [nameEn, setNameEn] = useState("KIM, CLE");
       const [deptKo, setDeptKo] = useState("소프트웨어 연구개발");
@@ -42,11 +34,14 @@
       const [mobile, setMobile] = useState("10.1234.5678");
       const [email, setEmail] = useState("kimcle");
 
-      const [logoUrl, setLogoUrl] = useState("https://raw.githubusercontent.com/miri-clerobotics/manual-tool/30d6f03aad8082ac0c25107127ec8a0bac2fe2ab/CLE%20ROBOTICS%20logo_Horizontal%20type.png");
+      const [logoUrlKo, setLogoUrlKo] = useState("https://github.com/miri-clerobotics/cle-tools/blob/main/logo-ko.png?raw=true");
+      const [logoUrlEn, setLogoUrlEn] = useState("https://github.com/miri-clerobotics/cle-tools/blob/main/logo-en.png?raw=true");
+
+      const currentLogoUrl = sigLang === "ko" ? logoUrlKo : logoUrlEn;
 
       const [copiedSign, setCopiedSign] = useState(false);
+      const [showExtraDisclaimer, setShowExtraDisclaimer] = useState(false);
 
-      // 부서명 프리셋 데이터
       const deptPresets = [
         { label: "소프트웨어 연구개발", ko: "소프트웨어 연구개발", en: "Software R&D" },
         { label: "시스템 연구개발", ko: "시스템 연구개발", en: "System R&D" },
@@ -58,7 +53,6 @@
         { label: "사용 안 함 (공란)", ko: "", en: "" }
       ];
 
-      // 직급명 프리셋 데이터
       const titlePresets = [
         { label: "책임연구원 | 리드", ko: "책임연구원 | 리드", en: "Senior Engineer | Lead" },
         { label: "책임매니저 | 리드", ko: "책임매니저 | 리드", en: "Senior Manager | Lead" },
@@ -69,7 +63,6 @@
         { label: "사용 안 함 (공란)", ko: "", en: "" }
       ];
 
-      // 근무지 변경 시 기본 부서, 직무 변경 핸들러
       const handleLocationChange = (loc) => {
         setLocationType(loc);
         if (loc === "hq") {
@@ -85,7 +78,6 @@
         }
       };
 
-      // 주소 볼드 처리된 상세 정보 맵
       const locationDetails = {
         hq: {
           t: "2.468.1114",
@@ -105,72 +97,71 @@
 
       const activeLocation = locationDetails[locationType];
 
-      // 이름 렌더링 블록 (가로 중앙정렬 유지)
       const renderNameRow = () => {
         if (sigLang === "ko") {
           return `
-            <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:16px; font-weight:700; color:#000000; white-space:nowrap; vertical-align: middle;">${nameKo}</td>
-            <td style="font-family:'Microsoft Sans Serif',sans-serif; font-size:12px; color:#cccccc; padding:0 10px; vertical-align: middle;">|</td>
-            <td style="font-family:'Noto Sans',sans-serif; font-size:16px; font-weight:700; color:#000000; white-space:nowrap; vertical-align: middle;">${nameEn}</td>
+            <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:16px; font-weight:700; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${nameKo}</td>
+            <td style="font-family:'Microsoft Sans Serif',sans-serif; font-size:12px; color:#cccccc; padding:0 10px; vertical-align: middle; line-height: 1;">|</td>
+            <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:16px; font-weight:700; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${nameEn}</td>
           `;
         }
-        return `<td style="font-family:'Noto Sans',sans-serif; font-size:16px; font-weight:700; color:#000000; white-space:nowrap; vertical-align: middle;">${nameEn}</td>`;
+        return `<td style="font-family:'Noto Sans',sans-serif; font-size:16px; font-weight:700; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${nameEn}</td>`;
       };
 
-      // 파트명 렌더링 블록
       const renderDeptRow = () => {
         if (!deptKo && !deptEn) return '';
         if (sigLang === "ko") {
           return `
-            <table cellpadding="0" cellspacing="0" border="0" style="margin-top:2px; text-align: left;">
+            <table cellpadding="0" cellspacing="0" border="0" style="margin-top:6px; text-align: left;">
               <tr>
-                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle;">${deptKo}</td>
-                <td style="font-family:'Microsoft Sans Serif',sans-serif; font-size:12px; color:#cccccc; padding:0 10px; vertical-align: middle;">|</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle;">${deptEn}</td>
+                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${deptKo}</td>
+                <td style="font-family:'Microsoft Sans Serif',sans-serif; font-size:12px; color:#cccccc; padding:0 10px; vertical-align: middle; line-height: 1;">|</td>
+                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${deptEn}</td>
               </tr>
             </table>
           `;
         }
         return `
-          <table cellpadding="0" cellspacing="0" border="0" style="margin-top:2px; text-align: left;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-top:6px; text-align: left;">
             <tr>
-              <td style="font-family:'Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle;">${deptEn}</td>
+              <td style="font-family:'Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${deptEn}</td>
             </tr>
           </table>
         `;
       };
 
-      // 직급명 렌더링 블록
       const renderTitleRow = () => {
         if (!titleKo && !titleEn) return '';
         if (sigLang === "ko") {
           return `
-            <table cellpadding="0" cellspacing="0" border="0" style="margin-top:2px; text-align: left;">
+            <table cellpadding="0" cellspacing="0" border="0" style="margin-top:6px; text-align: left;">
               <tr>
-                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle;">${titleKo}</td>
-                <td style="font-family:'Microsoft Sans Serif',sans-serif; font-size:12px; color:#cccccc; padding:0 10px; vertical-align: middle;">|</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle;">${titleEn}</td>
+                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${titleKo}</td>
+                <td style="font-family:'Microsoft Sans Serif',sans-serif; font-size:12px; color:#cccccc; padding:0 10px; vertical-align: middle; line-height: 1;">|</td>
+                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${titleEn}</td>
               </tr>
             </table>
           `;
         }
         return `
-          <table cellpadding="0" cellspacing="0" border="0" style="margin-top:2px; text-align: left;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-top:6px; text-align: left;">
             <tr>
-              <td style="font-family:'Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle;">${titleEn}</td>
+              <td style="font-family:'Noto Sans',sans-serif; font-size:12px; color:#000000; white-space:nowrap; vertical-align: middle; line-height: 1;">${titleEn}</td>
             </tr>
           </table>
         `;
       };
 
       const renderDisclaimer = () => {
-        if (sigLang === "ko") {
-          return `<strong>[비밀유지 고지]</strong> 본 메일의 본문 및 첨부 자료 등 모든 내용은 지정된 수신인만을 위한 것으로, 그 외의 사람에게 공개되어서는 안 됩니다. 귀하가 지정된 수신인이 아닐 경우, 본 메일의 내용을 무단으로 배포하거나 복제하실 수 없습니다. 만약 착오로 본 메일을 수신하셨다면, 즉시 발신인에게 알려주시고 본 메일을 시스템에서 삭제하여 주시기 바랍니다.`;
-        }
-        return `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
+        const koDisclaimer = `<strong>[비밀유지 고지]</strong> 본 메일의 본문 및 첨부 자료 등 모든 내용은 지정된 수신인만을 위한 것으로, 그 외의 사람에게 공개되어서는 안 됩니다. 귀하가 지정된 수신인이 아닐 경우, 본 메일의 내용을 무단으로 배포하거나 복제하실 수 없습니다. 만약 착오로 본 메일을 수신하셨다면, 즉시 발신인에게 알려주시고 본 메일을 시스템에서 삭제하여 주시기 바랍니다.`;
+        const enDisclaimer = `<strong>[Confidentiality Notice]</strong> This email, including its contents and any attachments, is intended solely for the designated recipient(s) and may contain confidential or privileged information. Any disclosure, distribution, or reproduction of this email by anyone other than the intended recipient is strictly prohibited. If you have received this email in error, please notify the sender immediately and delete it from your system.`;
+
+        const primary = sigLang === "ko" ? koDisclaimer : enDisclaimer;
+        const secondary = sigLang === "ko" ? enDisclaimer : koDisclaimer;
+
+        return showExtraDisclaimer ? `${primary}<br><br>${secondary}` : primary;
       };
 
-      // 서명 HTML 템플릿
       const signatureHTML = `<style>
       @media only screen and (max-width: 520px) {
         .mobile-logo-wrap {
@@ -182,7 +173,7 @@
         }
         .mobile-logo-td {
           text-align: left !important;
-          padding-bottom: 12px !important;
+          padding-bottom: 16px !important;
         }
         .mobile-logo-td img {
           float: none !important;
@@ -197,26 +188,37 @@
         }
       }
       </style>
-      <table id="signature-table-target" width="860" cellpadding="0" cellspacing="0" border="0" style="max-width:860px; width:100%; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left;">
+      <table id="signature-table-target" width="690" cellpadding="0" cellspacing="0" border="0" style="max-width:690px; width:100%; background:#ffffff; border:1px solid #cccccc; border-collapse:collapse; font-family:'Noto Sans KR','Noto Sans',sans-serif; text-align: left;">
         <tr>
           <td style="padding:16px; text-align: left;">
-
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left;">
+              <tr>
+                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#707070; line-height:1.6; text-align: left; padding-bottom: 6px;">
+                  ${renderDisclaimer()}
+                </td>
+              </tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
+              <tr>
+                <td style="padding: 16px 0; text-align: left; width: 100%;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-top: 1px solid #cccccc;">
+                    <tr><td style="font-size:0; line-height:0; height:1px;"> </td></tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left; border-collapse:collapse;" dir="ltr">
               <tr>
                 <td style="padding:0; text-align: left; font-size:0;">
-                  
-                  <!-- Logo Section (Top Left) -->
-                  <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 12px;">
+                  <div class="mobile-logo-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left; padding-bottom: 24px;">
                     <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
                       <tr>
                         <td class="mobile-logo-td" style="vertical-align:top; text-align: left; padding:0;">
-                          <img src="${logoUrl}" width="300" height="68" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:300px; max-height:68px; border:0;">
+                          <img src="${currentLogoUrl}" width="240" height="54" alt="CLE Robotics Logo" style="display:block; object-fit:contain; max-width:240px; max-height:54px; border:0;">
                         </td>
                       </tr>
                     </table>
                   </div>
-
-                  <!-- Personal Info Section (Below Logo) -->
                   <div class="mobile-info-wrap" style="display: block; width: 100%; font-size: 14px; text-align: left;">
                     <table cellpadding="0" cellspacing="0" border="0" style="text-align: left; width: 100%;">
                       <tr>
@@ -232,15 +234,12 @@
                       </tr>
                     </table>
                   </div>
-
                 </td>
               </tr>
             </table>
-
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr><td height="16" style="font-size:0; line-height:0;">&nbsp;</td></tr>
+              <tr><td height="16" style="font-size:0; line-height:0;"> </td></tr>
             </table>
-
             <table cellpadding="0" cellspacing="0" border="0" style="font-size:12px; color:#000000; text-align: left; width: 100%;">
               <tr>
                 <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">M</td>
@@ -248,7 +247,7 @@
               </tr>
               <tr>
                 <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">E</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;"><a href="mailto:${email}@clerobotics.com" style="color:#000000; text-decoration:none;">${email}@clerobotics.com</a></td>
+                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;"> ${email}@clerobotics.com</td>
               </tr>
               <tr>
                 <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">T</td>
@@ -260,38 +259,15 @@
               </tr>
               <tr>
                 <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; padding-bottom:2px; width:16px; vertical-align:top;">H</td>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">
-                  <a href="https://www.clerobotics.com" target="_blank" style="color:#000000; text-decoration:none;">www.clerobotics.com</a>
-                </td>
+                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-bottom:2px; padding-left:4px; vertical-align:top;">  www.clerobotics.com</td>
               </tr>
               <tr>
-                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; width:16px; vertical-align:top;">A</td>
+                <td style="font-family:'Noto Sans',sans-serif; font-size:12px; font-weight:700; width:16px; vertical-align:top; line-height:1.6;">A</td>
                 <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; font-weight:400; padding-left:4px; line-height:1.6; vertical-align:top;">
-                  <a href="${activeLocation.mapUrl}" target="_blank" style="color:#000000; text-decoration:none;">
-                    ${sigLang === "ko" ? `${activeLocation.aKo}<br>${activeLocation.aEn}` : activeLocation.aEn}
-                  </a>
+                  ${sigLang === "ko" ? `${activeLocation.aKo}<br>${activeLocation.aEn}` : activeLocation.aEn}
                 </td>
               </tr>
             </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
-              <tr>
-                <td style="padding: 16px 0; text-align: left; width: 100%;">
-                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; height: 1px; background-image: linear-gradient(to right, #cccccc 50%, rgba(255,255,255,0) 0%); background-position: bottom; background-size: 6px 1px; background-repeat: repeat-x;">
-                    <tr><td style="font-size:0; line-height:0;">&nbsp;</td></tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: left;">
-              <tr>
-                <td style="font-family:'Noto Sans KR','Noto Sans',sans-serif; font-size:12px; color:#707070; line-height:1.6; text-align: left;">
-                  ${renderDisclaimer()}
-                </td>
-              </tr>
-            </table>
-
           </td>
         </tr>
       </table>`;
@@ -302,14 +278,12 @@
           fallbackCopy();
           return;
         }
-
         try {
           const range = document.createRange();
           range.selectNode(tableEl);
           const selection = window.getSelection();
           selection.removeAllRanges();
           selection.addRange(range);
-
           const successful = document.execCommand("copy");
           if (successful) {
             setCopiedSign(true);
@@ -333,100 +307,84 @@
 
       return (
         <div className="h-screen flex bg-[#F8F9FB] text-slate-800 overflow-hidden font-sans">
-          
-          {/* [좌측 고정 메뉴] 입력용 제어판 */}
-          <aside className="w-[340px] bg-white border-r border-slate-200/80 p-5 flex flex-col gap-6 overflow-y-auto h-full shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.01)] z-10">
+          <aside className="w-[380px] bg-white border-r border-slate-200/80 p-5 flex flex-col gap-6 overflow-y-auto h-full shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.01)] z-10">
             <div>
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-[#FF4747] flex items-center justify-center text-white shadow-md shadow-[#FF4747]/20">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex items-center justify-center shrink-0">
+                  <img src="/favicon.ico" alt="Logo" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <span className="text-sm font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">CLE Robotics</span>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Signature Builder</p>
+                  <span className="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Email Signature Tool</span>
+                  <p className="text-[10px] text-slate-400 font-medium">클레로보틱스 메일 서명</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4.5 flex-1">
-              {/* 서명 언어 선택 */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">서명 언어 선택</label>
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
-                  <button onClick={() => setSigLang("ko")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${sigLang === "ko" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>
-                    한국어
-                  </button>
-                  <button onClick={() => setSigLang("en")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${sigLang === "en" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>
-                    영어
-                  </button>
+                  <button onClick={() => setSigLang("ko")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${sigLang === "ko" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>한국어</button>
+                  <button onClick={() => setSigLang("en")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${sigLang === "en" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>영어</button>
                 </div>
               </div>
 
-              {/* 근무지 선택 */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-4">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">추가 비밀유지 고지</label>
+                <button onClick={() => setShowExtraDisclaimer(!showExtraDisclaimer)} className={`w-full py-2 rounded-xl text-xs font-bold transition-all border ${showExtraDisclaimer ? "bg-[#FF4747] text-white border-[#FF4747]" : "bg-slate-50 text-slate-500 border-slate-200"}`}>
+                  {showExtraDisclaimer ? (sigLang === "ko" ? "영문 비밀유지 고지 포함됨" : "국문 비밀유지 고지 포함됨") : (sigLang === "ko" ? "영문 비밀유지 고지 추가" : "국문 비밀유지 고지 추가")}
+                </button>
+              </div>
+
+              <div className="space-y-2 mt-4">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">근무지 선택</label>
                 <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
-                  <button onClick={() => handleLocationChange("hq")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${locationType === "hq" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>
-                    본사 (기술연구소)
-                  </button>
-                  <button onClick={() => handleLocationChange("lab")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${locationType === "lab" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>
-                    시스템연구소
-                  </button>
+                  <button onClick={() => handleLocationChange("hq")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${locationType === "hq" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>본사 (기술연구소)</button>
+                  <button onClick={() => handleLocationChange("lab")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${locationType === "lab" ? "bg-white text-slate-800 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}>시스템연구소</button>
                 </div>
               </div>
 
               <div className="border-t border-slate-100 pt-3.5 mt-2">
                 <span className="text-xs font-extrabold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md inline-block mb-3">개인정보</span>
                 
-                {/* 이름 그룹 */}
                 <div className="space-y-2 mb-4">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이름 (Name)</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이름</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input type="text" value={nameKo} onChange={(e) => setNameKo(e.target.value)} placeholder="한글 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
-                    <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value)} placeholder="영문 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
+                    <input type="text" value={nameEn} onChange={(e) => setNameEn(e.target.value.toUpperCase())} placeholder="영문 이름" className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                   </div>
                 </div>
 
-                {/* 소속 파트 그룹 */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-4">
                   <div className="flex justify-between items-end">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">파트명 (Department)</label>
-                    <select 
-                      onChange={(e) => {
-                        const preset = deptPresets.find(p => p.label === e.target.value);
-                        if(preset) {
-                          setDeptKo(preset.ko);
-                          setDeptEn(preset.en);
-                        }
-                      }}
-                      className="text-[10px] bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-500 cursor-pointer outline-none"
-                    >
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">파트명</label>
+                    <select onChange={(e) => {
+                      const preset = deptPresets.find(p => p.label === e.target.value);
+                      if(preset) {
+                        setDeptKo(preset.ko);
+                        setDeptEn(preset.en);
+                      }
+                    }} className="text-[10px] bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-500 cursor-pointer outline-none">
                       <option value="">프리셋 선택</option>
                       {deptPresets.map(p => <option key={p.label} value={p.label}>{p.label}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <input type="text" value={deptKo} onChange={(e) => setDeptKo(e.target.value)} placeholder="국문 소속 파트 (직접입력 가능)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
-                    <input type="text" value={deptEn} onChange={(e) => setDeptEn(e.target.value)} placeholder="영문 소속 파트 (직접입력 가능)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" value={deptKo} onChange={(e) => setDeptKo(e.target.value)} placeholder="국문 소속 파트" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
+                    <input type="text" value={deptEn} onChange={(e) => setDeptEn(e.target.value)} placeholder="영문 소속 파트" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                   </div>
                 </div>
 
-                {/* 직급 그룹 */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-4">
                   <div className="flex justify-between items-end">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">직급명 (Position)</label>
-                    <select 
-                      onChange={(e) => {
-                        const preset = titlePresets.find(p => p.label === e.target.value);
-                        if(preset) {
-                          setTitleKo(preset.ko);
-                          setTitleEn(preset.en);
-                        }
-                      }}
-                      className="text-[10px] bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-500 cursor-pointer outline-none"
-                    >
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">직급명</label>
+                    <select onChange={(e) => {
+                      const preset = titlePresets.find(p => p.label === e.target.value);
+                      if(preset) {
+                        setTitleKo(preset.ko);
+                        setTitleEn(preset.en);
+                      }
+                    }} className="text-[10px] bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-500 cursor-pointer outline-none">
                       <option value="">프리셋 선택</option>
                       {titlePresets.map(p => <option key={p.label} value={p.label}>{p.label}</option>)}
                     </select>
@@ -437,18 +395,16 @@
                   </div>
                 </div>
 
-                {/* 휴대폰 번호 */}
-                <div className="space-y-2 mb-4">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">휴대폰 번호 (Mobile)</label>
+                <div className="space-y-2 mb-4 mt-4">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">휴대폰 번호</label>
                   <div className="relative flex items-center">
                     <span className="absolute left-3 text-xs font-bold text-slate-400 select-none pointer-events-none">+82.</span>
                     <input type="text" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="10.4617.3827" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-3 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold transition-all" />
                   </div>
                 </div>
 
-                {/* 이메일 주소 */}
-                <div className="space-y-2 mb-4">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이메일 주소 (Email)</label>
+                <div className="space-y-2 mb-4 mt-4">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">이메일 주소</label>
                   <div className="relative flex items-center">
                     <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="miri" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-28 py-2 text-xs focus:outline-none focus:border-[#FF4747] font-semibold text-right transition-all" />
                     <span className="absolute right-3 text-[11px] font-bold text-slate-400 select-none pointer-events-none">@clerobotics.com</span>
@@ -456,37 +412,36 @@
                 </div>
               </div>
 
-              {/* 고급 옵션 */}
               <div className="space-y-2 border-t border-slate-100 pt-3.5">
                 <button onClick={() => {
                   const el = document.getElementById("advancedConfig");
                   if (el) el.classList.toggle("hidden");
                 }} className="text-[10px] font-extrabold text-slate-400 hover:text-slate-600 uppercase tracking-wider flex items-center gap-1">
-                  <span>고급 설정 (로고 이미지)</span>
+                  <span>고급 설정 (로고 이미지 URL)</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 <div id="advancedConfig" className="hidden space-y-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200/50 mt-1">
+                  <div className="space-y-1 mb-2">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase block">국문 로고 이미지 주소</label>
+                    <input type="text" value={logoUrlKo} onChange={(e) => setLogoUrlKo(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none font-semibold text-slate-700" />
+                  </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase block">로고 이미지 URL</label>
-                    <input type="text" value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none font-semibold text-slate-700" />
+                    <label className="text-[9px] font-bold text-slate-400 uppercase block">영문 로고 이미지 주소</label>
+                    <input type="text" value={logoUrlEn} onChange={(e) => setLogoUrlEn(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none font-semibold text-slate-700" />
                   </div>
                 </div>
               </div>
             </div>
           </aside>
 
-          {/* [우측 캔버스 영역] 미리보기 및 복사 조작 스크린 */}
           <main className="flex-1 flex flex-col overflow-hidden p-8">
             <div className="max-w-5xl w-full mx-auto flex flex-col flex-1 gap-4 overflow-hidden">
-              
-              {/* 상단 바 */}
               <div className="flex items-center justify-between border-b border-slate-200/80 pb-2 shrink-0">
                 <div className="flex items-center gap-1.5 py-1.5">
-                  <span className="text-xs font-extrabold text-slate-900 bg-slate-100 border px-3 py-1 rounded-lg">이메일 서명 미리보기</span>
+                  <span className="text-xs font-extrabold text-slate-500">이메일 서명 미리보기</span>
                 </div>
-
                 <div>
                   <button onClick={handleCopySignature} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${copiedSign ? "bg-emerald-500 text-white shadow-emerald-100" : "bg-[#FF4747] hover:bg-[#FF4747]/90 text-white shadow-[#FF4747]/10"}`}>
                     {copiedSign ? "서명 복사 완료 ✓" : "이메일 서명 복사하기"}
@@ -494,14 +449,12 @@
                 </div>
               </div>
 
-              {/* 메인 미리보기 박스 */}
               <div className="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 overflow-auto flex items-start justify-center">
-                <div className="border border-slate-100 rounded-2xl p-6 shadow-sm bg-white select-text w-full max-w-[850px] overflow-x-auto flex justify-center">
-                  <div dangerouslySetInnerHTML={{ __html: signatureHTML }} />
+                <div className="border border-slate-100 rounded-2xl p-6 shadow-sm bg-white select-text overflow-x-auto flex justify-start">
+                  <div style={{ width: "690px", minWidth: "690px", flexShrink: 0 }} dangerouslySetInnerHTML={{ __html: signatureHTML }} />
                 </div>
               </div>
 
-              {/* 하단 팁 */}
               <div className="bg-amber-50/60 border border-amber-100 rounded-xl p-4 text-xs text-slate-600 leading-normal shrink-0 flex gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -514,10 +467,8 @@
                   </ul>
                 </div>
               </div>
-
             </div>
           </main>
-          
         </div>
       );
     }
