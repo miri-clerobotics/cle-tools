@@ -31,15 +31,7 @@
 - [ ] Release canvas memory after every page.
 - [ ] Show privacy warning, structure-loss warning, original size, output size, savings, page count, elapsed time, and output-larger-than-input guidance.
 
-### Task 3: Add Manual Test Fixture
-
-**Files:**
-- Create: `document-compressor/sample-pdf.html`
-
-- [ ] Create a printable sample document with text, link-like text, colored blocks, and image-like gradients so users can print/save it as PDF for manual compression tests.
-- [ ] Link the sample fixture from the compressor page.
-
-### Task 4: Verify and Prepare Local Manual Testing
+### Task 3: Verify and Prepare Local Manual Testing
 
 **Files:**
 - No code files expected.
@@ -48,4 +40,3 @@
 - [ ] Start a local static file server from the worktree.
 - [ ] Confirm the local URL for manual testing.
 - [ ] Commit implementation changes after verification.
-
