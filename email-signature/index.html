@@ -41,6 +41,9 @@
 
       const [copiedSign, setCopiedSign] = useState(false);
       const [showExtraDisclaimer, setShowExtraDisclaimer] = useState(false);
+      
+      // 새로 추가된 상태: 주소 순서 반전 여부
+      const [reverseAddressOrder, setReverseAddressOrder] = useState(false);
 
       const deptPresets = [
         { label: "소프트웨어 연구개발", ko: "소프트웨어 연구개발", en: "Software R&D" },
@@ -83,26 +86,32 @@
       const labKo = "<strong>시스템연구소 (데모/전시)</strong> 15847 경기 군포시 공단로 117, 1층";
       const labEn = "<strong>System R&D Center (Demo/Exhibition)</strong> 1F, 117, Gongdan-ro, Gunpo-si, Gyeonggi-do, Republic of Korea";
 
+      // 주소 순서 반전 로직 적용
       const locationDetails = {
         hq: {
           t: "2.468.1114",
           f: "2.2284.0135",
-          getAddress: (lang) => lang === "ko" ? `${hqKo}<br>${hqEn}` : `${hqEn}<br>${hqKo}`
+          getAddress: (lang) => {
+            const isKoFirst = lang === "ko" ? !reverseAddressOrder : reverseAddressOrder;
+            return isKoFirst ? `${hqKo}<br>${hqEn}` : `${hqEn}<br>${hqKo}`;
+          }
         },
         lab: {
           t: "31.427.0314",
           f: "31.427.0315",
-          getAddress: (lang) => lang === "ko" ? `${labKo}<br>${labEn}` : `${labEn}<br>${labKo}`
+          getAddress: (lang) => {
+            const isKoFirst = lang === "ko" ? !reverseAddressOrder : reverseAddressOrder;
+            return isKoFirst ? `${labKo}<br>${labEn}` : `${labEn}<br>${labKo}`;
+          }
         },
         both: {
           t: "2.468.1114",
           f: "2.2284.0135",
           getAddress: (lang) => {
-            if (lang === "ko") {
-              // 본사KO -> 본사EN -> 시스템KO -> 시스템EN
+            const isKoFirst = lang === "ko" ? !reverseAddressOrder : reverseAddressOrder;
+            if (isKoFirst) {
               return `${hqKo}<br>${hqEn}<br>${labKo}<br>${labEn}`;
             } else {
-              // 본사EN -> 본사KO -> 시스템EN -> 시스템KO
               return `${hqEn}<br>${hqKo}<br>${labEn}<br>${labKo}`;
             }
           }
@@ -221,7 +230,7 @@ text-align: left;">
                 </td>
               </tr>
             </table>
-                     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: left;">
               <tr>
                 <td style="padding: 16px 0; text-align: left; width: 100%;">
                   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-top: 1px solid #cccccc;">
@@ -476,8 +485,8 @@ border:0;">
                 </div>
               </div>
 
-              {/* [최하단 이동] 그외 옵션 (추가 비밀유지 고지) */}
-              <div className="space-y-2 border-t border-slate-100 pt-3.5 mt-4">
+              {/* [최하단 이동] 그외 옵션 (추가 비밀유지 고지 등) */}
+              <div className="space-y-2 border-t border-slate-100 pt-3.5 mt-4 pb-10">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                   그외 옵션
                 </label>
@@ -485,13 +494,25 @@ border:0;">
                   onClick={() => setShowExtraDisclaimer(!showExtraDisclaimer)}
                   className={`w-full py-2 rounded-xl text-xs font-bold transition-all border ${
                     showExtraDisclaimer
-                      ? "bg-[#FF4747] text-white border-[#FF4747]"
+                      ? "bg-[#1c1c1c] text-white border-[#1c1c1c]"
                       : "bg-slate-50 text-slate-500 border-slate-200"
                   }`}
                 >
                   {showExtraDisclaimer
                     ? sigLang === "ko" ? "영문 비밀유지 고지 포함됨" : "국문 비밀유지 고지 포함됨"
                     : sigLang === "ko" ? "영문 비밀유지 고지 추가" : "국문 비밀유지 고지 추가"}
+                </button>
+                
+                {/* 새로 추가된 버튼: 주소 순서 반전 */}
+                <button
+                  onClick={() => setReverseAddressOrder(!reverseAddressOrder)}
+                  className={`w-full py-2 mt-2 rounded-xl text-xs font-bold transition-all border ${
+                    reverseAddressOrder
+                      ? "bg-[#1c1c1c] text-white border-[#1c1c1c]"
+                      : "bg-slate-50 text-slate-500 border-slate-200"
+                  }`}
+                >
+                  {reverseAddressOrder ? "주소 순서 반전됨 (우선순위 변경)" : "주소 순서 반전 (국/영문)"}
                 </button>
               </div>
 
