@@ -80,7 +80,7 @@ The page will use the existing CLE tool visual language: light work surface, lef
 
 Primary flow:
 
-1. User opens "문서 용량 줄이기" from the portal.
+1. User opens "PDF 압축기" from the portal.
 2. User drops or selects one or more PDF files.
 3. User chooses a preset:
    - `작게`: lower render scale and lower JPEG quality.
@@ -197,4 +197,3 @@ Manual browser verification:
 - Test at desktop and mobile widths for layout integrity.
 
 Automated tests are limited because this repository is static HTML without a test harness. If a browser automation setup is added, cover file validation, preset state, and result rendering with Playwright.
-

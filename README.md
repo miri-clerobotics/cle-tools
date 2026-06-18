@@ -30,7 +30,7 @@ CLE Robotics 사내 업무를 조금 더 빠르게 처리하기 위한 간단한
 - 워터마크 추가
 - 완성 이미지 저장 또는 복사
 
-### 문서 용량 줄이기
+### PDF 압축기
 
 외부 클라우드 업로드 없이 브라우저 안에서 PDF 용량을 줄이는 도구입니다.
 
@@ -48,4 +48,4 @@ CLE Robotics 사내 업무를 조금 더 빠르게 처리하기 위한 간단한
 - `index.html`: 도구 선택 화면
 - `email-signature/index.html`: 이메일 서명 생성기
 - `manual-tool/index.html`: 매뉴얼 이미지 편집 도구
-- `document-compressor/index.html`: PDF 용량 줄이기 도구
+- `document-compressor/index.html`: PDF 압축기

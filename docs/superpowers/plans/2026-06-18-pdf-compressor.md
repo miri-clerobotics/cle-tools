@@ -16,7 +16,7 @@
 - Modify: `index.html`
 - Modify: `README.md`
 
-- [ ] Add a portal button linking to `/document-compressor/` with the label `문서 용량 줄이기`.
+- [ ] Add a portal button linking to `/document-compressor/` with the label `PDF 압축기`.
 - [ ] Add README section explaining PDF compression, local-only processing, and the generated sharing-copy limitation.
 - [ ] Verify the portal still renders as static HTML.
 
