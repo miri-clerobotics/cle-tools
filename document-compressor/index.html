@@ -24,10 +24,6 @@
 
     * { box-sizing: border-box; }
 
-    html {
-      font-size: 17px;
-    }
-
     body, input, button, select {
       font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     }
@@ -91,19 +87,19 @@
   <header class="bg-white/90 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
     <div class="max-w-[1600px] mx-auto px-5 py-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 min-w-0">
-        <a href="/" class="h-12 w-12 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0" title="도구 포털로 이동">
+        <a href="/" class="h-10 w-10 rounded-xl overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0" title="도구 포털로 이동">
           <img src="/favicon.ico" alt="CLE Robotics" class="w-full h-full object-cover">
         </a>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-950 truncate">PDF 압축기</h1>
-            <span class="hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-50 text-cyan-700 border border-cyan-100">Local Only</span>
+            <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent truncate">PDF 압축기</h1>
+            <span class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-100">Local Only</span>
           </div>
-          <p class="text-sm text-slate-500 font-medium">PDF를 외부 업로드 없이 공유용 사본으로 압축합니다.</p>
+          <p class="text-[10px] text-slate-400 font-medium">PDF 로컬 압축 도구</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <a href="/" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold text-slate-600">
+        <a href="/" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600">
           <i data-lucide="home" class="w-4 h-4"></i>
           포털
         </a>
@@ -111,15 +107,15 @@
     </div>
   </header>
 
-  <main class="max-w-[1600px] mx-auto px-6 py-7 lg:py-9 grid grid-cols-1 xl:grid-cols-[440px_minmax(0,1fr)] gap-6 xl:gap-7">
-    <aside class="panel rounded-lg p-6 h-fit lg:sticky lg:top-24">
-      <div class="space-y-7">
+  <main class="max-w-7xl mx-auto px-5 py-6 lg:py-8 grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-5">
+    <aside class="panel rounded-xl p-5 h-fit lg:sticky lg:top-24">
+      <div class="space-y-6">
         <section>
           <div class="flex items-center gap-2 mb-3">
             <i data-lucide="shield-check" class="w-4 h-4 text-cyan-700"></i>
-            <h2 class="text-sm font-extrabold text-slate-500 uppercase tracking-widest">처리 방식</h2>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">처리 방식</h2>
           </div>
-          <div class="space-y-2.5 text-sm leading-relaxed">
+          <div class="space-y-2 text-xs leading-relaxed">
             <p class="p-3 rounded-lg bg-cyan-50 border border-cyan-100 text-cyan-800 font-semibold">파일은 서버로 업로드되지 않고 이 브라우저 안에서만 처리됩니다.</p>
             <p class="p-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 font-semibold">공유용 PDF로 다시 생성되며 텍스트 검색, 링크, 주석, 양식이 사라질 수 있습니다.</p>
             <p class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 font-semibold">원본 파일은 수정하지 않고 새 파일만 다운로드합니다.</p>
@@ -128,19 +124,19 @@
 
         <section>
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-extrabold text-slate-500 uppercase tracking-widest">압축 프리셋</h2>
-            <span id="activePresetHint" class="text-xs font-bold text-[#FF4747]">균형</span>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">압축 프리셋</h2>
+            <span id="activePresetHint" class="text-[10px] font-bold text-[#FF4747]">균형</span>
           </div>
           <div class="grid grid-cols-3 gap-1.5">
-            <button class="preset h-20 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-sm font-extrabold flex flex-col items-center justify-center gap-1.5" data-preset="small">
+            <button class="preset h-16 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-[11px] font-bold flex flex-col items-center justify-center gap-1" data-preset="small">
               <i data-lucide="minimize-2" class="w-4 h-4"></i>
               작게
             </button>
-            <button class="preset active h-20 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-sm font-extrabold flex flex-col items-center justify-center gap-1.5" data-preset="balanced">
+            <button class="preset active h-16 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-[11px] font-bold flex flex-col items-center justify-center gap-1" data-preset="balanced">
               <i data-lucide="scale" class="w-4 h-4"></i>
               균형
             </button>
-            <button class="preset h-20 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-sm font-extrabold flex flex-col items-center justify-center gap-1.5" data-preset="sharp">
+            <button class="preset h-16 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-[11px] font-bold flex flex-col items-center justify-center gap-1" data-preset="sharp">
               <i data-lucide="badge-check" class="w-4 h-4"></i>
               선명하게
             </button>
@@ -149,36 +145,36 @@
 
         <section class="border-t border-slate-200 pt-5">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-extrabold text-slate-500 uppercase tracking-widest">세부 설정</h2>
-            <button id="resetPresetBtn" class="text-xs font-bold text-slate-400 hover:text-slate-700">초기화</button>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">세부 설정</h2>
+            <button id="resetPresetBtn" class="text-[10px] font-bold text-slate-400 hover:text-slate-700">초기화</button>
           </div>
           <div class="space-y-5">
             <label class="block">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-bold text-slate-600">렌더 배율</span>
-                <span id="scaleValue" class="text-sm font-extrabold text-[#FF4747]">1.4x</span>
+                <span class="text-xs font-bold text-slate-600">렌더 배율</span>
+                <span id="scaleValue" class="text-[11px] font-extrabold text-[#FF4747]">1.4x</span>
               </div>
               <input id="scaleRange" class="range w-full" type="range" min="0.8" max="2.2" step="0.1" value="1.4">
-              <p class="mt-1.5 text-xs text-slate-400 font-medium">페이지 크기나 글자 크기는 유지됩니다. 낮을수록 용량이 작고, 높을수록 다시 그린 이미지가 선명합니다.</p>
+              <p class="mt-1 text-[10px] text-slate-400 font-medium">페이지 크기나 글자 크기는 유지됩니다. 낮을수록 용량이 작고, 높을수록 다시 그린 이미지가 선명합니다.</p>
             </label>
 
             <label class="block">
               <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-bold text-slate-600">JPEG 품질</span>
-                <span id="qualityValue" class="text-sm font-extrabold text-[#FF4747]">72%</span>
+                <span class="text-xs font-bold text-slate-600">JPEG 품질</span>
+                <span id="qualityValue" class="text-[11px] font-extrabold text-[#FF4747]">72%</span>
               </div>
               <input id="qualityRange" class="range w-full" type="range" min="35" max="95" step="1" value="72">
-              <p class="mt-1.5 text-xs text-slate-400 font-medium">낮을수록 용량이 줄지만 이미지 압축 흔적이 늘어납니다.</p>
+              <p class="mt-1 text-[10px] text-slate-400 font-medium">낮을수록 용량이 줄지만 이미지 압축 흔적이 늘어납니다.</p>
             </label>
           </div>
         </section>
 
         <section class="border-t border-slate-200 pt-5">
-          <button id="compressBtn" class="w-full h-14 rounded-lg bg-[#FF4747] hover:bg-[#e83d3d] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-base font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-red-100" disabled>
+          <button id="compressBtn" class="w-full h-11 rounded-xl bg-[#FF4747] hover:bg-[#e83d3d] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-red-100" disabled>
             <i data-lucide="file-down" class="w-4 h-4"></i>
             압축 시작
           </button>
-          <button id="cancelBtn" class="hidden mt-2.5 w-full h-12 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-sm font-extrabold">
+          <button id="cancelBtn" class="hidden mt-2 w-full h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-extrabold">
             작업 중단
           </button>
         </section>
@@ -192,36 +188,36 @@
           <i data-lucide="upload-cloud" class="w-7 h-7"></i>
         </div>
         <h2 class="text-xl font-extrabold text-slate-950 tracking-tight">PDF 파일을 여기에 놓으세요</h2>
-        <p class="mt-2 text-base text-slate-500 font-medium">또는 클릭해서 파일을 선택하세요. 여러 PDF를 순서대로 처리할 수 있습니다.</p>
+        <p class="mt-2 text-sm text-slate-500 font-medium">또는 클릭해서 파일을 선택하세요. 여러 PDF를 순서대로 처리할 수 있습니다.</p>
       </div>
 
       <div class="panel rounded-lg overflow-hidden">
-        <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between gap-3">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
           <div>
-            <h2 class="text-base font-extrabold text-slate-900">처리 대기 파일</h2>
-            <p id="queueSummary" class="text-sm text-slate-500 font-medium mt-1">PDF 파일을 추가하면 여기에 표시됩니다.</p>
+            <h2 class="text-sm font-extrabold text-slate-900">처리 대기 파일</h2>
+            <p id="queueSummary" class="text-xs text-slate-500 font-medium mt-0.5">PDF 파일을 추가하면 여기에 표시됩니다.</p>
           </div>
-          <button id="clearBtn" class="px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold text-slate-500" disabled>비우기</button>
+          <button id="clearBtn" class="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-500" disabled>비우기</button>
         </div>
         <div id="fileList" class="divide-y divide-slate-200">
-          <div class="p-10 text-center text-base text-slate-400 font-semibold">대기 중인 파일이 없습니다.</div>
+          <div class="p-8 text-center text-sm text-slate-400 font-semibold">대기 중인 파일이 없습니다.</div>
         </div>
       </div>
 
       <div class="panel rounded-lg overflow-hidden">
-        <div class="px-6 py-5 border-b border-slate-200">
-          <h2 class="text-base font-extrabold text-slate-900">압축 결과</h2>
-          <p class="text-sm text-slate-500 font-medium mt-1">결과 파일은 브라우저에서 생성된 새 PDF입니다.</p>
+        <div class="px-5 py-4 border-b border-slate-200">
+          <h2 class="text-sm font-extrabold text-slate-900">압축 결과</h2>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">결과 파일은 브라우저에서 생성된 새 PDF입니다.</p>
         </div>
         <div id="resultList">
-          <div class="p-10 text-center text-base text-slate-400 font-semibold">아직 생성된 결과가 없습니다.</div>
+          <div class="p-8 text-center text-sm text-slate-400 font-semibold">아직 생성된 결과가 없습니다.</div>
         </div>
       </div>
     </section>
   </main>
 
   <div id="toast" class="fixed left-1/2 top-20 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-200">
-    <div class="px-5 py-4 rounded-lg bg-slate-950 text-white shadow-2xl flex items-center gap-2 text-sm font-bold">
+    <div class="px-4 py-3 rounded-xl bg-slate-950 text-white shadow-2xl flex items-center gap-2 text-xs font-bold">
       <i id="toastIcon" data-lucide="info" class="w-4 h-4"></i>
       <span id="toastMessage">알림</span>
     </div>
@@ -387,28 +383,28 @@
         : `${state.files.length}개 파일 대기 중`;
 
       if (state.files.length === 0) {
-        els.fileList.innerHTML = '<div class="p-10 text-center text-base text-slate-400 font-semibold">대기 중인 파일이 없습니다.</div>';
+        els.fileList.innerHTML = '<div class="p-8 text-center text-sm text-slate-400 font-semibold">대기 중인 파일이 없습니다.</div>';
         return;
       }
 
       els.fileList.innerHTML = state.files.map((item) => `
-        <div class="p-6 flex flex-col md:flex-row md:items-center gap-6" data-file-id="${item.id}">
-          <div class="w-full max-w-[200px] aspect-[11/16] md:w-52 md:h-72 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+        <div class="p-5 flex flex-col md:flex-row md:items-center gap-5" data-file-id="${item.id}">
+          <div class="w-full max-w-[152px] aspect-[11/16] md:w-36 md:h-52 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
             ${item.thumbnailUrl
               ? `<img src="${item.thumbnailUrl}" alt="${escapeHtml(item.file.name)} 첫 페이지 미리보기" class="w-full h-full object-cover">`
               : `<div class="w-full h-full flex flex-col items-center justify-center gap-1 text-[#FF4747] bg-red-50">
                   <i data-lucide="file-type-2" class="w-6 h-6"></i>
-                  <span class="text-xs font-extrabold">PDF</span>
+                  <span class="text-[10px] font-extrabold">PDF</span>
                 </div>`
             }
           </div>
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-3">
-              <p class="text-lg font-extrabold text-slate-900 truncate">${escapeHtml(item.file.name)}</p>
-              <span class="text-sm font-bold text-slate-500 shrink-0">${escapeHtml(item.status)}</span>
+              <p class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(item.file.name)}</p>
+              <span class="text-[11px] font-bold text-slate-500 shrink-0">${escapeHtml(item.status)}</span>
             </div>
-            <p class="text-base text-slate-500 font-medium mt-1.5">${escapeHtml(item.detail)}${item.pages ? ` · ${item.pages}페이지` : ''}</p>
-            <p class="mt-2.5 inline-flex w-fit rounded-md border border-cyan-100 bg-cyan-50 px-3 py-2 text-sm font-extrabold text-cyan-800">${escapeHtml(estimateLabel(item))}</p>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">${escapeHtml(item.detail)}${item.pages ? ` · ${item.pages}페이지` : ''}</p>
+            <p class="mt-1.5 inline-flex w-fit rounded-lg border border-cyan-100 bg-cyan-50 px-2.5 py-1.5 text-xs font-extrabold text-cyan-800">${escapeHtml(estimateLabel(item))}</p>
             <div class="mt-3 h-2.5 rounded-full bg-slate-100 overflow-hidden">
               <div class="h-full bg-[#FF4747] transition-all" style="width:${item.progress}%"></div>
             </div>
@@ -515,21 +511,21 @@
 
     function renderResults() {
       if (state.results.length === 0) {
-        els.resultList.innerHTML = '<div class="p-10 text-center text-base text-slate-400 font-semibold">아직 생성된 결과가 없습니다.</div>';
+        els.resultList.innerHTML = '<div class="p-8 text-center text-sm text-slate-400 font-semibold">아직 생성된 결과가 없습니다.</div>';
         return;
       }
 
       els.resultList.innerHTML = state.results.map((result) => {
         if (result.error) {
           return `
-            <div class="result-row p-6">
+            <div class="result-row p-5">
               <div class="flex items-start gap-3">
-                <div class="w-12 h-12 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
                   <i data-lucide="circle-alert" class="w-5 h-5"></i>
                 </div>
                 <div class="min-w-0">
-                  <p class="text-base font-extrabold text-slate-900 truncate">${escapeHtml(result.name)}</p>
-                  <p class="mt-1 text-sm text-rose-600 font-bold">${escapeHtml(result.error)}</p>
+                  <p class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(result.name)}</p>
+                  <p class="mt-1 text-xs text-rose-600 font-bold">${escapeHtml(result.error)}</p>
                 </div>
               </div>
             </div>
@@ -538,23 +534,23 @@
 
         const isLarger = result.outputSize >= result.inputSize;
         return `
-          <div class="result-row p-6">
+          <div class="result-row p-5">
             <div class="flex flex-col xl:flex-row xl:items-center gap-4">
-              <div class="w-12 h-12 rounded-lg ${isLarger ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'} flex items-center justify-center shrink-0">
+              <div class="w-10 h-10 rounded-xl ${isLarger ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'} flex items-center justify-center shrink-0">
                 <i data-lucide="${isLarger ? 'triangle-alert' : 'check-circle-2'}" class="w-5 h-5"></i>
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-base font-extrabold text-slate-900 truncate">${escapeHtml(result.name)}</p>
-                <div class="mt-2.5 grid grid-cols-2 md:grid-cols-5 gap-2.5 text-sm">
+                <p class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(result.name)}</p>
+                <div class="mt-2 grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
                   <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">원본 ${formatBytes(result.inputSize)}</span>
                   <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">결과 ${formatBytes(result.outputSize)}</span>
                   <span class="rounded-lg ${isLarger ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-emerald-50 border-emerald-100 text-emerald-700'} border px-3 py-2 font-extrabold">${isLarger ? '증가' : '절감'} ${Math.abs(result.savings).toFixed(1)}%</span>
                   <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">${result.pages}페이지</span>
                   <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">${formatElapsed(result.elapsed)}</span>
                 </div>
-                ${isLarger ? '<p class="mt-2.5 text-sm text-amber-700 font-bold">결과가 원본보다 큽니다. 더 작은 프리셋이나 낮은 JPEG 품질로 다시 시도하세요.</p>' : ''}
+                ${isLarger ? '<p class="mt-2 text-xs text-amber-700 font-bold">결과가 원본보다 큽니다. 더 작은 프리셋이나 낮은 JPEG 품질로 다시 시도하세요.</p>' : ''}
               </div>
-              <a class="inline-flex items-center justify-center gap-2 h-12 px-5 rounded-lg bg-slate-950 hover:bg-slate-800 text-white text-sm font-extrabold shrink-0" href="${result.url}" download="${escapeHtml(result.outputName)}">
+              <a class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-extrabold shrink-0" href="${result.url}" download="${escapeHtml(result.outputName)}">
                 <i data-lucide="download" class="w-4 h-4"></i>
                 다운로드
               </a>
