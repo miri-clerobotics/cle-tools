@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLE Robotics - 문서 용량 줄이기</title>
+  <link rel="icon" href="/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <style>
+    :root {
+      --cle-red: #FF4747;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #E4E7EC;
+      --paper: #FFFFFF;
+      --surface: #F6F8FB;
+      --teal: #0891B2;
+      --amber: #D97706;
+    }
+
+    * { box-sizing: border-box; }
+
+    body, input, button, select {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(228, 231, 236, 0.92);
+      box-shadow: 0 18px 54px rgba(20, 32, 54, 0.06);
+    }
+
+    .dropzone {
+      background:
+        linear-gradient(135deg, rgba(255, 71, 71, 0.08), transparent 34%),
+        linear-gradient(315deg, rgba(8, 145, 178, 0.10), transparent 38%),
+        #fff;
+    }
+
+    .dropzone.dragging {
+      border-color: var(--cle-red);
+      background:
+        linear-gradient(135deg, rgba(255, 71, 71, 0.14), transparent 34%),
+        linear-gradient(315deg, rgba(8, 145, 178, 0.14), transparent 38%),
+        #fff;
+    }
+
+    .preset.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .range {
+      accent-color: var(--cle-red);
+    }
+
+    .result-row + .result-row {
+      border-top: 1px solid var(--line);
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: white;
+      border-radius: 999px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="bg-white/90 backdrop-blur border-b border-slate-200 sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <a href="/" class="h-10 w-10 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0" title="도구 포털로 이동">
+          <img src="/favicon.ico" alt="CLE Robotics" class="w-full h-full object-cover">
+        </a>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-950 truncate">문서 용량 줄이기</h1>
+            <span class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-100">Local Only</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">PDF를 외부 업로드 없이 공유용 사본으로 압축합니다.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="./sample-pdf.html" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600">
+          <i data-lucide="file-text" class="w-4 h-4"></i>
+          테스트 샘플
+        </a>
+        <a href="/" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600">
+          <i data-lucide="home" class="w-4 h-4"></i>
+          포털
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-5 py-6 lg:py-8 grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-5">
+    <aside class="panel rounded-lg p-5 h-fit lg:sticky lg:top-24">
+      <div class="space-y-6">
+        <section>
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="shield-check" class="w-4 h-4 text-cyan-700"></i>
+            <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-widest">처리 방식</h2>
+          </div>
+          <div class="space-y-2 text-xs leading-relaxed">
+            <p class="p-3 rounded-lg bg-cyan-50 border border-cyan-100 text-cyan-800 font-semibold">파일은 서버로 업로드되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+            <p class="p-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 font-semibold">공유용 PDF로 다시 생성되며 텍스트 검색, 링크, 주석, 양식이 사라질 수 있습니다.</p>
+            <p class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 font-semibold">원본 파일은 수정하지 않고 새 파일만 다운로드합니다.</p>
+          </div>
+        </section>
+
+        <section>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-widest">압축 프리셋</h2>
+            <span id="activePresetHint" class="text-[10px] font-bold text-[#FF4747]">균형</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button class="preset h-16 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-[11px] font-extrabold flex flex-col items-center justify-center gap-1" data-preset="small">
+              <i data-lucide="minimize-2" class="w-4 h-4"></i>
+              작게
+            </button>
+            <button class="preset active h-16 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-[11px] font-extrabold flex flex-col items-center justify-center gap-1" data-preset="balanced">
+              <i data-lucide="scale" class="w-4 h-4"></i>
+              균형
+            </button>
+            <button class="preset h-16 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition text-[11px] font-extrabold flex flex-col items-center justify-center gap-1" data-preset="sharp">
+              <i data-lucide="badge-check" class="w-4 h-4"></i>
+              선명하게
+            </button>
+          </div>
+        </section>
+
+        <section class="border-t border-slate-200 pt-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-widest">세부 설정</h2>
+            <button id="resetPresetBtn" class="text-[10px] font-bold text-slate-400 hover:text-slate-700">초기화</button>
+          </div>
+          <div class="space-y-5">
+            <label class="block">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-slate-600">렌더 배율</span>
+                <span id="scaleValue" class="text-[11px] font-extrabold text-[#FF4747]">1.4x</span>
+              </div>
+              <input id="scaleRange" class="range w-full" type="range" min="0.8" max="2.2" step="0.1" value="1.4">
+              <p class="mt-1 text-[10px] text-slate-400 font-medium">낮을수록 작고, 높을수록 글자와 선이 선명합니다.</p>
+            </label>
+
+            <label class="block">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-slate-600">JPEG 품질</span>
+                <span id="qualityValue" class="text-[11px] font-extrabold text-[#FF4747]">72%</span>
+              </div>
+              <input id="qualityRange" class="range w-full" type="range" min="35" max="95" step="1" value="72">
+              <p class="mt-1 text-[10px] text-slate-400 font-medium">낮을수록 용량이 줄지만 이미지 압축 흔적이 늘어납니다.</p>
+            </label>
+          </div>
+        </section>
+
+        <section class="border-t border-slate-200 pt-5">
+          <button id="compressBtn" class="w-full h-11 rounded-lg bg-[#FF4747] hover:bg-[#e83d3d] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-red-100" disabled>
+            <i data-lucide="file-down" class="w-4 h-4"></i>
+            압축 시작
+          </button>
+          <button id="cancelBtn" class="hidden mt-2 w-full h-10 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-extrabold">
+            작업 중단
+          </button>
+        </section>
+      </div>
+    </aside>
+
+    <section class="space-y-5 min-w-0">
+      <div id="dropzone" class="dropzone border border-dashed border-slate-300 rounded-lg p-8 sm:p-10 text-center transition cursor-pointer">
+        <input id="fileInput" class="hidden" type="file" accept="application/pdf,.pdf" multiple>
+        <div class="mx-auto w-14 h-14 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-[#FF4747] mb-4">
+          <i data-lucide="upload-cloud" class="w-7 h-7"></i>
+        </div>
+        <h2 class="text-xl font-extrabold text-slate-950 tracking-tight">PDF 파일을 여기에 놓으세요</h2>
+        <p class="mt-2 text-sm text-slate-500 font-medium">또는 클릭해서 파일을 선택하세요. 여러 PDF를 순서대로 처리할 수 있습니다.</p>
+        <p class="mt-4 text-xs text-slate-400">수동 테스트용 파일이 필요하면 상단의 <a href="./sample-pdf.html" target="_blank" class="font-bold text-cyan-700 underline">테스트 샘플</a>을 인쇄 또는 PDF로 저장하세요.</p>
+      </div>
+
+      <div class="panel rounded-lg overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-sm font-extrabold text-slate-900">처리 대기 파일</h2>
+            <p id="queueSummary" class="text-xs text-slate-500 font-medium mt-0.5">PDF 파일을 추가하면 여기에 표시됩니다.</p>
+          </div>
+          <button id="clearBtn" class="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-500" disabled>비우기</button>
+        </div>
+        <div id="fileList" class="divide-y divide-slate-200">
+          <div class="p-8 text-center text-sm text-slate-400 font-semibold">대기 중인 파일이 없습니다.</div>
+        </div>
+      </div>
+
+      <div class="panel rounded-lg overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200">
+          <h2 class="text-sm font-extrabold text-slate-900">압축 결과</h2>
+          <p class="text-xs text-slate-500 font-medium mt-0.5">결과 파일은 브라우저에서 생성된 새 PDF입니다.</p>
+        </div>
+        <div id="resultList">
+          <div class="p-8 text-center text-sm text-slate-400 font-semibold">아직 생성된 결과가 없습니다.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="fixed left-1/2 top-20 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-200">
+    <div class="px-4 py-3 rounded-lg bg-slate-950 text-white shadow-2xl flex items-center gap-2 text-xs font-bold">
+      <i id="toastIcon" data-lucide="info" class="w-4 h-4"></i>
+      <span id="toastMessage">알림</span>
+    </div>
+  </div>
+
+  <script>
+    const presets = {
+      small: { label: '작게', scale: 1.0, quality: 55 },
+      balanced: { label: '균형', scale: 1.4, quality: 72 },
+      sharp: { label: '선명하게', scale: 1.8, quality: 86 }
+    };
+
+    const state = {
+      files: [],
+      results: [],
+      activePreset: 'balanced',
+      isProcessing: false,
+      cancelRequested: false
+    };
+
+    const els = {
+      dropzone: document.getElementById('dropzone'),
+      fileInput: document.getElementById('fileInput'),
+      fileList: document.getElementById('fileList'),
+      resultList: document.getElementById('resultList'),
+      queueSummary: document.getElementById('queueSummary'),
+      compressBtn: document.getElementById('compressBtn'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      scaleRange: document.getElementById('scaleRange'),
+      qualityRange: document.getElementById('qualityRange'),
+      scaleValue: document.getElementById('scaleValue'),
+      qualityValue: document.getElementById('qualityValue'),
+      resetPresetBtn: document.getElementById('resetPresetBtn'),
+      activePresetHint: document.getElementById('activePresetHint'),
+      toast: document.getElementById('toast'),
+      toastIcon: document.getElementById('toastIcon'),
+      toastMessage: document.getElementById('toastMessage')
+    };
+
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      const value = bytes / Math.pow(1024, index);
+      return `${value >= 10 || index === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`;
+    }
+
+    function formatElapsed(ms) {
+      if (ms < 1000) return `${ms}ms`;
+      return `${(ms / 1000).toFixed(1)}초`;
+    }
+
+    function makeOutputName(name) {
+      return name.replace(/\.pdf$/i, '') + '_compressed.pdf';
+    }
+
+    function showToast(message, icon = 'info') {
+      els.toastMessage.textContent = message;
+      els.toastIcon.setAttribute('data-lucide', icon);
+      lucide.createIcons();
+      els.toast.classList.remove('opacity-0', 'translate-y-2');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        els.toast.classList.add('opacity-0', 'translate-y-2');
+      }, 2400);
+    }
+
+    function applyPreset(name) {
+      const preset = presets[name];
+      state.activePreset = name;
+      els.scaleRange.value = preset.scale;
+      els.qualityRange.value = preset.quality;
+      els.activePresetHint.textContent = preset.label;
+      document.querySelectorAll('.preset').forEach((button) => {
+        button.classList.toggle('active', button.dataset.preset === name);
+      });
+      updateRangeLabels();
+    }
+
+    function updateRangeLabels() {
+      els.scaleValue.textContent = `${Number(els.scaleRange.value).toFixed(1)}x`;
+      els.qualityValue.textContent = `${els.qualityRange.value}%`;
+    }
+
+    function getSettings() {
+      return {
+        scale: Number(els.scaleRange.value),
+        quality: Number(els.qualityRange.value) / 100
+      };
+    }
+
+    function validatePdfFile(file) {
+      if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+        return 'PDF 파일만 추가할 수 있습니다.';
+      }
+      if (file.size === 0) {
+        return '빈 파일은 처리할 수 없습니다.';
+      }
+      return '';
+    }
+
+    function addFiles(fileList) {
+      const incoming = Array.from(fileList);
+      let added = 0;
+      incoming.forEach((file) => {
+        const error = validatePdfFile(file);
+        if (error) {
+          showToast(`${file.name}: ${error}`, 'circle-alert');
+          return;
+        }
+        state.files.push({
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          file,
+          status: '대기',
+          progress: 0,
+          detail: `${formatBytes(file.size)}`
+        });
+        added++;
+      });
+      if (added > 0) showToast(`${added}개 PDF를 추가했습니다.`, 'check');
+      renderQueue();
+    }
+
+    function renderQueue() {
+      els.compressBtn.disabled = state.files.length === 0 || state.isProcessing;
+      els.clearBtn.disabled = state.files.length === 0 || state.isProcessing;
+      els.queueSummary.textContent = state.files.length === 0
+        ? 'PDF 파일을 추가하면 여기에 표시됩니다.'
+        : `${state.files.length}개 파일 대기 중`;
+
+      if (state.files.length === 0) {
+        els.fileList.innerHTML = '<div class="p-8 text-center text-sm text-slate-400 font-semibold">대기 중인 파일이 없습니다.</div>';
+        return;
+      }
+
+      els.fileList.innerHTML = state.files.map((item) => `
+        <div class="p-4 flex flex-col sm:flex-row sm:items-center gap-3" data-file-id="${item.id}">
+          <div class="w-10 h-10 rounded-lg bg-red-50 text-[#FF4747] flex items-center justify-center shrink-0">
+            <i data-lucide="file-type-2" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(item.file.name)}</p>
+              <span class="text-[11px] font-bold text-slate-500 shrink-0">${escapeHtml(item.status)}</span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">${escapeHtml(item.detail)}</p>
+            <div class="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
+              <div class="h-full bg-[#FF4747] transition-all" style="width:${item.progress}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderResults() {
+      if (state.results.length === 0) {
+        els.resultList.innerHTML = '<div class="p-8 text-center text-sm text-slate-400 font-semibold">아직 생성된 결과가 없습니다.</div>';
+        return;
+      }
+
+      els.resultList.innerHTML = state.results.map((result) => {
+        if (result.error) {
+          return `
+            <div class="result-row p-5">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                  <i data-lucide="circle-alert" class="w-5 h-5"></i>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(result.name)}</p>
+                  <p class="mt-1 text-xs text-rose-600 font-bold">${escapeHtml(result.error)}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        const isLarger = result.outputSize >= result.inputSize;
+        return `
+          <div class="result-row p-5">
+            <div class="flex flex-col xl:flex-row xl:items-center gap-4">
+              <div class="w-10 h-10 rounded-lg ${isLarger ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'} flex items-center justify-center shrink-0">
+                <i data-lucide="${isLarger ? 'triangle-alert' : 'check-circle-2'}" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(result.name)}</p>
+                <div class="mt-2 grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                  <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">원본 ${formatBytes(result.inputSize)}</span>
+                  <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">결과 ${formatBytes(result.outputSize)}</span>
+                  <span class="rounded-lg ${isLarger ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-emerald-50 border-emerald-100 text-emerald-700'} border px-3 py-2 font-extrabold">${isLarger ? '증가' : '절감'} ${Math.abs(result.savings).toFixed(1)}%</span>
+                  <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">${result.pages}페이지</span>
+                  <span class="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-bold text-slate-600">${formatElapsed(result.elapsed)}</span>
+                </div>
+                ${isLarger ? '<p class="mt-2 text-xs text-amber-700 font-bold">결과가 원본보다 큽니다. 더 작은 프리셋이나 낮은 JPEG 품질로 다시 시도하세요.</p>' : ''}
+              </div>
+              <a class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-slate-950 hover:bg-slate-800 text-white text-xs font-extrabold shrink-0" href="${result.url}" download="${escapeHtml(result.outputName)}">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                다운로드
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    async function compressAll() {
+      if (state.isProcessing || state.files.length === 0) return;
+      if (!window.pdfjsLib || !window.jspdf) {
+        showToast('PDF 라이브러리를 불러오지 못했습니다. 네트워크를 확인하세요.', 'circle-alert');
+        return;
+      }
+
+      state.isProcessing = true;
+      state.cancelRequested = false;
+      els.compressBtn.disabled = true;
+      els.compressBtn.innerHTML = '<span class="spinner"></span>압축 중';
+      els.cancelBtn.disabled = false;
+      els.cancelBtn.classList.remove('hidden');
+      renderQueue();
+
+      for (const item of state.files) {
+        if (state.cancelRequested) break;
+        try {
+          const result = await compressOne(item);
+          state.results.unshift(result);
+          renderResults();
+        } catch (error) {
+          state.results.unshift({
+            name: item.file.name,
+            error: normalizeError(error)
+          });
+          item.status = '실패';
+          item.detail = normalizeError(error);
+          renderResults();
+          renderQueue();
+        }
+      }
+
+      state.isProcessing = false;
+      els.compressBtn.innerHTML = '<i data-lucide="file-down" class="w-4 h-4"></i>압축 시작';
+      els.cancelBtn.disabled = false;
+      els.cancelBtn.classList.add('hidden');
+      lucide.createIcons();
+      renderQueue();
+
+      if (state.cancelRequested) {
+        showToast('작업을 중단했습니다.', 'circle-alert');
+      } else {
+        showToast('압축 작업이 끝났습니다.', 'check');
+      }
+    }
+
+    async function compressOne(item) {
+      const startedAt = performance.now();
+      const settings = getSettings();
+      item.status = '읽는 중';
+      item.progress = 2;
+      item.detail = `${formatBytes(item.file.size)} · PDF 분석 중`;
+      renderQueue();
+
+      const buffer = await item.file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: buffer });
+      const pdf = await loadingTask.promise;
+      const pages = pdf.numPages;
+      let outputPdf = null;
+
+      for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
+        if (state.cancelRequested) throw new Error('작업이 중단되었습니다.');
+        item.status = `${pageNumber}/${pages} 페이지`;
+        item.progress = Math.round(((pageNumber - 1) / pages) * 92) + 4;
+        item.detail = `렌더 배율 ${settings.scale.toFixed(1)}x · JPEG ${Math.round(settings.quality * 100)}%`;
+        renderQueue();
+
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const renderViewport = page.getViewport({ scale: settings.scale });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d', { alpha: false });
+        canvas.width = Math.ceil(renderViewport.width);
+        canvas.height = Math.ceil(renderViewport.height);
+
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({
+          canvasContext: context,
+          viewport: renderViewport
+        }).promise;
+
+        const imageData = canvas.toDataURL('image/jpeg', settings.quality);
+        const pageWidth = baseViewport.width;
+        const pageHeight = baseViewport.height;
+        const orientation = pageWidth > pageHeight ? 'landscape' : 'portrait';
+
+        if (!outputPdf) {
+          outputPdf = new jspdf.jsPDF({
+            orientation,
+            unit: 'pt',
+            format: [pageWidth, pageHeight],
+            compress: true
+          });
+        } else {
+          outputPdf.addPage([pageWidth, pageHeight], orientation);
+        }
+
+        outputPdf.addImage(imageData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+        canvas.width = 1;
+        canvas.height = 1;
+      }
+
+      if (!outputPdf) throw new Error('처리할 페이지가 없습니다.');
+
+      item.status = '저장 중';
+      item.progress = 98;
+      item.detail = '결과 PDF 생성 중';
+      renderQueue();
+
+      const blob = outputPdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      const outputSize = blob.size;
+      const savings = ((item.file.size - outputSize) / item.file.size) * 100;
+      const elapsed = Math.round(performance.now() - startedAt);
+
+      item.status = '완료';
+      item.progress = 100;
+      item.detail = `${formatBytes(item.file.size)} → ${formatBytes(outputSize)}`;
+      renderQueue();
+
+      return {
+        name: item.file.name,
+        outputName: makeOutputName(item.file.name),
+        inputSize: item.file.size,
+        outputSize,
+        savings,
+        pages,
+        elapsed,
+        url
+      };
+    }
+
+    function normalizeError(error) {
+      const message = error && error.message ? error.message : String(error);
+      if (/password|encrypted/i.test(message)) {
+        return '암호화되었거나 비밀번호가 필요한 PDF는 처리할 수 없습니다.';
+      }
+      if (/Invalid PDF|Missing PDF|corrupt|damaged/i.test(message)) {
+        return '손상되었거나 올바른 PDF가 아닙니다.';
+      }
+      if (/canvas|memory|allocation/i.test(message)) {
+        return '브라우저 메모리 한계로 처리하지 못했습니다. 더 작은 프리셋으로 시도하세요.';
+      }
+      return message;
+    }
+
+    function clearFiles() {
+      if (state.isProcessing) return;
+      state.files = [];
+      renderQueue();
+    }
+
+    document.querySelectorAll('.preset').forEach((button) => {
+      button.addEventListener('click', () => applyPreset(button.dataset.preset));
+    });
+
+    els.scaleRange.addEventListener('input', updateRangeLabels);
+    els.qualityRange.addEventListener('input', updateRangeLabels);
+    els.resetPresetBtn.addEventListener('click', () => applyPreset(state.activePreset));
+    els.compressBtn.addEventListener('click', compressAll);
+    els.cancelBtn.addEventListener('click', () => {
+      state.cancelRequested = true;
+      els.cancelBtn.disabled = true;
+    });
+    els.clearBtn.addEventListener('click', clearFiles);
+
+    els.dropzone.addEventListener('click', () => els.fileInput.click());
+    els.fileInput.addEventListener('change', (event) => {
+      addFiles(event.target.files);
+      event.target.value = '';
+    });
+
+    ['dragenter', 'dragover'].forEach((eventName) => {
+      els.dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        els.dropzone.classList.add('dragging');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach((eventName) => {
+      els.dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        els.dropzone.classList.remove('dragging');
+      });
+    });
+
+    els.dropzone.addEventListener('drop', (event) => {
+      addFiles(event.dataTransfer.files);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      state.results.forEach((result) => {
+        if (result.url) URL.revokeObjectURL(result.url);
+      });
+    });
+
+    applyPreset('balanced');
+    renderQueue();
+    renderResults();
+    lucide.createIcons();
+  </script>
+</body>
+</html>

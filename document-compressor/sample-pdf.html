@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 압축 테스트 샘플</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm;
+    }
+
+    body {
+      margin: 0;
+      background: #eef2f6;
+      color: #182033;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    main {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 24px auto;
+      padding: 18mm;
+      background: #fff;
+      box-shadow: 0 24px 80px rgba(20, 32, 54, 0.14);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 28px 0 10px;
+      font-size: 16px;
+      color: #FF4747;
+    }
+
+    p, li, td, th {
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .hero {
+      margin-top: 18px;
+      min-height: 180px;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 18% 26%, rgba(255, 71, 71, 0.96), transparent 24%),
+        radial-gradient(circle at 74% 36%, rgba(8, 145, 178, 0.92), transparent 26%),
+        radial-gradient(circle at 50% 82%, rgba(245, 158, 11, 0.82), transparent 24%),
+        linear-gradient(135deg, #172033, #29364f);
+      border: 1px solid #d0d5dd;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #d0d5dd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f2f4f7;
+      font-weight: 800;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .card {
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 100px;
+    }
+
+    .linklike {
+      color: #075985;
+      text-decoration: underline;
+      font-weight: 700;
+    }
+
+    .print-note {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 280px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #172033;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.5;
+      box-shadow: 0 12px 40px rgba(20, 32, 54, 0.24);
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      main {
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+
+      .print-note {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CLE Robotics PDF 압축 테스트 문서</h1>
+    <p class="notice">이 문서는 압축 도구 수동 테스트용입니다. 브라우저에서 인쇄한 뒤 PDF로 저장해서 사용하세요.</p>
+
+    <div class="hero" aria-label="색상 그라데이션 테스트 이미지"></div>
+
+    <h2>1. 테스트 목적</h2>
+    <p>
+      이 샘플은 텍스트, 표, 색상 블록, 링크처럼 보이는 요소를 포함합니다.
+      압축 후에는 시각적으로 읽을 수 있어야 하지만, 첫 버전 압축 방식 특성상 텍스트 선택과 링크 동작은 보존되지 않을 수 있습니다.
+    </p>
+
+    <h2>2. 확인 항목</h2>
+    <ul>
+      <li>압축 도구가 PDF 파일을 정상적으로 읽는지 확인합니다.</li>
+      <li>작게, 균형, 선명하게 프리셋별 결과 용량 차이를 확인합니다.</li>
+      <li>다운로드된 PDF가 열리고 모든 페이지가 보이는지 확인합니다.</li>
+      <li>압축 후 텍스트 검색, 링크, 주석이 보존되지 않을 수 있다는 경고가 적절한지 확인합니다.</li>
+    </ul>
+
+    <h2>3. 샘플 표</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>원본에서 확인</th>
+          <th>압축본에서 확인</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>본문 텍스트</td>
+          <td>선택 및 검색 가능</td>
+          <td>시각적으로 읽을 수 있음</td>
+        </tr>
+        <tr>
+          <td>색상 블록</td>
+          <td>선명한 경계와 색상</td>
+          <td>압축 흔적과 색상 변화 확인</td>
+        </tr>
+        <tr>
+          <td>링크형 텍스트</td>
+          <td><span class="linklike">https://www.clerobotics.com</span></td>
+          <td>링크 동작 보존 여부 확인</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. 색상 카드</h2>
+    <div class="cards">
+      <div class="card">
+        <strong>작게</strong>
+        <p>용량 절감 우선. 이미지 압축 흔적이 보일 수 있습니다.</p>
+      </div>
+      <div class="card">
+        <strong>균형</strong>
+        <p>일반 공유용 기본값입니다. 읽기 품질과 용량을 함께 봅니다.</p>
+      </div>
+      <div class="card">
+        <strong>선명하게</strong>
+        <p>도면, 작은 글씨, 표가 많은 문서에 적합합니다.</p>
+      </div>
+    </div>
+  </main>
+
+  <div class="print-note">
+    수동 테스트 준비: Ctrl+P를 누르고 "PDF로 저장"을 선택해 샘플 PDF를 만든 뒤 압축 도구에 업로드하세요.
+  </div>
+</body>
+</html>
