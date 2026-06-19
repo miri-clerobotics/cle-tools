@@ -508,7 +508,7 @@
     let copiedComponents = [];
     let copiedComponentsSourceSize = null;
     let copiedComponentsPasteCount = 0;
-    const VIEWPORT_MIN_SCALE = 0.35;
+    const VIEWPORT_MIN_SCALE = 0.05;
     const VIEWPORT_MAX_SCALE = 4;
     const VIEWPORT_ZOOM_STEP = 1.12;
     const VIEWPORT_WHEEL_AFTER_PAN_IGNORE_MS = 180;
@@ -1087,14 +1087,25 @@
       focus.h = snappedPoint.y - focus.y;
     }
 
+    function indexToAlphaLabel(index, uppercase) {
+      let remaining = index;
+      let label = '';
+      while (remaining > 0) {
+        remaining--;
+        label = String.fromCharCode((uppercase ? 65 : 97) + (remaining % 26)) + label;
+        remaining = Math.floor(remaining / 26);
+      }
+      return label;
+    }
+
     function reindexBadges() {
       let count = 1;
       elements.forEach(el => {
         if (el.type === 'badge') {
-          if (el.manualText) return;
+          if (el.manualText) { count++; return; }
           if (el.badgeStyle === 'number') { el.text = count.toString(); }
-          else if (el.badgeStyle === 'alpha-low') { el.text = String.fromCharCode(96 + count); }
-          else if (el.badgeStyle === 'alpha-caps') { el.text = String.fromCharCode(64 + count); }
+          else if (el.badgeStyle === 'alpha-low') { el.text = indexToAlphaLabel(count, false); }
+          else if (el.badgeStyle === 'alpha-caps') { el.text = indexToAlphaLabel(count, true); }
           count++;
         }
       });
@@ -1176,7 +1187,17 @@
         const f = focusAreas[i];
         const minX = Math.min(f.x, f.x + f.w); const maxX = Math.max(f.x, f.x + f.w);
         const minY = Math.min(f.y, f.y + f.h); const maxY = Math.max(f.y, f.y + f.h);
-        if (x >= minX && x <= maxX && y >= minY && y <= maxY) return f;
+        if (x < minX || x > maxX || y < minY || y > maxY) continue;
+        if (f.type === 'circle') {
+          const rx = Math.abs(f.w / 2);
+          const ry = Math.abs(f.h / 2);
+          if (rx === 0 || ry === 0) continue;
+          const normalizedX = (x - (f.x + f.w / 2)) / rx;
+          const normalizedY = (y - (f.y + f.h / 2)) / ry;
+          if (normalizedX * normalizedX + normalizedY * normalizedY <= 1) return f;
+          continue;
+        }
+        return f;
       }
       return null;
     }
@@ -1238,34 +1259,91 @@
       if (e.key === 'Enter') { e.preventDefault(); applySelectedTextEdit(); }
     });
 
-    function saveHistoryState() {
-      const snapshot = { 
-        focusAreas: JSON.parse(JSON.stringify(focusAreas)), 
-        elements: JSON.parse(JSON.stringify(elements)), 
-        canvasWidth: canvas.width, 
+    function cloneStateValue(value) {
+      return value == null ? value : JSON.parse(JSON.stringify(value));
+    }
+
+    function createHistorySnapshot() {
+      return {
+        focusAreas: cloneStateValue(focusAreas),
+        elements: cloneStateValue(elements),
+        canvasWidth: canvas.width,
         canvasHeight: canvas.height,
-        bgImage: bgImage 
+        bgImage: bgImage,
+        originalBgImage: originalBgImage,
+        cropArea: cloneStateValue(cropArea),
+        dimOpacity: dimOpacity,
+        currentScalePreset: currentScalePreset,
+        autoScaleEnabled: autoScaleEnabled,
+        watermarkEnabled: watermarkEnabled,
+        watermarkImage: watermarkImage,
+        watermarkOpacity: watermarkOpacity,
+        watermarkSize: watermarkSize,
+        watermarkPos: watermarkPos
       };
+    }
+
+    function saveHistoryState() {
+      const snapshot = createHistorySnapshot();
       history.push(snapshot); if (history.length > 40) history.shift(); redoStack = []; 
     }
 
     function handleUndo() {
       if (history.length <= 1) { showToast("실행 취소할 이전 내역이 없습니다.", "error"); return; }
-      const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height, bgImage: bgImage };
+      const current = createHistorySnapshot();
       redoStack.push(current); history.pop(); applySnapshot(history[history.length - 1]); showToast("이전 작업을 실행 취소했습니다.");
     }
 
     function handleRedo() {
       if (redoStack.length === 0) { showToast("다시 실행할 내역이 없습니다.", "error"); return; }
       const next = redoStack.pop();
-      const current = { focusAreas: JSON.parse(JSON.stringify(focusAreas)), elements: JSON.parse(JSON.stringify(elements)), canvasWidth: canvas.width, canvasHeight: canvas.height, bgImage: bgImage };
-      history.push(current); applySnapshot(next); showToast("작업을 다시 실행했습니다.");
+      history.push(next); applySnapshot(next); showToast("작업을 다시 실행했습니다.");
+    }
+
+    function syncDocumentVisibility() {
+      if (bgImage) {
+        if (dropzone) dropzone.classList.add('hidden');
+        if (canvasContainer) canvasContainer.classList.remove('hidden');
+      } else {
+        if (dropzone) dropzone.classList.remove('hidden');
+        if (canvasContainer) canvasContainer.classList.add('hidden');
+      }
+      updateViewportToolbar();
+    }
+
+    function syncRenderControlsFromState() {
+      if (dimValue) dimValue.innerText = `${Math.round(dimOpacity * 100)}%`;
+      if (autoScaleCheckbox) autoScaleCheckbox.checked = autoScaleEnabled;
+      if (scaleModeLabel) {
+        if (autoScaleEnabled) {
+          scaleModeLabel.innerText = "자동비례 ON"; scaleModeLabel.className = "text-[9px] text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
+        } else {
+          scaleModeLabel.innerText = "자동비례 OFF"; scaleModeLabel.className = "text-[9px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-95";
+        }
+      }
+      if (watermarkToggle) watermarkToggle.checked = watermarkEnabled;
+      if (watermarkConfig) watermarkConfig.classList.toggle('hidden', !watermarkEnabled);
+      if (watermarkPosSelect) watermarkPosSelect.value = watermarkPos;
+      if (watermarkOpacityRange) watermarkOpacityRange.value = String(Math.round(watermarkOpacity * 100));
+      if (wmOpacityVal) wmOpacityVal.innerText = `${Math.round(watermarkOpacity * 100)}%`;
+      if (watermarkScaleRange) watermarkScaleRange.value = String(Math.round(watermarkSize * 100));
+      if (wmScaleVal) wmScaleVal.innerText = `${Math.round(watermarkSize * 100)}%`;
     }
 
     function applySnapshot(state) {
-      focusAreas = JSON.parse(JSON.stringify(state.focusAreas)); elements = JSON.parse(JSON.stringify(state.elements));
+      focusAreas = cloneStateValue(state.focusAreas) || []; elements = cloneStateValue(state.elements) || [];
       canvas.width = state.canvasWidth; canvas.height = state.canvasHeight;
-      bgImage = state.bgImage; 
+      bgImage = state.bgImage || null;
+      originalBgImage = Object.prototype.hasOwnProperty.call(state, 'originalBgImage') ? state.originalBgImage : originalBgImage;
+      cropArea = cloneStateValue(state.cropArea);
+      dimOpacity = state.dimOpacity ?? dimOpacity;
+      currentScalePreset = state.currentScalePreset ?? currentScalePreset;
+      autoScaleEnabled = state.autoScaleEnabled ?? autoScaleEnabled;
+      watermarkEnabled = state.watermarkEnabled ?? watermarkEnabled;
+      watermarkImage = Object.prototype.hasOwnProperty.call(state, 'watermarkImage') ? state.watermarkImage : watermarkImage;
+      watermarkOpacity = state.watermarkOpacity ?? watermarkOpacity;
+      watermarkSize = state.watermarkSize ?? watermarkSize;
+      watermarkPos = state.watermarkPos || watermarkPos;
       
       // CSS 해상도 동기화 보장
       canvas.style.width = state.canvasWidth + 'px';
@@ -1273,7 +1351,12 @@
       canvasContainer.style.width = state.canvasWidth + 'px';
       canvasContainer.style.height = state.canvasHeight + 'px';
 
-      selectedFocusArea = null; selectedElement = null; multiSel = []; updateSelectedActionArea(); drawCanvas();
+      selectedFocusArea = null; selectedElement = null; multiSel = []; drawingLineInstance = null; placingBadge = null; isPlacingBadge = false; activeSnapGuides = [];
+      syncDocumentVisibility();
+      syncRenderControlsFromState();
+      updateSelectedActionArea();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCanvas();
     }
 
     if (undoBtn) undoBtn.addEventListener('click', handleUndo);
@@ -1298,8 +1381,8 @@
     if (closeInfoModalBtn) { closeInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
     if (confirmInfoModalBtn) { confirmInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
 
-    function showRenderedModal() {
-      try { renderedModalImg.src = canvas.toDataURL('image/png'); imagePreviewModal.classList.remove('hidden'); } catch (e) { showToast('우회 가이드 생성 도중 오류가 발생했습니다.', 'error'); }
+    function showRenderedModal(dataUrl = null) {
+      try { renderedModalImg.src = dataUrl || canvas.toDataURL('image/png'); imagePreviewModal.classList.remove('hidden'); } catch (e) { showToast('우회 가이드 생성 도중 오류가 발생했습니다.', 'error'); }
     }
     function hideRenderedModal() { if (imagePreviewModal) imagePreviewModal.classList.add('hidden'); }
 
@@ -1318,7 +1401,10 @@
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         const file = files[0];
-        if (file.type.startsWith('image/')) { loadImageFromFile(file); showToast('드래그 앤 드롭으로 스크린샷 화면을 로드했습니다!'); } 
+        if (file.type.startsWith('image/')) {
+          if (!shouldReplaceCurrentImage('드래그 앤 드롭')) return;
+          loadImageFromFile(file, '드래그 앤 드롭', '드래그 앤 드롭으로 스크린샷 화면을 로드했습니다!', false);
+        }
         else { showToast('이미지 형태의 파일만 등록할 수 있습니다.', 'error'); }
       }
     });
@@ -1343,7 +1429,18 @@
     if (revertImageBtn) {
       revertImageBtn.addEventListener('click', () => {
         if (!originalBgImage) { showToast('복원할 최초 이미지가 없습니다.', 'error'); return; }
-        setupCanvasWithImage(originalBgImage, true); 
+        bgImage = originalBgImage;
+        const intrinsicWidth = originalBgImage.naturalWidth || originalBgImage.width;
+        const intrinsicHeight = originalBgImage.naturalHeight || originalBgImage.height;
+        setCanvasSize(intrinsicWidth, intrinsicHeight);
+        elements = []; focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; multiSel = []; drawingLineInstance = null; placingBadge = null; isPlacingBadge = false; isResizingBadge = false; activeSnapGuides = [];
+        hideInlineTextInput();
+        syncDocumentVisibility();
+        resetViewportTransform();
+        saveHistoryState();
+        drawCanvas();
+        fitViewportToWorkspace(false);
+        updateSelectedActionArea();
         showToast('최초 스크린샷 원본 이미지 크기로 복원되었습니다.');
       });
     }
@@ -1352,10 +1449,11 @@
     if (clearCanvasBtn) {
       clearCanvasBtn.addEventListener('click', () => {
         elements = []; focusAreas = []; cropArea = null; selectedFocusArea = null; selectedElement = null; multiSel = []; drawingLineInstance = null; placingBadge = null; isPlacingBadge = false; isResizingBadge = false;
-        bgImage = null; originalBgImage = null; hideInlineTextInput(); history = []; redoStack = [];
-        if (dropzone) dropzone.classList.remove('hidden');
-        if (canvasContainer) canvasContainer.classList.add('hidden');
+        bgImage = null; originalBgImage = null; hideInlineTextInput();
+        syncDocumentVisibility();
         resetViewportTransform();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        saveHistoryState();
         updateSelectedActionArea(); showToast('캔버스가 완전히 비워졌습니다.');
       });
     }
@@ -1530,6 +1628,62 @@
       });
     });
 
+    function cancelActiveInteraction() {
+      if (drawingLineInstance) {
+        elements = elements.filter(el => el !== drawingLineInstance);
+        drawingLineInstance = null;
+        activeSnapGuides = [];
+        drawCanvas();
+        return true;
+      }
+      if (isPlacingBadge && placingBadge) {
+        elements = elements.filter(el => el !== placingBadge);
+        placingBadge = null;
+        isPlacingBadge = false;
+        activeSnapGuides = [];
+        reindexBadges();
+        drawCanvas(); updateSelectedActionArea();
+        return true;
+      }
+      if (isDrawingFocus && selectedFocusArea) {
+        focusAreas = focusAreas.filter(f => f !== selectedFocusArea);
+        selectedFocusArea = null;
+        isDrawingFocus = false;
+        activeSnapGuides = [];
+        drawCanvas(); updateSelectedActionArea();
+        return true;
+      }
+      if (isMarqueeSelecting) {
+        isMarqueeSelecting = false;
+        marqueeRect = null;
+        marqueeMoved = false;
+        clearSelection();
+        drawCanvas(); updateSelectedActionArea();
+        return true;
+      }
+      if (isDragging || isResizingFocus || isResizingBadge || isResizingCrop || isResizingBackground) {
+        isDragging = false; isResizingFocus = false; isResizingBadge = false; isResizingCrop = false; isResizingBackground = false;
+        activeFocusHandle = null; activeBadgeHandle = null; activeCropHandle = null; activeSnapGuides = [];
+        drawCanvas(); updateSelectedActionArea();
+        return true;
+      }
+      if (currentTool === 'crop' && cropArea) {
+        selectTool('select');
+        return true;
+      }
+      if (canvasTextInputContainer && !canvasTextInputContainer.classList.contains('hidden')) {
+        hideInlineTextInput();
+        return true;
+      }
+      if (getSelectionList().length > 0 || selectedElement === 'background') {
+        clearSelection();
+        activeSnapGuides = [];
+        drawCanvas(); updateSelectedActionArea();
+        return true;
+      }
+      return false;
+    }
+
     window.addEventListener('keydown', (e) => {
       if (!customColorModal.classList.contains('hidden') && e.key === 'Escape') { closeCustomColorModal(); return; }
       if (document.activeElement === customColorHexInput || document.activeElement === customColorInput) return;
@@ -1567,9 +1721,13 @@
         if (bgImage) { zoomViewportByStep(1); e.preventDefault(); }
         return;
       }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); handleRedo(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); handleUndo(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); handleRedo(); return; }
-      if (e.key === 'Escape') { if (currentTool === 'line' && drawingLineInstance) finishDrawingLine(); }
+      if (e.key === 'Escape') {
+        if (cancelActiveInteraction()) e.preventDefault();
+        return;
+      }
       // 화살표 키로 선택 컴포넌트 이동 (Shift 누르면 10px씩)
       if (e.key.startsWith('Arrow')) {
         const step = e.shiftKey ? 10 : 1;
@@ -1580,18 +1738,23 @@
         else if (e.key === 'ArrowRight') moved = nudgeSelected(step, 0);
         if (moved) { e.preventDefault(); return; }
       }
-      if (e.key === 'Delete' || e.key === 'Backspace') executeDeleteSelected();
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (executeDeleteSelected()) e.preventDefault();
+        return;
+      }
     });
 
     canvasContainer.addEventListener('wheel', handleViewportWheel, { passive: false });
     workspace.addEventListener('wheel', suppressHorizontalViewportWheel, { passive: false, capture: true });
+    workspace.addEventListener('mousedown', handleWorkspaceEmptyMouseDown);
     workspace.addEventListener('pointerdown', handleViewportPanStart, true);
     document.addEventListener('contextmenu', suppressViewportContextMenu, true);
     window.addEventListener('pointermove', handleViewportPanMove);
     window.addEventListener('pointerup', finishViewportPan);
     window.addEventListener('pointercancel', finishViewportPan);
     window.addEventListener('blur', finishViewportPan);
-    window.addEventListener('mouseup', () => { finishBadgePlacement(); });
+    window.addEventListener('mousemove', handleCanvasEditMouseMove);
+    window.addEventListener('mouseup', finishCanvasEditInteraction);
     window.addEventListener('keyup', (e) => {
       if (e.code === 'Space') {
         isSpacePanActive = false;
@@ -1610,33 +1773,52 @@
           if (idx === 0) return true;
           return !(p.x === arr[idx-1].x && p.y === arr[idx-1].y);
         });
+        if (drawingLineInstance.points.length < 2) {
+          elements = elements.filter(el => el !== drawingLineInstance);
+          drawingLineInstance = null;
+          activeSnapGuides = [];
+          drawCanvas();
+          return;
+        }
         drawingLineInstance = null;
         saveHistoryState(); showToast("가이드 라인 배치가 완료되었습니다."); drawCanvas();
       }
     }
 
-    function handleFileSelect(e) { const file = e.target.files[0]; if (file) loadImageFromFile(file); }
+    function shouldReplaceCurrentImage(sourceLabel) {
+      if (!bgImage) return true;
+      return window.confirm(`현재 작업 중인 이미지와 편집 내용이 사라집니다.\n${sourceLabel} 이미지로 교체할까요?`);
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!shouldReplaceCurrentImage('파일')) return;
+      loadImageFromFile(file, '파일', '스크린샷 파일을 로드했습니다!', false);
+    }
     function handlePaste(e) {
       const items = (e.clipboardData || e.originalEvent.clipboardData).items;
       for (let index in items) {
         const item = items[index];
         if (item.kind === 'file' && item.type.startsWith('image/')) {
           const file = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            const img = new Image(); img.onload = function() { setupCanvasWithImage(img, true); }; img.src = event.target.result;
-          };
-          reader.readAsDataURL(file); showToast('클립보드에서 캡쳐 화면을 로드했습니다!'); return;
+          if (!shouldReplaceCurrentImage('클립보드')) return;
+          loadImageFromFile(file, '클립보드', '클립보드에서 캡쳐 화면을 로드했습니다!', false);
+          e.preventDefault();
+          return;
         }
       }
     }
 
-    function loadImageFromFile(file) {
+    function loadImageFromFile(file, sourceLabel = '파일', successMessage = '스크린샷 화면을 로드했습니다!', shouldConfirm = true) {
+      if (shouldConfirm && !shouldReplaceCurrentImage(sourceLabel)) return false;
       const reader = new FileReader();
       reader.onload = function(event) {
         const img = new Image(); img.onload = function() { setupCanvasWithImage(img, true); }; img.src = event.target.result;
       };
       reader.readAsDataURL(file);
+      if (successMessage) showToast(successMessage);
+      return true;
     }
 
     function calculateFittedCanvasSize(img) {
@@ -1842,6 +2024,16 @@
         e.preventDefault();
         e.stopPropagation();
       }
+    }
+
+    function handleWorkspaceEmptyMouseDown(e) {
+      if (e.button !== 0 || currentTool !== 'select' || !bgImage) return;
+      if (canvasContainer.contains(e.target)) return;
+      if (viewportZoomToolbar && viewportZoomToolbar.contains(e.target)) return;
+      clearSelection();
+      activeSnapGuides = [];
+      drawCanvas();
+      updateSelectedActionArea();
     }
 
     function scaleAbsoluteCanvasItems(scaleX, scaleY) {
@@ -2162,7 +2354,7 @@
 
     function executeDeleteSelected() {
       const list = getSelectionList();
-      if (list.length === 0) return;
+      if (list.length === 0) return false;
       const focusSet = new Set(list.filter(i => i.type === 'rect' || i.type === 'circle'));
       const elemSet = new Set(list.filter(i => i.type === 'line' || i.type === 'badge' || i.type === 'text'));
       if (focusSet.size) focusAreas = focusAreas.filter(f => !focusSet.has(f));
@@ -2173,6 +2365,7 @@
       clearSelection(); drawingLineInstance = null;
       saveHistoryState(); drawCanvas(); updateSelectedActionArea();
       showToast(`선택한 ${count}개 요소를 삭제했습니다.`);
+      return true;
     }
 
     function getSingleEditableTextElement() {
@@ -2261,11 +2454,23 @@
       updateTextStylePanel();
     }
 
+    function distanceToSegment(x, y, a, b) {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      if (dx === 0 && dy === 0) return Math.hypot(x - a.x, y - a.y);
+      const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy)));
+      const closestX = a.x + t * dx;
+      const closestY = a.y + t * dy;
+      return Math.hypot(x - closestX, y - closestY);
+    }
+
     function findElementAt(x, y) {
       for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
         if (el.type === 'line') {
-          for (let pt of el.points) { if (Math.hypot(pt.x - x, pt.y - y) < calculateScaledSize(20)) return el; }
+          for (let i = 1; i < el.points.length; i++) {
+            if (distanceToSegment(x, y, el.points[i - 1], el.points[i]) < calculateScaledSize(12)) return el;
+          }
         } else {
           const pxX = el.x * canvas.width, pxY = el.y * canvas.height;
           if (el.type === 'badge' && Math.hypot(pxX - x, pxY - y) < getBadgeRadius(el) + calculateScaledSize(6)) return el;
@@ -2404,7 +2609,7 @@
       }
     });
 
-    canvas.addEventListener('mousemove', (e) => {
+    function handleCanvasEditMouseMove(e) {
       if (!bgImage) return;
       const pos = getMousePos(e);
 
@@ -2532,7 +2737,7 @@
         }
         drawCanvas();
       }
-    });
+    }
 
     function finishBadgePlacement() {
       if (!isPlacingBadge || !placingBadge) return false;
@@ -2545,7 +2750,7 @@
       return true;
     }
 
-    canvas.addEventListener('mouseup', () => {
+    function finishCanvasEditInteraction() {
       if (isResizingBackground) {
         isResizingBackground = false; saveHistoryState(); return;
       }
@@ -2557,9 +2762,8 @@
           multiSel = selectInMarquee(marqueeRect);
           selectedElement = null; selectedFocusArea = null;
           if (multiSel.length > 0) showToast(`${multiSel.length}개 요소를 선택했습니다.`);
-        } else {
-          // 단순 클릭 → 배경 선택(기존 동작)
-          selectedElement = 'background'; selectedFocusArea = null; multiSel = [];
+        } else if (!marqueeMoved && marqueeRect) {
+          clearSelection();
         }
         marqueeRect = null; marqueeMoved = false;
         drawCanvas(); updateSelectedActionArea();
@@ -2594,7 +2798,9 @@
       }
       drawCanvas(); updateSelectedActionArea();
       if (wasActionActive && currentTool !== 'crop') saveHistoryState();
-    });
+    }
+
+    canvas.addEventListener('mouseup', finishCanvasEditInteraction);
 
     canvas.addEventListener('dblclick', (e) => {
       if (currentTool === 'line' && drawingLineInstance) { finishDrawingLine(); }
@@ -2616,38 +2822,91 @@
       pendingTextPos = null;
     }
 
-    function downloadResult() {
-      if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
-      const tempSelected = selectedFocusArea; selectedFocusArea = null;
-      const tempElement = selectedElement; selectedElement = null;
-      const tempMulti = multiSel; multiSel = [];
+    function captureOutputRenderState() {
+      return {
+        selectedFocusArea,
+        selectedElement,
+        multiSel,
+        currentTool,
+        cropArea,
+        marqueeRect,
+        isMarqueeSelecting
+      };
+    }
+
+    function restoreOutputRenderState(previousState) {
+      selectedFocusArea = previousState.selectedFocusArea;
+      selectedElement = previousState.selectedElement;
+      multiSel = previousState.multiSel;
+      currentTool = previousState.currentTool;
+      cropArea = previousState.cropArea;
+      marqueeRect = previousState.marqueeRect;
+      isMarqueeSelecting = previousState.isMarqueeSelecting;
       drawCanvas();
-      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); return; }
+      updateSelectedActionArea();
+    }
+
+    async function withCleanOutputRender(renderCallback) {
+      const previousState = captureOutputRenderState();
+      selectedFocusArea = null;
+      selectedElement = null;
+      multiSel = [];
+      currentTool = 'select';
+      cropArea = null;
+      marqueeRect = null;
+      isMarqueeSelecting = false;
+      drawCanvas();
+      try {
+        return await renderCallback();
+      } finally { restoreOutputRenderState(previousState); }
+    }
+
+    async function downloadResult() {
+      if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
+      if (isIframe) {
+        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+        showRenderedModal(dataUrl);
+        return;
+      }
       try {
         const link = document.createElement('a');
         const fileIndex = String(downloadCount).padStart(3, '0');
         link.download = `CLE Robotics_Manual_${fileIndex}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        downloadCount++; selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); showToast('성공적으로 저장되었습니다!');
-      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); }
+        downloadCount++; showToast('성공적으로 저장되었습니다!');
+      } catch (e) {
+        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+        showRenderedModal(dataUrl);
+      }
     }
 
-    function copyToClipboard() {
+    async function copyToClipboard() {
       if (!bgImage) { showToast('복사 대상이 없습니다.', 'error'); return; }
-      const tempSelected = selectedFocusArea; selectedFocusArea = null;
-      const tempElement = selectedElement; selectedElement = null;
-      const tempMulti = multiSel; multiSel = [];
-      drawCanvas();
-      if (isIframe) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); return; }
+      if (isIframe) {
+        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+        showRenderedModal(dataUrl);
+        return;
+      }
+      if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+        showRenderedModal(dataUrl);
+        return;
+      }
       try {
-        canvas.toBlob((blob) => {
-          const item = new ClipboardItem({ "image/png": blob });
-          navigator.clipboard.write([item]).then(() => {
-            selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); showToast('클립보드에 이미지가 복사되었습니다!');
-          }).catch(() => { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); });
-        }, 'image/png');
-      } catch (e) { showRenderedModal(); selectedFocusArea = tempSelected; selectedElement = tempElement; multiSel = tempMulti; drawCanvas(); }
+        const blob = await withCleanOutputRender(() => new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (!blob) { reject(new Error('clipboard blob creation failed')); return; }
+            resolve(blob);
+          }, 'image/png');
+        }));
+        const item = new ClipboardItem({ "image/png": blob });
+        await navigator.clipboard.write([item]);
+        showToast('클립보드에 이미지가 복사되었습니다!');
+      } catch (e) {
+        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+        showRenderedModal(dataUrl);
+      }
     }
 
     // 기본 로고 세팅
