@@ -30,7 +30,11 @@ assert.match(resizeCanvasBody[1], /fitViewportToWorkspace\(false\)/, 'window res
 assert.match(html, /function fitViewportToWorkspace\(allowUpscale = true\)/, 'viewport fitting should support non-upscaling initial fit');
 assert.match(html, /if \(!allowUpscale\) nextScale = Math\.min\(1, nextScale\)/, 'initial viewport fit should avoid scaling small screenshots above 100%');
 assert.match(html, /const CREATION_TOOLS = \['focus-rect', 'focus-circle', 'badge'\]/, 'creation tools should stay active for repeated placement');
-assert.match(html, /if \(CREATION_TOOLS\.includes\(currentTool\)\) {\s*selectedFocusArea = null;\s*} else {[\s\S]*?selectTool\('select'\)/, 'created focus shapes should not force creation tools back to select mode');
+assert.match(html, /function isFocusCreationTool/, 'focus creation tools should share creation-mode focus editing checks');
+assert.match(html, /function startActiveFocusEditIfHit/, 'active focus created in creation mode should be editable before leaving that mode');
+assert.match(html, /if \(startActiveFocusEditIfHit\(pos\)\) return;[\s\S]*?selectedFocusArea = null; selectedElement = null; multiSel = \[\];/, 'clicking the active focus should edit it, while clicking elsewhere should clear it before new drawing');
+assert.doesNotMatch(html, /if \(CREATION_TOOLS\.includes\(currentTool\)\) {\s*selectedFocusArea = null;\s*}/, 'created focus shapes should stay active in creation mode after mouseup');
+assert.match(html, /if \(justDrewFocus && !CREATION_TOOLS\.includes\(currentTool\)\)/, 'only non-creation focus drawing should force select mode');
 assert.match(html, /let copiedComponents = \[\]/, 'selected components should have an internal clipboard');
 assert.match(html, /function copySelectedComponents/, 'selected components should be copyable');
 assert.match(html, /function pasteCopiedComponents/, 'copied components should be pasteable');
@@ -171,6 +175,8 @@ assert.match(html, /scale: toolDefaults\.badge\.badgeScale/, 'new badges should 
 assert.match(html, /let isResizingBadge = false/, 'badge resizing should have explicit interaction state');
 assert.match(html, /if \(selectedElement && selectedElement\.type === 'badge'\)/, 'badge resize handles should be checked before dragging selection');
 assert.match(html, /if \(isResizingBadge && selectedElement && selectedElement\.type === 'badge'\)/, 'badge mousemove should resize the selected badge');
+assert.match(html, /if \(isResizingFocus && selectedFocusArea\) \{[\s\S]*?resizeSelectedFocusFromPoint\(pos\);[\s\S]*?return;[\s\S]*?\}/, 'active focus resizing should work outside select mode');
+assert.match(html, /if \(isDragging\) \{[\s\S]*?moveCurrentSelectionByPointer\(pos, e\);[\s\S]*?return;[\s\S]*?\}/, 'active focus moving should work outside select mode');
 assert.match(html, /function getItemBounds/, 'snap logic should use shared item bounds');
 assert.match(html, /function getBoundsForItems/, 'snap logic should support moving grouped selections');
 assert.match(html, /function getSnapAnchors/, 'snap logic should compare edges, centers, and corners');
