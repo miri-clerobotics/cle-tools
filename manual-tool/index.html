@@ -639,6 +639,10 @@
       'line': document.getElementById('toolLine')
     };
 
+    function isFocusCreationTool() {
+      return currentTool === 'focus-rect' || currentTool === 'focus-circle';
+    }
+
     function drawCanvas() {
       if (!bgImage) return;
 
@@ -2415,6 +2419,75 @@
       else { item.x += dx / canvas.width; item.y += dy / canvas.height; }
     }
 
+    function resizeSelectedFocusFromPoint(pos) {
+      if (!selectedFocusArea) return;
+      let origX = selectedFocusArea.x; let origY = selectedFocusArea.y;
+      let origW = selectedFocusArea.w; let origH = selectedFocusArea.h;
+
+      if (activeFocusHandle === 'br') { selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
+      else if (activeFocusHandle === 'tl') { const x2 = selectedFocusArea.x + selectedFocusArea.w, y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.x = pos.x; selectedFocusArea.y = pos.y; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = y2 - pos.y; }
+      else if (activeFocusHandle === 'tr') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = y2 - pos.y; }
+      else if (activeFocusHandle === 'bl') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
+      else if (activeFocusHandle === 't') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.h = y2 - pos.y; }
+      else if (activeFocusHandle === 'b') { selectedFocusArea.h = pos.y - selectedFocusArea.y; }
+      else if (activeFocusHandle === 'l') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; }
+      else if (activeFocusHandle === 'r') { selectedFocusArea.w = pos.x - selectedFocusArea.x; }
+
+      if (selectedFocusArea.type === 'circle') {
+         let size = Math.max(Math.abs(selectedFocusArea.w), Math.abs(selectedFocusArea.h));
+         let signW = selectedFocusArea.w < 0 ? -1 : 1;
+         let signH = selectedFocusArea.h < 0 ? -1 : 1;
+
+         if (activeFocusHandle === 'br') {
+             selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+         } else if (activeFocusHandle === 'tl') {
+             selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+             selectedFocusArea.x = (origX + origW) - selectedFocusArea.w;
+             selectedFocusArea.y = (origY + origH) - selectedFocusArea.h;
+         } else if (activeFocusHandle === 'tr') {
+             selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+             selectedFocusArea.y = (origY + origH) - selectedFocusArea.h;
+         } else if (activeFocusHandle === 'bl') {
+             selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
+             selectedFocusArea.x = (origX + origW) - selectedFocusArea.w;
+         }
+      }
+      drawCanvas();
+    }
+
+    function moveCurrentSelectionByPointer(pos, e) {
+      const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
+      dragStartX = pos.x; dragStartY = pos.y;
+      const selection = getSelectionList();
+      const snappedDelta = shouldBypassSnap(e) ? { dx, dy } : getSnappedMoveDelta(selection, dx, dy);
+      if (shouldBypassSnap(e)) activeSnapGuides = [];
+      selection.forEach(item => moveItemBy(item, snappedDelta.dx, snappedDelta.dy));
+      drawCanvas();
+    }
+
+    function startActiveFocusEditIfHit(pos) {
+      if (!isFocusCreationTool() || !selectedFocusArea) return false;
+
+      const handle = getFocusHandleAt(pos, selectedFocusArea);
+      if (handle) {
+        isResizingFocus = true;
+        activeFocusHandle = handle;
+        return true;
+      }
+
+      const clickedFocus = findFocusAreaAt(pos.x, pos.y);
+      if (clickedFocus === selectedFocusArea) {
+        selectedElement = null;
+        multiSel = [];
+        isDragging = true;
+        drawCanvas();
+        updateSelectedActionArea();
+        return true;
+      }
+
+      return false;
+    }
+
     function copySelectedComponents() {
       if (currentTool !== 'select') return false;
       const list = getSelectionList();
@@ -2742,7 +2815,9 @@
         const handle = getCropHandleAt(pos);
         if (handle) { isResizingCrop = true; activeCropHandle = handle; }
       } 
-      else if (currentTool === 'focus-rect' || currentTool === 'focus-circle') {
+      else if (isFocusCreationTool()) {
+        if (startActiveFocusEditIfHit(pos)) return;
+        selectedFocusArea = null; selectedElement = null; multiSel = [];
         isDrawingFocus = true; focusStartX = pos.x; focusStartY = pos.y;
         const newFocus = { id: 'f_' + Date.now(), type: currentTool === 'focus-rect' ? 'rect' : 'circle', x: pos.x, y: pos.y, w: 0, h: 0, color: toolDefaults.focus.strokeColor };
         focusAreas.push(newFocus); selectedFocusArea = newFocus;
@@ -2803,6 +2878,16 @@
         return;
       }
 
+      if (isResizingFocus && selectedFocusArea) {
+        resizeSelectedFocusFromPoint(pos);
+        return;
+      }
+
+      if (isDragging) {
+        moveCurrentSelectionByPointer(pos, e);
+        return;
+      }
+
       if (currentTool === 'select') {
         if (isMarqueeSelecting && marqueeRect) {
           marqueeRect.w = pos.x - marqueeRect.x;
@@ -2816,50 +2901,6 @@
           applySnapUnlessBypassed(e, () => applySnapToBadgeResize(selectedElement));
           drawCanvas();
           return;
-        }
-        if (isResizingFocus && selectedFocusArea) {
-          let origX = selectedFocusArea.x; let origY = selectedFocusArea.y;
-          let origW = selectedFocusArea.w; let origH = selectedFocusArea.h;
-
-          if (activeFocusHandle === 'br') { selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
-          else if (activeFocusHandle === 'tl') { const x2 = selectedFocusArea.x + selectedFocusArea.w, y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.x = pos.x; selectedFocusArea.y = pos.y; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = y2 - pos.y; }
-          else if (activeFocusHandle === 'tr') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.w = pos.x - selectedFocusArea.x; selectedFocusArea.h = y2 - pos.y; }
-          else if (activeFocusHandle === 'bl') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; selectedFocusArea.h = pos.y - selectedFocusArea.y; }
-          // 사각형 포커스: 상하좌우 변 개별 조절
-          else if (activeFocusHandle === 't') { const y2 = selectedFocusArea.y + selectedFocusArea.h; selectedFocusArea.y = pos.y; selectedFocusArea.h = y2 - pos.y; }
-          else if (activeFocusHandle === 'b') { selectedFocusArea.h = pos.y - selectedFocusArea.y; }
-          else if (activeFocusHandle === 'l') { const x2 = selectedFocusArea.x + selectedFocusArea.w; selectedFocusArea.x = pos.x; selectedFocusArea.w = x2 - pos.x; }
-          else if (activeFocusHandle === 'r') { selectedFocusArea.w = pos.x - selectedFocusArea.x; }
-
-          if (selectedFocusArea.type === 'circle') {
-             let size = Math.max(Math.abs(selectedFocusArea.w), Math.abs(selectedFocusArea.h));
-             let signW = selectedFocusArea.w < 0 ? -1 : 1;
-             let signH = selectedFocusArea.h < 0 ? -1 : 1;
-             
-             if (activeFocusHandle === 'br') {
-                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
-             } else if (activeFocusHandle === 'tl') {
-                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
-                 selectedFocusArea.x = (origX + origW) - selectedFocusArea.w;
-                 selectedFocusArea.y = (origY + origH) - selectedFocusArea.h;
-             } else if (activeFocusHandle === 'tr') {
-                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
-                 selectedFocusArea.y = (origY + origH) - selectedFocusArea.h;
-             } else if (activeFocusHandle === 'bl') {
-                 selectedFocusArea.w = size * signW; selectedFocusArea.h = size * signH;
-                 selectedFocusArea.x = (origX + origW) - selectedFocusArea.w;
-             }
-          }
-          drawCanvas();
-        } 
-        else if (isDragging) {
-          const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
-          dragStartX = pos.x; dragStartY = pos.y;
-          const selection = getSelectionList();
-          const snappedDelta = shouldBypassSnap(e) ? { dx, dy } : getSnappedMoveDelta(selection, dx, dy);
-          if (shouldBypassSnap(e)) activeSnapGuides = [];
-          selection.forEach(item => moveItemBy(item, snappedDelta.dx, snappedDelta.dy));
-          drawCanvas();
         }
       } 
       else if (currentTool === 'crop' && isResizingCrop && cropArea) {
@@ -2948,16 +2989,11 @@
       isDragging = false; isResizingFocus = false; isResizingBadge = false; isResizingCrop = false; isDrawingFocus = false;
       activeBadgeHandle = null;
       activeSnapGuides = [];
-      // 포커스 도형을 다 그리면 선택 모드로 전환하고 방금 그린 도형을 선택 상태로 둠
-      // (단, 도구가 잠겨 있으면 그대로 유지하여 연속 생성)
-      if (justDrewFocus) {
-        if (CREATION_TOOLS.includes(currentTool)) {
-          selectedFocusArea = null;
-        } else {
-          const drawn = selectedFocusArea;
-          selectTool('select');
-          selectedFocusArea = drawn;
-        }
+      // 생성 도구에서는 방금 만든 포커스를 활성 상태로 유지해 바로 이동/리사이즈할 수 있게 둔다.
+      if (justDrewFocus && !CREATION_TOOLS.includes(currentTool)) {
+        const drawn = selectedFocusArea;
+        selectTool('select');
+        selectedFocusArea = drawn;
       }
       drawCanvas(); updateSelectedActionArea();
       if (wasActionActive && currentTool !== 'crop') saveHistoryState();
