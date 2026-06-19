@@ -1742,11 +1742,13 @@
       setViewportScaleAtCenter(viewportScale * (direction < 0 ? VIEWPORT_ZOOM_STEP : 1 / VIEWPORT_ZOOM_STEP));
     }
 
-    function fitViewportToWorkspace() {
+    function fitViewportToWorkspace(allowUpscale = true) {
       if (!bgImage || !canvasContainer || canvasContainer.classList.contains('hidden')) return;
       const availableWidth = Math.max(100, workspace.clientWidth - 64);
       const availableHeight = Math.max(100, workspace.clientHeight - 64);
-      const nextScale = clampViewportScale(Math.min(availableWidth / canvasContainer.offsetWidth, availableHeight / canvasContainer.offsetHeight));
+      let nextScale = Math.min(availableWidth / canvasContainer.offsetWidth, availableHeight / canvasContainer.offsetHeight);
+      if (!allowUpscale) nextScale = Math.min(1, nextScale);
+      nextScale = clampViewportScale(nextScale);
 
       viewportScale = nextScale;
       viewportPanX = 0;
@@ -1858,13 +1860,7 @@
 
     function resizeCanvasToViewport() {
       if (!bgImage || !imageAutoFitEnabled || canvasContainer.classList.contains('hidden')) return;
-      const nextSize = calculateFittedCanvasSize(bgImage);
-      const prevW = canvas.width || nextSize.width;
-      const prevH = canvas.height || nextSize.height;
-      if (Math.abs(nextSize.width - prevW) < 1 && Math.abs(nextSize.height - prevH) < 1) return;
-
-      scaleAbsoluteCanvasItems(nextSize.width / prevW, nextSize.height / prevH);
-      setCanvasSize(nextSize.width, nextSize.height);
+      fitViewportToWorkspace(false);
       hideInlineTextInput();
       drawCanvas();
     }
@@ -1883,8 +1879,9 @@
       dropzone.classList.add('hidden');
       canvasContainer.classList.remove('hidden');
 
-      const nextSize = isFreshLoad ? calculateFittedCanvasSize(img) : { width: img.width, height: img.height };
-      setCanvasSize(nextSize.width, nextSize.height);
+      const intrinsicWidth = img.naturalWidth || img.width;
+      const intrinsicHeight = img.naturalHeight || img.height;
+      setCanvasSize(intrinsicWidth, intrinsicHeight);
       resetViewportTransform();
       
       if (isFreshLoad) {
@@ -1894,6 +1891,7 @@
       
       saveHistoryState(); 
       hideInlineTextInput(); drawCanvas();
+      fitViewportToWorkspace(false);
     }
 
     window.addEventListener('resize', handleWindowResize);
