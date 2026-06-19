@@ -146,6 +146,31 @@
           </div>
         </div>
 
+        <div id="badgeBorderStylePanel" class="hidden space-y-2 border-t border-slate-200/60 pt-4">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">번호표 테두리</span>
+          <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5 space-y-3">
+            <div class="flex items-center gap-2 min-w-0">
+              <button id="badgeBorderColorSwatch" type="button" class="w-8 h-8 rounded-lg border border-slate-200 bg-white shadow-sm shrink-0"></button>
+              <input id="badgeBorderColorInput" type="text" value="#FFFFFF" maxlength="7" class="w-20 min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-2 text-[11px] text-slate-800 focus:outline-none focus:border-[#FF4747] font-semibold uppercase">
+            </div>
+            <div id="badgeBorderColorPalette" class="grid grid-cols-6 gap-1.5">
+              <button type="button" class="badge-border-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#FFFFFF]" data-color="#FFFFFF"></button>
+              <button type="button" class="badge-border-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#111827]" data-color="#111827"></button>
+              <button type="button" class="badge-border-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#FF4747]" data-color="#FF4747"></button>
+              <button type="button" class="badge-border-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#F59E0B]" data-color="#F59E0B"></button>
+              <button type="button" class="badge-border-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#10B981]" data-color="#10B981"></button>
+              <button type="button" class="badge-border-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#00418B]" data-color="#00418B"></button>
+            </div>
+            <label class="block space-y-1.5">
+              <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+                <span>테두리 투명도</span>
+                <span id="badgeBorderTransparencyValue">100%</span>
+              </div>
+              <input id="badgeBorderTransparencyRange" type="range" min="0" max="100" value="100" class="w-full accent-[#FF4747]">
+            </label>
+          </div>
+        </div>
+
         <div class="space-y-4 border-t border-slate-200/60 pt-4">
           <div class="space-y-3">
             <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">편집 제어</h2>
@@ -457,7 +482,7 @@
       focus: { strokeColor: '#FF4747' },
       line: { strokeColor: '#FF4747' },
       text: { fillColor: '#FF4747', textColor: '#FFFFFF' },
-      badge: { fillColor: '#FF4747', textColor: '#FFFFFF', badgeStyle: 'number', badgeScale: 1 }
+      badge: { fillColor: '#FF4747', textColor: '#FFFFFF', badgeStyle: 'number', badgeScale: 1, borderColor: '#FFFFFF', borderOpacity: 0 }
     };
     const CUSTOM_COLOR_STORAGE_KEY = 'manualToolCustomColors';
     let dimOpacity = 0.3; 
@@ -586,6 +611,12 @@
     const objectColorInput = document.getElementById('objectColorInput');
     const textStylePanel = document.getElementById('textStylePanel');
     const textStylePanelTitle = document.getElementById('textStylePanelTitle');
+    const badgeBorderStylePanel = document.getElementById('badgeBorderStylePanel');
+    const badgeBorderColorSwatch = document.getElementById('badgeBorderColorSwatch');
+    const badgeBorderColorInput = document.getElementById('badgeBorderColorInput');
+    const badgeBorderColorPalette = document.getElementById('badgeBorderColorPalette');
+    const badgeBorderTransparencyRange = document.getElementById('badgeBorderTransparencyRange');
+    const badgeBorderTransparencyValue = document.getElementById('badgeBorderTransparencyValue');
     
     // 워터마크 관련 바인딩
     const watermarkToggle = document.getElementById('watermarkToggle');
@@ -701,6 +732,12 @@
           
           ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2);
           ctx.fillStyle = el.color; ctx.fill();
+          const borderOpacity = getBadgeBorderOpacity(el);
+          if (borderOpacity > 0) {
+            ctx.strokeStyle = hexToRgba(el.borderColor || toolDefaults.badge.borderColor, getBadgeBorderOpacity(el));
+            ctx.lineWidth = Math.max(calculateScaledSize(2), radius * 0.08);
+            ctx.stroke();
+          }
           
           ctx.fillStyle = el.textColor || '#ffffff';
           ctx.font = `bold ${calculateScaledSize(14) * getBadgeScale(el)}px Pretendard`;
@@ -825,6 +862,17 @@
       return Math.min(max, Math.max(min, value));
     }
 
+    function hexToRgba(color, opacity) {
+      const normalized = normalizeHexColor(color) || '#FFFFFF';
+      const alphaValue = Number(opacity);
+      const alpha = Number.isFinite(alphaValue) ? clampNumber(alphaValue, 0, 1) : 0;
+      const value = parseInt(normalized.slice(1), 16);
+      const r = (value >> 16) & 255;
+      const g = (value >> 8) & 255;
+      const b = value & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
     function createBounds(left, top, right, bottom) {
       const minX = Math.min(left, right);
       const maxX = Math.max(left, right);
@@ -849,6 +897,12 @@
 
     function getBadgeRadius(badge) {
       return calculateScaledSize(BADGE_BASE_RADIUS) * getBadgeScale(badge);
+    }
+
+    function getBadgeBorderOpacity(badge) {
+      const opacity = Number(badge?.borderOpacity);
+      if (Number.isFinite(opacity)) return clampNumber(opacity, 0, 1);
+      return clampNumber(toolDefaults.badge.borderOpacity, 0, 1);
     }
 
     function getBadgeBounds(badge) {
@@ -1250,9 +1304,22 @@
       const normalized = normalizeHexColor(objectColorInput.value);
       if (normalized) applyObjectFillColor(normalized);
     });
+    if (badgeBorderColorSwatch) badgeBorderColorSwatch.addEventListener('click', toggleBadgeBorderColorPalette);
+    if (badgeBorderColorInput) badgeBorderColorInput.addEventListener('input', () => {
+      const normalized = normalizeHexColor(badgeBorderColorInput.value);
+      if (normalized) applyBadgeBorderColor(normalized);
+    });
+    if (badgeBorderTransparencyRange) badgeBorderTransparencyRange.addEventListener('input', () => {
+      applyBadgeBorderTransparency(Number(badgeBorderTransparencyRange.value) / 100);
+    });
     document.querySelectorAll('.selected-text-color-option').forEach(btn => {
       btn.addEventListener('click', () => {
         applySelectedTextColor(btn.getAttribute('data-color'));
+      });
+    });
+    document.querySelectorAll('.badge-border-color-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyBadgeBorderColor(btn.getAttribute('data-color'));
       });
     });
     if (selectedTextInput) selectedTextInput.addEventListener('keydown', (e) => {
@@ -1687,7 +1754,7 @@
     window.addEventListener('keydown', (e) => {
       if (!customColorModal.classList.contains('hidden') && e.key === 'Escape') { closeCustomColorModal(); return; }
       if (document.activeElement === customColorHexInput || document.activeElement === customColorInput) return;
-      if (document.activeElement === selectedTextInput || document.activeElement === selectedTextColorInput || document.activeElement === objectColorInput) return;
+      if (document.activeElement === selectedTextInput || document.activeElement === selectedTextColorInput || document.activeElement === objectColorInput || document.activeElement === badgeBorderColorInput) return;
       if (document.activeElement === canvasTextInput) return;
       if (e.key === 'Shift' && activeSnapGuides.length) {
         activeSnapGuides = [];
@@ -2117,6 +2184,7 @@
       if (badgeTypePanel) badgeTypePanel.classList.toggle('hidden', currentTool !== 'badge');
       updateObjectStylePanel();
       updateTextStylePanel();
+      updateBadgeBorderStylePanel();
     }
 
     function getObjectStyleSelectionList() {
@@ -2175,6 +2243,100 @@
       });
       if (changedSelection) saveHistoryState();
       highlightObjectColor(normalized);
+      drawCanvas();
+    }
+
+    function getBadgeBorderSelectionList() {
+      return getSelectionList().filter(item => item.type === 'badge');
+    }
+
+    function getCurrentBadgeBorderColor() {
+      if (currentTool === 'badge') return toolDefaults.badge.borderColor;
+      const badges = getBadgeBorderSelectionList();
+      if (badges.length > 0) return badges[0].borderColor || toolDefaults.badge.borderColor;
+      return toolDefaults.badge.borderColor;
+    }
+
+    function transparencyToBorderOpacity(transparency) {
+      const value = Number(transparency);
+      const safeTransparency = Number.isFinite(value) ? clampNumber(value, 0, 1) : 1;
+      return 1 - safeTransparency;
+    }
+
+    function getBadgeBorderTransparency(badge) {
+      return 1 - getBadgeBorderOpacity(badge);
+    }
+
+    function getCurrentBadgeBorderTransparency() {
+      if (currentTool === 'badge') return 1 - toolDefaults.badge.borderOpacity;
+      const badges = getBadgeBorderSelectionList();
+      if (badges.length > 0) return getBadgeBorderTransparency(badges[0]);
+      return 1 - toolDefaults.badge.borderOpacity;
+    }
+
+    function setBadgeBorderColorDraft(color) {
+      const normalized = normalizeHexColor(color) || toolDefaults.badge.borderColor;
+      if (badgeBorderColorInput) badgeBorderColorInput.value = normalized;
+      if (badgeBorderColorSwatch) badgeBorderColorSwatch.style.backgroundColor = normalized;
+    }
+
+    function setBadgeBorderTransparencyDraft(transparency) {
+      const safeTransparency = Number.isFinite(Number(transparency)) ? clampNumber(Number(transparency), 0, 1) : 1;
+      const percent = Math.round(safeTransparency * 100);
+      if (badgeBorderTransparencyRange) badgeBorderTransparencyRange.value = String(percent);
+      if (badgeBorderTransparencyValue) badgeBorderTransparencyValue.innerText = `${percent}%`;
+    }
+
+    function toggleBadgeBorderColorPalette() {
+      if (badgeBorderColorPalette) badgeBorderColorPalette.classList.toggle('hidden');
+    }
+
+    function updateBadgeBorderStylePanel() {
+      if (!badgeBorderStylePanel) return;
+      const badges = getBadgeBorderSelectionList();
+      const shouldShow = currentTool === 'badge' || (currentTool === 'select' && badges.length > 0);
+      badgeBorderStylePanel.classList.toggle('hidden', !shouldShow);
+      if (!shouldShow) return;
+
+      if (badgeBorderColorPalette) badgeBorderColorPalette.classList.remove('hidden');
+      setBadgeBorderColorDraft(getCurrentBadgeBorderColor());
+      setBadgeBorderTransparencyDraft(getCurrentBadgeBorderTransparency());
+    }
+
+    function applyBadgeBorderColor(color) {
+      const normalized = normalizeHexColor(color);
+      if (!normalized) return;
+
+      if (currentTool === 'badge') toolDefaults.badge.borderColor = normalized;
+
+      let changedSelection = false;
+      getBadgeBorderSelectionList().forEach(item => {
+        if (item.borderColor !== normalized) {
+          item.borderColor = normalized;
+          changedSelection = true;
+        }
+      });
+      if (changedSelection) saveHistoryState();
+      setBadgeBorderColorDraft(normalized);
+      drawCanvas();
+    }
+
+    function applyBadgeBorderTransparency(value) {
+      const rawTransparency = Number(value);
+      if (!Number.isFinite(rawTransparency)) return;
+      const transparency = clampNumber(rawTransparency, 0, 1);
+
+      if (currentTool === 'badge') toolDefaults.badge.borderOpacity = transparencyToBorderOpacity(transparency);
+
+      let changedSelection = false;
+      getBadgeBorderSelectionList().forEach(item => {
+        if (getBadgeBorderTransparency(item) !== transparency) {
+          item.borderOpacity = transparencyToBorderOpacity(transparency);
+          changedSelection = true;
+        }
+      });
+      if (changedSelection) saveHistoryState();
+      setBadgeBorderTransparencyDraft(transparency);
       drawCanvas();
     }
 
@@ -2452,6 +2614,7 @@
       updateSelectedTextEditArea();
       updateObjectStylePanel();
       updateTextStylePanel();
+      updateBadgeBorderStylePanel();
     }
 
     function distanceToSegment(x, y, a, b) {
@@ -2585,7 +2748,7 @@
         focusAreas.push(newFocus); selectedFocusArea = newFocus;
       } 
       else if (currentTool === 'badge') {
-        const newBadge = { type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: toolDefaults.badge.badgeStyle, color: toolDefaults.badge.fillColor, textColor: toolDefaults.badge.textColor, scale: toolDefaults.badge.badgeScale, text: '' };
+        const newBadge = { type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: toolDefaults.badge.badgeStyle, color: toolDefaults.badge.fillColor, textColor: toolDefaults.badge.textColor, scale: toolDefaults.badge.badgeScale, borderColor: toolDefaults.badge.borderColor, borderOpacity: toolDefaults.badge.borderOpacity, text: '' };
         elements.push(newBadge);
         placingBadge = newBadge;
         isPlacingBadge = true;
