@@ -1013,6 +1013,19 @@
       ctx.restore();
     }
 
+    function shouldBypassSnap(e) {
+      return e?.shiftKey === true;
+    }
+
+    function applySnapUnlessBypassed(e, snapAction) {
+      if (shouldBypassSnap(e)) {
+        activeSnapGuides = [];
+        return false;
+      }
+      snapAction();
+      return true;
+    }
+
     function applySnapToBadgePlacement(badge) {
       const snapResult = snapBoundsToTargets(getBadgeBounds(badge), [badge]);
       activeSnapGuides = snapResult.guides;
@@ -1060,7 +1073,11 @@
       return { x: point.x + snapResult.dx, y: point.y + snapResult.dy };
     }
 
-    function snapFocusDraftToTargets(focus) {
+    function snapFocusDraftToTargets(focus, e) {
+      if (shouldBypassSnap(e)) {
+        activeSnapGuides = [];
+        return;
+      }
       if (focus.type !== 'rect') {
         activeSnapGuides = [];
         return;
@@ -1518,6 +1535,11 @@
       if (document.activeElement === customColorHexInput || document.activeElement === customColorInput) return;
       if (document.activeElement === selectedTextInput || document.activeElement === selectedTextColorInput || document.activeElement === objectColorInput) return;
       if (document.activeElement === canvasTextInput) return;
+      if (e.key === 'Shift' && activeSnapGuides.length) {
+        activeSnapGuides = [];
+        drawCanvas();
+        return;
+      }
       if (e.code === 'Space' && bgImage) {
         isSpacePanActive = true;
         workspace.style.cursor = 'grab';
@@ -1562,6 +1584,7 @@
     });
 
     canvasContainer.addEventListener('wheel', handleViewportWheel, { passive: false });
+    workspace.addEventListener('wheel', suppressHorizontalViewportWheel, { passive: false, capture: true });
     workspace.addEventListener('pointerdown', handleViewportPanStart, true);
     document.addEventListener('contextmenu', suppressViewportContextMenu, true);
     window.addEventListener('pointermove', handleViewportPanMove);
@@ -1745,8 +1768,24 @@
       return true;
     }
 
+    function shouldSuppressHorizontalViewportWheel(e) {
+      if (!bgImage || canvasContainer.classList.contains('hidden')) return false;
+      return Math.abs(e.deltaX) >= 1 && Math.abs(e.deltaX) >= Math.abs(e.deltaY);
+    }
+
+    function suppressHorizontalViewportWheel(e) {
+      if (!shouldSuppressHorizontalViewportWheel(e)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     function handleViewportWheel(e) {
       if (isPanningViewport) { finishViewportPan(); return; }
+      if (shouldSuppressHorizontalViewportWheel(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (!shouldHandleViewportWheel(e)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -2349,7 +2388,7 @@
         isPlacingBadge = true;
         selectedElement = null; selectedFocusArea = null; multiSel = [];
         reindexBadges();
-        applySnapToBadgePlacement(newBadge);
+        applySnapUnlessBypassed(e, () => applySnapToBadgePlacement(newBadge));
         drawCanvas(); updateSelectedActionArea();
       }
       else if (currentTool === 'line') {
@@ -2393,7 +2432,7 @@
 
       if (isPlacingBadge && placingBadge) {
         setBadgeCenterFromPoint(placingBadge, pos);
-        applySnapToBadgePlacement(placingBadge);
+        applySnapUnlessBypassed(e, () => applySnapToBadgePlacement(placingBadge));
         drawCanvas();
         return;
       }
@@ -2408,7 +2447,7 @@
         }
         if (isResizingBadge && selectedElement && selectedElement.type === 'badge') {
           resizeBadgeFromPoint(selectedElement, pos);
-          applySnapToBadgeResize(selectedElement);
+          applySnapUnlessBypassed(e, () => applySnapToBadgeResize(selectedElement));
           drawCanvas();
           return;
         }
@@ -2451,7 +2490,8 @@
           const dx = pos.x - dragStartX; const dy = pos.y - dragStartY;
           dragStartX = pos.x; dragStartY = pos.y;
           const selection = getSelectionList();
-          const snappedDelta = getSnappedMoveDelta(selection, dx, dy);
+          const snappedDelta = shouldBypassSnap(e) ? { dx, dy } : getSnappedMoveDelta(selection, dx, dy);
+          if (shouldBypassSnap(e)) activeSnapGuides = [];
           selection.forEach(item => moveItemBy(item, snappedDelta.dx, snappedDelta.dy));
           drawCanvas();
         }
@@ -2474,7 +2514,8 @@
         const dx = pos.x - lastFixedPt.x; const dy = pos.y - lastFixedPt.y;
         let orthogonalPos = { x: pos.x, y: pos.y };
         if (Math.abs(dx) > Math.abs(dy)) orthogonalPos.y = lastFixedPt.y; else orthogonalPos.x = lastFixedPt.x;
-        points[points.length - 1] = snapPointToTargets(orthogonalPos, [drawingLineInstance]);
+        points[points.length - 1] = shouldBypassSnap(e) ? orthogonalPos : snapPointToTargets(orthogonalPos, [drawingLineInstance]);
+        if (shouldBypassSnap(e)) activeSnapGuides = [];
         drawCanvas();
       }
       else if (isDrawingFocus && selectedFocusArea) {
@@ -2489,7 +2530,7 @@
         } else {
           selectedFocusArea.w = dw;
           selectedFocusArea.h = dh;
-          snapFocusDraftToTargets(selectedFocusArea);
+          snapFocusDraftToTargets(selectedFocusArea, e);
         }
         drawCanvas();
       }

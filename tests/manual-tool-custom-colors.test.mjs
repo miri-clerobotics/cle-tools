@@ -107,6 +107,13 @@ assert.match(html, /Date\.now\(\) - lastViewportPanEndedAt < VIEWPORT_WHEEL_AFTE
 assert.match(html, /Math\.abs\(e\.deltaY\) < 1/, 'wheel zoom should ignore zero vertical wheel delta');
 assert.match(html, /Math\.abs\(e\.deltaX\) > Math\.abs\(e\.deltaY\)/, 'horizontal wheel gestures should not be treated as zoom');
 assert.match(html, /if \(!shouldHandleViewportWheel\(e\)\) return;/, 'wheel handler should return before preventing default when a wheel is unrelated to zooming');
+assert.match(html, /function shouldSuppressHorizontalViewportWheel/, 'horizontal wheel suppression should be centralized');
+assert.match(html, /Math\.abs\(e\.deltaX\) >= 1/, 'horizontal wheel suppression should detect real horizontal deltas');
+assert.match(html, /Math\.abs\(e\.deltaX\) >= Math\.abs\(e\.deltaY\)/, 'horizontal wheel suppression should ignore diagonal vertical zoom gestures');
+assert.match(html, /function suppressHorizontalViewportWheel/, 'workspace horizontal wheel events should have a suppress-only handler');
+assert.match(html, /workspace\.addEventListener\('wheel', suppressHorizontalViewportWheel, \{ passive: false, capture: true \}\)/, 'horizontal wheel suppression should run before workspace scrolling');
+assert.match(html, /if \(shouldSuppressHorizontalViewportWheel\(e\)\) \{[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?return;[\s\S]*?\}/, 'canvas wheel handler should block horizontal wheel default scrolling without zooming');
+assert.match(html, /if \(!shouldSuppressHorizontalViewportWheel\(e\)\) return;[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);/, 'workspace suppress handler should prevent and stop horizontal wheel events');
 assert.match(html, /workspace\.addEventListener\('pointerdown', handleViewportPanStart, true\)/, 'right-click panning should use pointer events before canvas editing handlers');
 assert.match(html, /document\.addEventListener\('contextmenu', suppressViewportContextMenu, true\)/, 'context menu should be suppressed at capture phase while viewport panning is available');
 assert.match(html, /workspace\.contains\(e\.target\)/, 'context menu suppression should stay scoped to the editing workspace');
@@ -158,5 +165,18 @@ assert.match(html, /activeSnapGuides = snapResult\.guides/, 'active snap guides 
 assert.match(html, /const SNAP_THRESHOLD_PX = 8/, 'snap threshold should be defined in screen pixels');
 assert.match(html, /canvas\.width \/ rect\.width/, 'snap threshold should account for viewport zoom');
 assert.match(html, /item\.type === 'line'[\s\S]*?item\.points\.forEach/, 'line endpoints should contribute snap anchors');
+assert.match(html, /function shouldBypassSnap\(e\)/, 'snap bypass should be centralized');
+assert.match(html, /return e\?\.shiftKey === true/, 'holding Shift should bypass snap behavior');
+assert.match(html, /function applySnapUnlessBypassed\(e, snapAction\)/, 'snap application and Shift bypass should share one helper');
+assert.match(html, /if \(shouldBypassSnap\(e\)\) \{[\s\S]*?activeSnapGuides = \[\];[\s\S]*?return false;[\s\S]*?\}/, 'snap bypass helper should clear guides and report that snapping was skipped');
+assert.match(html, /applySnapUnlessBypassed\(e, \(\) => applySnapToBadgePlacement\(newBadge\)\)/, 'holding Shift should disable initial badge placement snap on mousedown');
+assert.match(html, /applySnapUnlessBypassed\(e, \(\) => applySnapToBadgePlacement\(placingBadge\)\)/, 'holding Shift should disable snap while placing badges');
+assert.match(html, /applySnapUnlessBypassed\(e, \(\) => applySnapToBadgeResize\(selectedElement\)\)/, 'holding Shift should disable snap while resizing badges');
+assert.match(html, /const snappedDelta = shouldBypassSnap\(e\) \? \{ dx, dy \} : getSnappedMoveDelta\(selection, dx, dy\)/, 'holding Shift should disable snap while moving selected components');
+assert.match(html, /if \(shouldBypassSnap\(e\)\) activeSnapGuides = \[\];/, 'holding Shift should clear visible snap guides during movement');
+assert.match(html, /points\[points\.length - 1\] = shouldBypassSnap\(e\) \? orthogonalPos : snapPointToTargets\(orthogonalPos, \[drawingLineInstance\]\)/, 'holding Shift should disable snap while moving line endpoints');
+assert.match(html, /function snapFocusDraftToTargets\(focus, e\)/, 'focus draft snapping should receive the pointer event');
+assert.match(html, /if \(shouldBypassSnap\(e\)\) \{[\s\S]*?activeSnapGuides = \[\];[\s\S]*?return;[\s\S]*?\}/, 'holding Shift should disable snap while drawing focus rectangles');
+assert.match(html, /if \(e\.key === 'Shift' && activeSnapGuides\.length\)/, 'pressing Shift should immediately clear visible snap guides');
 
 console.log('manual-tool custom color checks passed');
