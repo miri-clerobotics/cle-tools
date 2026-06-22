@@ -107,45 +107,21 @@
           </div>
         </div>
 
-        <div id="textStylePanel" class="hidden space-y-2 border-t border-slate-200/60 pt-4">
-          <span id="textStylePanelTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">글씨 스타일</span>
+        <div id="colorPresetPanel" class="space-y-2 border-t border-slate-200/60 pt-4">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">테두리 & 뱃지 색상</span>
           <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5 space-y-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <button id="selectedTextColorSwatch" type="button" class="w-8 h-8 rounded-lg border border-slate-200 bg-white shadow-sm shrink-0"></button>
-              <input id="selectedTextColorInput" type="text" value="#FFFFFF" maxlength="7" class="w-20 min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-2 text-[11px] text-slate-800 focus:outline-none focus:border-[#FF4747] font-semibold uppercase">
+            <div id="colorPresetPalette" class="flex flex-wrap items-center gap-2">
+              <button type="button" class="color-preset-btn w-8 h-8 rounded-full border border-slate-200 bg-[#FF4747]" data-fill-color="#FF4747" data-text-color="#FFFFFF" title="빨강"></button>
+              <button type="button" class="color-preset-btn w-8 h-8 rounded-full border border-slate-200 bg-[#F59E0B]" data-fill-color="#F59E0B" data-text-color="#FFFFFF" title="주황"></button>
+              <button type="button" class="color-preset-btn w-8 h-8 rounded-full border border-slate-200 bg-[#10B981]" data-fill-color="#10B981" data-text-color="#FFFFFF" title="초록"></button>
+              <button type="button" class="color-preset-btn w-8 h-8 rounded-full border border-slate-200 bg-[#00418B]" data-fill-color="#00418B" data-text-color="#FFFFFF" title="파랑"></button>
+              <button type="button" class="color-preset-btn w-8 h-8 rounded-full border border-slate-200 bg-[#111827]" data-fill-color="#111827" data-text-color="#FFFFFF" title="검정"></button>
+              <button type="button" class="color-preset-btn w-8 h-8 rounded-full border border-slate-200 bg-[#FFFFFF]" data-fill-color="#FFFFFF" data-text-color="#111827" title="흰색"></button>
             </div>
-            <div id="selectedTextColorPalette" class="grid grid-cols-6 gap-1.5">
-              <button type="button" class="selected-text-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#FFFFFF]" data-color="#FFFFFF"></button>
-              <button type="button" class="selected-text-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#111827]" data-color="#111827"></button>
-              <button type="button" class="selected-text-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#FF4747]" data-color="#FF4747"></button>
-              <button type="button" class="selected-text-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#F59E0B]" data-color="#F59E0B"></button>
-              <button type="button" class="selected-text-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#10B981]" data-color="#10B981"></button>
-              <button type="button" class="selected-text-color-option w-6 h-6 rounded-full border border-slate-200 bg-[#00418B]" data-color="#00418B"></button>
-            </div>
-          </div>
-        </div>
-
-        <div id="objectStylePanel" class="hidden space-y-2 border-t border-slate-200/60 pt-4">
-          <span id="objectStylePanelTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">색상</span>
-          <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5 space-y-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <button id="objectColorSwatch" type="button" class="w-8 h-8 rounded-lg border border-slate-200 bg-white shadow-sm shrink-0"></button>
-              <input id="objectColorInput" type="text" value="#FF4747" maxlength="7" class="w-20 min-w-0 bg-white border border-slate-200 rounded-lg px-2 py-2 text-[11px] text-slate-800 focus:outline-none focus:border-[#FF4747] font-semibold uppercase">
-            </div>
-            <div id="colorPalette" class="space-y-2">
-              <div id="defaultColorPalette" class="grid grid-cols-6 gap-1.5">
-                <button type="button" class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-[#FFFFFF]" data-color="#FFFFFF"></button>
-                <button type="button" class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-[#111827]" data-color="#111827"></button>
-                <button type="button" class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-[#FF4747]" data-color="#FF4747"></button>
-                <button type="button" class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-[#F59E0B]" data-color="#F59E0B"></button>
-                <button type="button" class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-[#10B981]" data-color="#10B981"></button>
-                <button type="button" class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-[#00418B]" data-color="#00418B"></button>
-              </div>
-              <div id="customColorPalette" class="flex flex-wrap items-center gap-1.5 pt-1">
-                <button id="addCustomColorBtn" type="button" class="w-6 h-6 rounded-full border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-400 hover:text-[#FF4747] transition-all flex items-center justify-center" title="커스텀 색상 추가">
-                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
+            <div id="customPresetPalette" class="flex flex-wrap items-center gap-2 pt-1">
+              <button id="addCustomColorBtn" type="button" class="w-8 h-8 rounded-full border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-400 hover:text-[#FF4747] transition-all flex items-center justify-center" title="커스텀 프리셋 추가">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -417,17 +393,43 @@
       <button id="closeCustomColorModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
       <div class="flex items-center gap-3 mb-4">
         <div class="bg-[#FF4747]/10 p-2 rounded-xl text-[#FF4747]"><i data-lucide="palette" class="w-5 h-5"></i></div>
-        <h3 id="customColorModalTitle" class="text-base font-extrabold text-slate-800">커스텀 색상 추가</h3>
+        <h3 id="customColorModalTitle" class="text-base font-extrabold text-slate-800">커스텀 프리셋 추가</h3>
       </div>
-      <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-3 space-y-3">
-        <div class="flex items-center gap-2 min-w-0">
-          <label id="customColorPreviewSwatch" class="relative w-9 h-9 rounded-lg border border-slate-200 bg-[#FF4747] shadow-sm shrink-0 overflow-hidden cursor-pointer" title="색상 선택">
-            <input type="color" id="customColorInput" value="#FF4747" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-          </label>
-          <input type="text" id="customColorHexInput" value="#FF4747" maxlength="7" class="w-28 min-w-0 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:border-[#FF4747] uppercase" placeholder="#FF4747">
+      <div class="space-y-4">
+        <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-3 space-y-2">
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">번호표 글씨 스타일</span>
+          <div class="flex items-center gap-2 min-w-0">
+            <label id="customPresetTextPreviewSwatch" class="relative w-9 h-9 rounded-lg border border-slate-200 bg-[#FFFFFF] shadow-sm shrink-0 overflow-hidden cursor-pointer" title="번호표 글씨색 선택">
+              <input type="color" id="customPresetTextColorPicker" value="#FFFFFF" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            </label>
+            <input type="text" id="customPresetTextColorInput" value="#FFFFFF" maxlength="7" class="w-28 min-w-0 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:border-[#FF4747] uppercase" placeholder="#FFFFFF">
+          </div>
+          <div id="customPresetTextPalette" class="flex flex-wrap items-center gap-2">
+            <button type="button" class="custom-preset-text-option w-7 h-7 rounded-full border border-slate-200 bg-[#FFFFFF]" data-color="#FFFFFF"></button>
+            <button type="button" class="custom-preset-text-option w-7 h-7 rounded-full border border-slate-200 bg-[#111827]" data-color="#111827"></button>
+            <button type="button" class="custom-preset-text-option w-7 h-7 rounded-full border border-slate-200 bg-[#FF4747]" data-color="#FF4747"></button>
+            <button type="button" class="custom-preset-text-option w-7 h-7 rounded-full border border-slate-200 bg-[#F59E0B]" data-color="#F59E0B"></button>
+            <button type="button" class="custom-preset-text-option w-7 h-7 rounded-full border border-slate-200 bg-[#10B981]" data-color="#10B981"></button>
+            <button type="button" class="custom-preset-text-option w-7 h-7 rounded-full border border-slate-200 bg-[#00418B]" data-color="#00418B"></button>
+          </div>
         </div>
-        <div id="customColorModalPalette" class="grid grid-cols-6 gap-1.5"></div>
-        <div id="customColorModalCustomPalette" class="flex flex-wrap items-center gap-1.5 pt-1"></div>
+        <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-3 space-y-2">
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">번호표 배경색</span>
+          <div class="flex items-center gap-2 min-w-0">
+            <label id="customPresetFillPreviewSwatch" class="relative w-9 h-9 rounded-lg border border-slate-200 bg-[#FF4747] shadow-sm shrink-0 overflow-hidden cursor-pointer" title="번호표 배경색 선택">
+              <input type="color" id="customPresetFillColorPicker" value="#FF4747" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            </label>
+            <input type="text" id="customPresetFillColorInput" value="#FF4747" maxlength="7" class="w-28 min-w-0 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:border-[#FF4747] uppercase" placeholder="#FF4747">
+          </div>
+          <div id="customPresetFillPalette" class="flex flex-wrap items-center gap-2">
+            <button type="button" class="custom-preset-fill-option w-7 h-7 rounded-full border border-slate-200 bg-[#FFFFFF]" data-color="#FFFFFF"></button>
+            <button type="button" class="custom-preset-fill-option w-7 h-7 rounded-full border border-slate-200 bg-[#111827]" data-color="#111827"></button>
+            <button type="button" class="custom-preset-fill-option w-7 h-7 rounded-full border border-slate-200 bg-[#FF4747]" data-color="#FF4747"></button>
+            <button type="button" class="custom-preset-fill-option w-7 h-7 rounded-full border border-slate-200 bg-[#F59E0B]" data-color="#F59E0B"></button>
+            <button type="button" class="custom-preset-fill-option w-7 h-7 rounded-full border border-slate-200 bg-[#10B981]" data-color="#10B981"></button>
+            <button type="button" class="custom-preset-fill-option w-7 h-7 rounded-full border border-slate-200 bg-[#00418B]" data-color="#00418B"></button>
+          </div>
+        </div>
         <p id="customColorError" class="hidden text-[11px] text-rose-500 font-semibold">HEX 색상 코드를 확인하세요. 예: #FF4747</p>
         <div class="grid grid-cols-3 gap-2 pt-1">
           <button id="cancelCustomColorBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-600 py-2.5 rounded-xl text-xs font-bold transition-all">닫기</button>
@@ -465,8 +467,16 @@
       badge: { fillColor: '#FF4747', textColor: '#FFFFFF', badgeStyle: 'number', badgeScale: 1 }
     };
     const CUSTOM_COLOR_STORAGE_KEY = 'manualToolCustomColors';
-    const DEFAULT_COLOR_VALUES = ['#FFFFFF', '#111827', '#FF4747', '#F59E0B', '#10B981', '#00418B'];
-    let editingCustomColor = null;
+    const DEFAULT_COLOR_PRESETS = [
+      { fillColor: '#FF4747', textColor: '#FFFFFF' },
+      { fillColor: '#F59E0B', textColor: '#FFFFFF' },
+      { fillColor: '#10B981', textColor: '#FFFFFF' },
+      { fillColor: '#00418B', textColor: '#FFFFFF' },
+      { fillColor: '#111827', textColor: '#FFFFFF' },
+      { fillColor: '#FFFFFF', textColor: '#111827' }
+    ];
+    let activeColorPreset = { fillColor: '#FF4747', textColor: '#FFFFFF' };
+    let editingCustomPresetKey = null;
     let dimOpacity = 0.3; 
     let currentScalePreset = 1.0; 
     let autoScaleEnabled = true; 
@@ -577,9 +587,9 @@
     const scaleModeLabel = document.getElementById('scaleModeLabel');
     const downloadBtn = document.getElementById('downloadBtn');
     const copyClipBtn = document.getElementById('copyClipBtn');
-    const colorPalette = document.getElementById('colorPalette');
-    const defaultColorPalette = document.getElementById('defaultColorPalette');
-    const customColorPalette = document.getElementById('customColorPalette');
+    const colorPresetPanel = document.getElementById('colorPresetPanel');
+    const colorPresetPalette = document.getElementById('colorPresetPalette');
+    const customPresetPalette = document.getElementById('customPresetPalette');
     const addCustomColorBtn = document.getElementById('addCustomColorBtn');
     const customColorModal = document.getElementById('customColorModal');
     const customColorModalTitle = document.getElementById('customColorModalTitle');
@@ -587,19 +597,14 @@
     const cancelCustomColorBtn = document.getElementById('cancelCustomColorBtn');
     const saveCustomColorBtn = document.getElementById('saveCustomColorBtn');
     const deleteCustomColorBtn = document.getElementById('deleteCustomColorBtn');
-    const customColorInput = document.getElementById('customColorInput');
-    const customColorHexInput = document.getElementById('customColorHexInput');
-    const customColorPreviewSwatch = document.getElementById('customColorPreviewSwatch');
-    const customColorModalPalette = document.getElementById('customColorModalPalette');
-    const customColorModalCustomPalette = document.getElementById('customColorModalCustomPalette');
+    const customPresetTextColorPicker = document.getElementById('customPresetTextColorPicker');
+    const customPresetTextColorInput = document.getElementById('customPresetTextColorInput');
+    const customPresetTextPreviewSwatch = document.getElementById('customPresetTextPreviewSwatch');
+    const customPresetFillColorPicker = document.getElementById('customPresetFillColorPicker');
+    const customPresetFillColorInput = document.getElementById('customPresetFillColorInput');
+    const customPresetFillPreviewSwatch = document.getElementById('customPresetFillPreviewSwatch');
     const customColorError = document.getElementById('customColorError');
     const badgeTypePanel = document.getElementById('badgeTypePanel');
-    const objectStylePanel = document.getElementById('objectStylePanel');
-    const objectStylePanelTitle = document.getElementById('objectStylePanelTitle');
-    const objectColorSwatch = document.getElementById('objectColorSwatch');
-    const objectColorInput = document.getElementById('objectColorInput');
-    const textStylePanel = document.getElementById('textStylePanel');
-    const textStylePanelTitle = document.getElementById('textStylePanelTitle');
     
     // 워터마크 관련 바인딩
     const watermarkToggle = document.getElementById('watermarkToggle');
@@ -1260,10 +1265,6 @@
       const normalized = normalizeHexColor(selectedTextColorInput.value);
       if (normalized) applySelectedTextColor(normalized, true);
     });
-    if (objectColorInput) objectColorInput.addEventListener('input', () => {
-      const normalized = normalizeHexColor(objectColorInput.value);
-      if (normalized) applyObjectFillColor(normalized);
-    });
     document.querySelectorAll('.selected-text-color-option').forEach(btn => {
       btn.addEventListener('click', () => {
         applySelectedTextColor(btn.getAttribute('data-color'));
@@ -1531,211 +1532,201 @@
       return null;
     }
 
-    function isDefaultColor(color) {
-      const normalized = normalizeHexColor(color);
-      return !!normalized && DEFAULT_COLOR_VALUES.includes(normalized);
+    function normalizeColorPreset(value) {
+      const fillColor = normalizeHexColor(typeof value === 'string' ? value : value?.fillColor || value?.color || value?.backgroundColor);
+      const textColor = normalizeHexColor(typeof value === 'string' ? '#FFFFFF' : value?.textColor || '#FFFFFF');
+      if (!fillColor || !textColor) return null;
+      return { fillColor, textColor };
     }
 
-    function normalizeCustomColorCollection(colors) {
-      if (!Array.isArray(colors)) return [];
-      return [...new Set(colors.map(normalizeHexColor).filter(color => color && !isDefaultColor(color)))].slice(0, 24);
+    function getPresetKey(preset) {
+      const normalized = normalizeColorPreset(preset);
+      return normalized ? `${normalized.textColor}|${normalized.fillColor}` : '';
     }
 
-    function getStoredCustomColors() {
+    function isDefaultPreset(preset) {
+      const key = getPresetKey(preset);
+      return DEFAULT_COLOR_PRESETS.some(defaultPreset => getPresetKey(defaultPreset) === key);
+    }
+
+    function normalizeCustomPresetCollection(presets) {
+      if (!Array.isArray(presets)) return [];
+      const seen = new Set();
+      return presets
+        .map(normalizeColorPreset)
+        .filter(preset => {
+          const key = getPresetKey(preset);
+          if (!key || isDefaultPreset(preset) || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 24);
+    }
+
+    function getStoredCustomColorPresets() {
       try {
         const parsed = JSON.parse(localStorage.getItem(CUSTOM_COLOR_STORAGE_KEY) || '[]');
-        return normalizeCustomColorCollection(parsed);
+        return normalizeCustomPresetCollection(parsed);
       } catch (error) {
         return [];
       }
     }
 
-    function saveStoredCustomColors(colors) {
-      localStorage.setItem(CUSTOM_COLOR_STORAGE_KEY, JSON.stringify(normalizeCustomColorCollection(colors)));
+    function saveStoredCustomColorPresets(presets) {
+      localStorage.setItem(CUSTOM_COLOR_STORAGE_KEY, JSON.stringify(normalizeCustomPresetCollection(presets)));
     }
 
-    function selectColorButton(btn) {
-      if (!btn) return;
-      applyObjectFillColor(btn.getAttribute('data-color'));
+    function setPresetButtonPreview(btn, preset) {
+      btn.style.background = `linear-gradient(90deg, ${preset.textColor} 0 50%, ${preset.fillColor} 50% 100%)`;
     }
 
-    function findColorButton(color) {
-      const normalized = normalizeHexColor(color);
-      if (!normalized) return null;
-      return document.querySelector(`.color-picker-btn[data-color="${normalized}"]`);
-    }
-
-    function createColorSwatchButton(color, className, onClick) {
+    function createCustomPresetButton(preset) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = className;
-      btn.style.backgroundColor = color;
-      btn.setAttribute('data-color', color);
-      btn.setAttribute('title', color);
-      btn.addEventListener('click', onClick);
+      btn.className = 'color-preset-btn custom-preset-btn w-8 h-8 rounded-full border border-slate-200 overflow-hidden';
+      btn.setAttribute('data-fill-color', preset.fillColor);
+      btn.setAttribute('data-text-color', preset.textColor);
+      btn.setAttribute('title', `${preset.textColor} / ${preset.fillColor}`);
+      setPresetButtonPreview(btn, preset);
+      btn.addEventListener('click', () => {
+        applyColorPreset(preset.fillColor, preset.textColor);
+        openCustomColorModal(preset);
+      });
       return btn;
     }
 
-    function createCustomColorButton(color) {
-      return createColorSwatchButton(
-        color,
-        'color-picker-btn custom-color-btn w-6 h-6 rounded-full border border-slate-200',
-        () => {
-          applyObjectFillColor(color);
-          setCustomColorFormValue(color);
-        }
-      );
-    }
-
-    function renderCustomColorButtons() {
-      document.querySelectorAll('.custom-color-btn').forEach(btn => btn.remove());
-      if (!customColorPalette) return;
-      getStoredCustomColors().forEach(color => {
-        customColorPalette.appendChild(createCustomColorButton(color));
+    function renderCustomColorPresets() {
+      document.querySelectorAll('.custom-preset-btn').forEach(btn => btn.remove());
+      if (!customPresetPalette) return;
+      getStoredCustomColorPresets().forEach(preset => {
+        customPresetPalette.appendChild(createCustomPresetButton(preset));
       });
+      lucide.createIcons();
+      updateColorPresetPanel();
     }
 
-    function setCustomColorFormValue(color) {
-      const normalized = normalizeHexColor(color) || '#FF4747';
-      if (customColorInput) customColorInput.value = normalized;
-      if (customColorHexInput) customColorHexInput.value = normalized;
-      if (customColorPreviewSwatch) customColorPreviewSwatch.style.backgroundColor = normalized;
-      if (customColorError) customColorError.classList.add('hidden');
-    }
-
-    function setCustomColorEditState(color = null) {
-      editingCustomColor = normalizeHexColor(color);
-      const isEditing = !!editingCustomColor;
-      if (customColorModalTitle) customColorModalTitle.innerText = isEditing ? '커스텀 색상 수정' : '커스텀 색상 추가';
-      if (saveCustomColorBtn) saveCustomColorBtn.innerText = isEditing ? '수정' : '추가';
-      if (deleteCustomColorBtn) deleteCustomColorBtn.disabled = !isEditing;
-    }
-
-    function resetCustomColorModalForm(color = activeColor) {
-      setCustomColorEditState(null);
-      setCustomColorFormValue(color);
-    }
-
-    function selectCustomColorForEdit(color) {
+    function setCustomPresetDraft(kind, color) {
       const normalized = normalizeHexColor(color);
-      if (!normalized) return;
-      setCustomColorEditState(normalized);
-      setCustomColorFormValue(normalized);
-      applyObjectFillColor(normalized);
-    }
-
-    function renderCustomColorModalPalette() {
-      if (customColorModalPalette) {
-        customColorModalPalette.innerHTML = '';
-        DEFAULT_COLOR_VALUES.forEach(color => {
-          customColorModalPalette.appendChild(createColorSwatchButton(
-            color,
-            'custom-color-modal-option w-6 h-6 rounded-full border border-slate-200',
-            () => {
-              setCustomColorEditState(null);
-              setCustomColorFormValue(color);
-              applyObjectFillColor(color);
-            }
-          ));
-        });
-      }
-      if (customColorModalCustomPalette) {
-        customColorModalCustomPalette.innerHTML = '';
-        getStoredCustomColors().forEach(color => {
-          customColorModalCustomPalette.appendChild(createColorSwatchButton(
-            color,
-            'custom-color-modal-option custom-color-modal-saved w-6 h-6 rounded-full border border-slate-200',
-            () => selectCustomColorForEdit(color)
-          ));
-        });
-      }
-    }
-
-    function syncCustomColorPalettes() {
-      renderCustomColorButtons();
-      renderCustomColorModalPalette();
-    }
-
-    function deleteSelectedCustomColor() {
-      if (!editingCustomColor) return;
-      const removedColor = editingCustomColor;
-      const colors = getStoredCustomColors().filter(savedColor => savedColor !== removedColor);
-      saveStoredCustomColors(colors);
-      resetCustomColorModalForm(activeColor);
-      syncCustomColorPalettes();
-      showToast('커스텀 색상이 삭제되었습니다.');
-    }
-
-    function openCustomColorModal() {
-      renderCustomColorModalPalette();
-      const normalizedActive = normalizeHexColor(activeColor);
-      if (getStoredCustomColors().includes(normalizedActive)) {
-        selectCustomColorForEdit(normalizedActive);
+      if (!normalized) return false;
+      if (kind === 'text') {
+        if (customPresetTextColorPicker) customPresetTextColorPicker.value = normalized;
+        if (customPresetTextColorInput) customPresetTextColorInput.value = normalized;
+        if (customPresetTextPreviewSwatch) customPresetTextPreviewSwatch.style.backgroundColor = normalized;
       } else {
-        resetCustomColorModalForm(normalizedActive || '#FF4747');
+        if (customPresetFillColorPicker) customPresetFillColorPicker.value = normalized;
+        if (customPresetFillColorInput) customPresetFillColorInput.value = normalized;
+        if (customPresetFillPreviewSwatch) customPresetFillPreviewSwatch.style.backgroundColor = normalized;
       }
+      if (customColorError) customColorError.classList.add('hidden');
+      return true;
+    }
+
+    function setCustomPresetEditState(preset = null) {
+      const normalized = normalizeColorPreset(preset);
+      editingCustomPresetKey = normalized ? getPresetKey(normalized) : null;
+      if (customColorModalTitle) customColorModalTitle.innerText = normalized ? '커스텀 프리셋 수정' : '커스텀 프리셋 추가';
+      if (saveCustomColorBtn) saveCustomColorBtn.innerText = normalized ? '수정' : '추가';
+      if (deleteCustomColorBtn) deleteCustomColorBtn.disabled = !normalized;
+    }
+
+    function resetCustomPresetModalForm(preset = activeColorPreset) {
+      const normalized = normalizeColorPreset(preset) || activeColorPreset;
+      setCustomPresetEditState(isDefaultPreset(normalized) ? null : normalized);
+      setCustomPresetDraft('text', normalized.textColor);
+      setCustomPresetDraft('fill', normalized.fillColor);
+    }
+
+    function openCustomColorModal(preset = activeColorPreset) {
+      resetCustomPresetModalForm(preset);
       customColorModal.classList.remove('hidden');
-      customColorHexInput.focus();
-      customColorHexInput.select();
+      customPresetFillColorInput.focus();
+      customPresetFillColorInput.select();
     }
 
     function closeCustomColorModal() {
       customColorModal.classList.add('hidden');
-      resetCustomColorModalForm(activeColor);
+      resetCustomPresetModalForm(activeColorPreset);
     }
 
-    function saveCustomColor() {
-      const color = normalizeHexColor(customColorHexInput.value || customColorInput.value);
-      if (!color) {
+    function getDraftCustomPreset() {
+      const textColor = normalizeHexColor(customPresetTextColorInput?.value || customPresetTextColorPicker?.value);
+      const fillColor = normalizeHexColor(customPresetFillColorInput?.value || customPresetFillColorPicker?.value);
+      if (!textColor || !fillColor) return null;
+      return { fillColor, textColor };
+    }
+
+    function saveCustomColorPreset() {
+      const preset = getDraftCustomPreset();
+      if (!preset) {
         customColorError.classList.remove('hidden');
         return;
       }
 
-      let colors = getStoredCustomColors();
-      const wasEditing = !!editingCustomColor;
-      if (editingCustomColor) colors = colors.filter(savedColor => savedColor !== editingCustomColor);
-      if (!isDefaultColor(color) && !colors.includes(color)) colors.push(color);
-      saveStoredCustomColors(colors);
-
-      syncCustomColorPalettes();
-      if (!isDefaultColor(color)) selectCustomColorForEdit(color);
-      else resetCustomColorModalForm(color);
-      applyObjectFillColor(color);
-      showToast(wasEditing ? '커스텀 색상이 수정되었습니다.' : '커스텀 색상이 추가되었습니다.');
+      let presets = getStoredCustomColorPresets();
+      const wasEditing = !!editingCustomPresetKey;
+      if (editingCustomPresetKey) presets = presets.filter(savedPreset => getPresetKey(savedPreset) !== editingCustomPresetKey);
+      if (!isDefaultPreset(preset) && !presets.some(savedPreset => getPresetKey(savedPreset) === getPresetKey(preset))) {
+        presets.push(preset);
+      }
+      saveStoredCustomColorPresets(presets);
+      renderCustomColorPresets();
+      applyColorPreset(preset.fillColor, preset.textColor);
+      setCustomPresetEditState(isDefaultPreset(preset) ? null : preset);
+      showToast(wasEditing ? '커스텀 프리셋이 수정되었습니다.' : '커스텀 프리셋이 추가되었습니다.');
     }
 
-    document.querySelectorAll('.color-picker-btn').forEach(btn => {
+    function deleteSelectedCustomPreset() {
+      if (!editingCustomPresetKey) return;
+      const presets = getStoredCustomColorPresets().filter(preset => getPresetKey(preset) !== editingCustomPresetKey);
+      saveStoredCustomColorPresets(presets);
+      renderCustomColorPresets();
+      resetCustomPresetModalForm(activeColorPreset);
+      showToast('커스텀 프리셋이 삭제되었습니다.');
+    }
+
+    document.querySelectorAll('.color-preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        selectColorButton(btn);
-        setCustomColorFormValue(btn.getAttribute('data-color'));
+        applyColorPreset(btn.getAttribute('data-fill-color'), btn.getAttribute('data-text-color'));
       });
     });
-    syncCustomColorPalettes();
+    document.querySelectorAll('.custom-preset-text-option').forEach(btn => {
+      btn.addEventListener('click', () => setCustomPresetDraft('text', btn.getAttribute('data-color')));
+    });
+    document.querySelectorAll('.custom-preset-fill-option').forEach(btn => {
+      btn.addEventListener('click', () => setCustomPresetDraft('fill', btn.getAttribute('data-color')));
+    });
+    renderCustomColorPresets();
 
-    if (addCustomColorBtn) addCustomColorBtn.addEventListener('click', openCustomColorModal);
+    if (addCustomColorBtn) addCustomColorBtn.addEventListener('click', () => openCustomColorModal(activeColorPreset));
     if (closeCustomColorModalBtn) closeCustomColorModalBtn.addEventListener('click', closeCustomColorModal);
     if (cancelCustomColorBtn) cancelCustomColorBtn.addEventListener('click', closeCustomColorModal);
-    if (saveCustomColorBtn) saveCustomColorBtn.addEventListener('click', saveCustomColor);
-    if (deleteCustomColorBtn) deleteCustomColorBtn.addEventListener('click', deleteSelectedCustomColor);
+    if (saveCustomColorBtn) saveCustomColorBtn.addEventListener('click', saveCustomColorPreset);
+    if (deleteCustomColorBtn) deleteCustomColorBtn.addEventListener('click', deleteSelectedCustomPreset);
     if (customColorModal) {
       customColorModal.addEventListener('click', (e) => {
         if (e.target === customColorModal) closeCustomColorModal();
       });
     }
-    if (customColorInput) {
-      customColorInput.addEventListener('input', () => {
-        customColorHexInput.value = normalizeHexColor(customColorInput.value) || customColorInput.value;
-        customColorError.classList.add('hidden');
+    if (customPresetTextColorPicker) {
+      customPresetTextColorPicker.addEventListener('input', () => setCustomPresetDraft('text', customPresetTextColorPicker.value));
+    }
+    if (customPresetFillColorPicker) {
+      customPresetFillColorPicker.addEventListener('input', () => setCustomPresetDraft('fill', customPresetFillColorPicker.value));
+    }
+    if (customPresetTextColorInput) {
+      customPresetTextColorInput.addEventListener('input', () => {
+        setCustomPresetDraft('text', customPresetTextColorInput.value);
+      });
+      customPresetTextColorInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveCustomColorPreset();
       });
     }
-    if (customColorHexInput) {
-      customColorHexInput.addEventListener('input', () => {
-        const normalized = normalizeHexColor(customColorHexInput.value);
-        if (normalized) customColorInput.value = normalized;
-        customColorError.classList.add('hidden');
+    if (customPresetFillColorInput) {
+      customPresetFillColorInput.addEventListener('input', () => {
+        setCustomPresetDraft('fill', customPresetFillColorInput.value);
       });
-      customColorHexInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') saveCustomColor();
+      customPresetFillColorInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveCustomColorPreset();
       });
     }
 
@@ -1811,8 +1802,8 @@
         if (e.key === 'Escape') closeCustomColorModal();
         return;
       }
-      if (document.activeElement === customColorHexInput || document.activeElement === customColorInput) return;
-      if (document.activeElement === selectedTextInput || document.activeElement === selectedTextColorInput || document.activeElement === objectColorInput) return;
+      if (document.activeElement === customPresetTextColorInput || document.activeElement === customPresetTextColorPicker || document.activeElement === customPresetFillColorInput || document.activeElement === customPresetFillColorPicker) return;
+      if (document.activeElement === selectedTextInput || document.activeElement === selectedTextColorInput) return;
       if (document.activeElement === canvasTextInput) return;
       if (e.key === 'Shift' && activeSnapGuides.length) {
         activeSnapGuides = [];
@@ -2240,67 +2231,60 @@
 
     function updateToolSpecificPanels() {
       if (badgeTypePanel) badgeTypePanel.classList.toggle('hidden', currentTool !== 'badge');
-      updateObjectStylePanel();
-      updateTextStylePanel();
+      updateColorPresetPanel();
     }
 
     function getObjectStyleSelectionList() {
       return getSelectionList().filter(item => item.type === 'rect' || item.type === 'circle' || item.type === 'line' || item.type === 'badge' || item.type === 'text');
     }
 
-    function getCurrentObjectDefaultColor() {
-      if (currentTool === 'badge') return toolDefaults.badge.fillColor;
-      if (currentTool === 'text') return toolDefaults.text.fillColor;
-      if (currentTool === 'line') return toolDefaults.line.strokeColor;
-      if (currentTool === 'focus-rect' || currentTool === 'focus-circle') return toolDefaults.focus.strokeColor;
-      const styled = getObjectStyleSelectionList();
-      if (styled.length > 0) return styled[0].color || '#FF4747';
-      return '#FF4747';
+    function updateColorPresetPanel() {
+      const activeKey = getPresetKey(activeColorPreset);
+      document.querySelectorAll('.color-preset-btn').forEach(btn => {
+        const key = getPresetKey({
+          fillColor: btn.getAttribute('data-fill-color'),
+          textColor: btn.getAttribute('data-text-color')
+        });
+        btn.classList.toggle('ring-2', key === activeKey);
+        btn.classList.toggle('ring-[#FF4747]', key === activeKey);
+        btn.classList.toggle('ring-offset-2', key === activeKey);
+      });
     }
 
-    function updateObjectStylePanel() {
-      if (!objectStylePanel) return;
-      const styled = getObjectStyleSelectionList();
-      const shouldShow = ['badge', 'text', 'line', 'focus-rect', 'focus-circle'].includes(currentTool) || (currentTool === 'select' && styled.length > 0);
-      objectStylePanel.classList.toggle('hidden', !shouldShow);
-      if (!shouldShow) return;
+    function applyColorPreset(fillColorValue, textColorValue = '#FFFFFF', silent = false) {
+      const fillColor = normalizeHexColor(fillColorValue);
+      const textColor = normalizeHexColor(textColorValue);
+      if (!fillColor || !textColor) return;
 
-      if (objectStylePanelTitle) {
-        if (currentTool === 'badge') objectStylePanelTitle.innerText = '번호표 배경색';
-        else if (currentTool === 'text') objectStylePanelTitle.innerText = '말풍선 배경색';
-        else if (currentTool === 'line') objectStylePanelTitle.innerText = '가이드 라인 색상';
-        else if (currentTool === 'focus-rect' || currentTool === 'focus-circle') objectStylePanelTitle.innerText = '포커스 테두리 색상';
-        else objectStylePanelTitle.innerText = '선택 요소 색상';
-      }
-      highlightObjectColor(getCurrentObjectDefaultColor());
-    }
-
-    function highlightObjectColor(color) {
-      const normalized = normalizeHexColor(color) || color;
-      if (objectColorInput) objectColorInput.value = normalized;
-      if (objectColorSwatch) objectColorSwatch.style.backgroundColor = normalized;
-    }
-
-    function applyObjectFillColor(color) {
-      const normalized = normalizeHexColor(color);
-      if (!normalized) return;
-
-      activeColor = normalized;
-      if (currentTool === 'badge') toolDefaults.badge.fillColor = normalized;
-      else if (currentTool === 'text') toolDefaults.text.fillColor = normalized;
-      else if (currentTool === 'line') toolDefaults.line.strokeColor = normalized;
-      else if (currentTool === 'focus-rect' || currentTool === 'focus-circle') toolDefaults.focus.strokeColor = normalized;
+      activeColor = fillColor;
+      activeColorPreset = { fillColor, textColor };
+      toolDefaults.focus.strokeColor = fillColor;
+      toolDefaults.line.strokeColor = fillColor;
+      toolDefaults.text.fillColor = fillColor;
+      toolDefaults.text.textColor = textColor;
+      toolDefaults.badge.fillColor = fillColor;
+      toolDefaults.badge.textColor = textColor;
 
       let changedSelection = false;
       getObjectStyleSelectionList().forEach(item => {
-        if (item.color !== normalized) {
-          item.color = normalized;
+        if (item.color !== fillColor) {
+          item.color = fillColor;
+          changedSelection = true;
+        }
+        if ((item.type === 'badge' || item.type === 'text') && item.textColor !== textColor) {
+          item.textColor = textColor;
           changedSelection = true;
         }
       });
       if (changedSelection) saveHistoryState();
-      highlightObjectColor(normalized);
+      setSelectedTextColorDraft(textColor);
+      updateColorPresetPanel();
       drawCanvas();
+      if (!silent) showToast('색상 프리셋을 적용했습니다.');
+    }
+
+    function applyObjectFillColor(color) {
+      applyColorPreset(color, activeColorPreset.textColor, true);
     }
 
     function getEditableTextSelectionList() {
@@ -2316,16 +2300,6 @@
     }
 
     function updateTextStylePanel() {
-      if (!textStylePanel) return;
-      const editable = getEditableTextSelectionList();
-      const shouldShow = currentTool === 'badge' || currentTool === 'text' || (currentTool === 'select' && editable.length > 0);
-      textStylePanel.classList.toggle('hidden', !shouldShow);
-      if (!shouldShow) return;
-
-      if (textStylePanelTitle) {
-        textStylePanelTitle.innerText = currentTool === 'badge' ? '번호표 글씨 스타일' : '글씨 스타일';
-      }
-      if (selectedTextColorPalette) selectedTextColorPalette.classList.remove('hidden');
       setSelectedTextColorDraft(getCurrentTextDefaultColor());
     }
 
@@ -2558,7 +2532,7 @@
 
       if (target.type === 'badge' && nextText !== target.text) target.manualText = true;
       target.text = nextText;
-      target.textColor = normalizeHexColor(selectedTextColorInput.value) || '#FFFFFF';
+      target.textColor = normalizeHexColor(selectedTextColorInput?.value) || target.textColor || activeColorPreset.textColor || '#FFFFFF';
       saveHistoryState(); drawCanvas(); updateSelectedActionArea();
       showToast('선택한 텍스트를 수정했습니다.');
     }
