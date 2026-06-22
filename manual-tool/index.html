@@ -34,6 +34,10 @@
     ::-webkit-scrollbar-track { background: #F8F9FB; }
     ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
     ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    #leftPanelResizeHandle,
+    #customColorModalDragHandle {
+      touch-action: none;
+    }
   </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden selection:bg-[#FF4747]/20 selection:text-[#FF4747]">
@@ -66,7 +70,7 @@
   <div class="flex-1 flex overflow-hidden">
     
     <!-- 왼쪽 사이드바 (도구 패널) -->
-    <aside class="w-64 bg-white/90 backdrop-blur-xl border-r border-slate-200/60 p-5 flex flex-col gap-5 overflow-y-auto z-10 h-full shrink-0">
+    <aside id="leftToolPanel" class="bg-white/90 backdrop-blur-xl border-r border-slate-200/60 p-5 flex flex-col gap-5 overflow-y-auto z-10 h-full shrink-0" style="width: 256px; min-width: 220px; max-width: 420px;">
       <div class="space-y-5 flex-1">
         <div class="space-y-3">
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">01. 디자인 도구</h2>
@@ -172,6 +176,10 @@
         </div>
       </div>
     </aside>
+    <div id="leftPanelResizeHandle" class="group relative w-2 shrink-0 cursor-col-resize bg-transparent z-20" title="좌측 패널 너비 조절">
+      <div class="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-slate-200/80 group-hover:bg-[#FF4747] transition-colors"></div>
+      <div class="absolute inset-y-0 left-0 w-full bg-[#FF4747]/0 group-hover:bg-[#FF4747]/5 transition-colors"></div>
+    </div>
 
     <!-- 중앙 작업 영역 (캔버스 중앙 정렬 및 스크롤 지원 flex) -->
     <main class="flex-1 bg-[#F1F3F6] p-8 relative overflow-hidden select-none h-full flex text-left">
@@ -389,9 +397,9 @@
   </div>
 
   <div id="customColorModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute left-1/2 top-24 md:left-72 md:top-36 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 md:translate-x-0 bg-white border-2 border-sky-400 rounded-xl p-5 shadow-2xl relative">
+    <div id="customColorDialog" class="absolute w-80 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-xl p-5 shadow-2xl">
       <button id="closeCustomColorModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
-      <div class="flex items-center gap-3 mb-4">
+      <div id="customColorModalDragHandle" class="flex items-center gap-3 mb-4 pr-8 cursor-move select-none">
         <div class="bg-[#FF4747]/10 p-2 rounded-xl text-[#FF4747]"><i data-lucide="palette" class="w-5 h-5"></i></div>
         <h3 id="customColorModalTitle" class="text-base font-extrabold text-slate-800">커스텀 프리셋 추가</h3>
       </div>
@@ -466,7 +474,13 @@
       text: { fillColor: '#FF4747', textColor: '#FFFFFF' },
       badge: { fillColor: '#FF4747', textColor: '#FFFFFF', badgeStyle: 'number', badgeScale: 1 }
     };
+    const LEFT_PANEL_WIDTH_STORAGE_KEY = 'manualToolLeftPanelWidth';
+    const LEFT_PANEL_DEFAULT_WIDTH = 256;
+    const LEFT_PANEL_MIN_WIDTH = 220;
+    const LEFT_PANEL_MAX_WIDTH = 420;
     const CUSTOM_COLOR_STORAGE_KEY = 'manualToolCustomColors';
+    const CUSTOM_COLOR_MODAL_POSITION_STORAGE_KEY = 'manualToolCustomColorModalPosition';
+    const CUSTOM_COLOR_MODAL_MARGIN = 16;
     const DEFAULT_COLOR_PRESETS = [
       { fillColor: '#FF4747', textColor: '#FFFFFF' },
       { fillColor: '#F59E0B', textColor: '#FFFFFF' },
@@ -477,6 +491,9 @@
     ];
     let activeColorPreset = { fillColor: '#FF4747', textColor: '#FFFFFF' };
     let editingCustomPresetKey = null;
+    let isResizingLeftPanel = false;
+    let isDraggingCustomColorModal = false;
+    let customColorModalDragOffset = { x: 0, y: 0 };
     let dimOpacity = 0.3; 
     let currentScalePreset = 1.0; 
     let autoScaleEnabled = true; 
@@ -572,6 +589,8 @@
     const canvasTextInput = document.getElementById('canvasTextInput');
     const saveTextInputBtn = document.getElementById('saveTextInputBtn');
     const cancelTextInputBtn = document.getElementById('cancelTextInputBtn');
+    const leftToolPanel = document.getElementById('leftToolPanel');
+    const leftPanelResizeHandle = document.getElementById('leftPanelResizeHandle');
     const selectedTextEditArea = document.getElementById('selectedTextEditArea');
     const selectedTextInput = document.getElementById('selectedTextInput');
     const selectedTextColorInput = document.getElementById('selectedTextColorInput');
@@ -592,6 +611,8 @@
     const customPresetPalette = document.getElementById('customPresetPalette');
     const addCustomColorBtn = document.getElementById('addCustomColorBtn');
     const customColorModal = document.getElementById('customColorModal');
+    const customColorDialog = document.getElementById('customColorDialog');
+    const customColorModalDragHandle = document.getElementById('customColorModalDragHandle');
     const customColorModalTitle = document.getElementById('customColorModalTitle');
     const closeCustomColorModalBtn = document.getElementById('closeCustomColorModalBtn');
     const cancelCustomColorBtn = document.getElementById('cancelCustomColorBtn');
@@ -626,6 +647,162 @@
       'text': document.getElementById('toolText'),
       'line': document.getElementById('toolLine')
     };
+
+    function getLeftPanelMaxWidth() {
+      const viewportSafeMax = window.innerWidth ? window.innerWidth - 480 : LEFT_PANEL_MAX_WIDTH;
+      return Math.max(LEFT_PANEL_MIN_WIDTH, Math.min(LEFT_PANEL_MAX_WIDTH, viewportSafeMax));
+    }
+
+    function clampLeftPanelWidth(width) {
+      const parsed = Number(width);
+      if (!Number.isFinite(parsed)) return LEFT_PANEL_DEFAULT_WIDTH;
+      return Math.round(Math.min(Math.max(parsed, LEFT_PANEL_MIN_WIDTH), getLeftPanelMaxWidth()));
+    }
+
+    function applyLeftPanelWidth(width, shouldSave = false) {
+      if (!leftToolPanel) return LEFT_PANEL_DEFAULT_WIDTH;
+      const clamped = clampLeftPanelWidth(width);
+      leftToolPanel.style.width = `${clamped}px`;
+      if (shouldSave) {
+        localStorage.setItem(LEFT_PANEL_WIDTH_STORAGE_KEY, String(clamped));
+      }
+      return clamped;
+    }
+
+    function loadLeftPanelWidth() {
+      try {
+        const storedWidth = localStorage.getItem(LEFT_PANEL_WIDTH_STORAGE_KEY);
+        if (storedWidth == null) {
+          applyLeftPanelWidth(LEFT_PANEL_DEFAULT_WIDTH);
+        } else {
+          applyLeftPanelWidth(storedWidth, true);
+        }
+      } catch (error) {
+        applyLeftPanelWidth(LEFT_PANEL_DEFAULT_WIDTH);
+      }
+    }
+
+    function startLeftPanelResize(e) {
+      if (!leftToolPanel || e.button !== 0) return;
+      e.preventDefault();
+      isResizingLeftPanel = true;
+      document.body.classList.add('select-none');
+      window.addEventListener('pointermove', handleLeftPanelResize);
+      window.addEventListener('pointerup', finishLeftPanelResize);
+      window.addEventListener('pointercancel', finishLeftPanelResize);
+    }
+
+    function handleLeftPanelResize(e) {
+      if (!isResizingLeftPanel || !leftToolPanel) return;
+      const parentRect = leftToolPanel.parentElement?.getBoundingClientRect();
+      const parentLeft = parentRect ? parentRect.left : 0;
+      applyLeftPanelWidth(e.clientX - parentLeft, true);
+    }
+
+    function finishLeftPanelResize() {
+      if (!isResizingLeftPanel) return;
+      isResizingLeftPanel = false;
+      document.body.classList.remove('select-none');
+      if (leftToolPanel) {
+        applyLeftPanelWidth(leftToolPanel.getBoundingClientRect().width, true);
+      }
+      window.removeEventListener('pointermove', handleLeftPanelResize);
+      window.removeEventListener('pointerup', finishLeftPanelResize);
+      window.removeEventListener('pointercancel', finishLeftPanelResize);
+    }
+
+    function getDefaultCustomColorModalPosition() {
+      const panelRight = leftPanelResizeHandle?.getBoundingClientRect().right
+        || leftToolPanel?.getBoundingClientRect().right
+        || LEFT_PANEL_DEFAULT_WIDTH;
+      return { left: panelRight + 16, top: 144 };
+    }
+
+    function getStoredCustomColorModalPosition() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(CUSTOM_COLOR_MODAL_POSITION_STORAGE_KEY) || 'null');
+        if (Number.isFinite(parsed?.left) && Number.isFinite(parsed?.top)) return parsed;
+      } catch (error) {
+        localStorage.removeItem(CUSTOM_COLOR_MODAL_POSITION_STORAGE_KEY);
+      }
+      return null;
+    }
+
+    function getCustomColorDialogSize() {
+      const rect = customColorDialog?.getBoundingClientRect();
+      return {
+        width: rect?.width || 320,
+        height: rect?.height || 440
+      };
+    }
+
+    function clampCustomColorModalPosition(position) {
+      const fallback = getDefaultCustomColorModalPosition();
+      const rawLeft = Number(position?.left);
+      const rawTop = Number(position?.top);
+      const size = getCustomColorDialogSize();
+      const maxLeft = Math.max(CUSTOM_COLOR_MODAL_MARGIN, window.innerWidth - size.width - CUSTOM_COLOR_MODAL_MARGIN);
+      const maxTop = Math.max(CUSTOM_COLOR_MODAL_MARGIN, window.innerHeight - size.height - CUSTOM_COLOR_MODAL_MARGIN);
+      return {
+        left: Math.round(Math.min(Math.max(Number.isFinite(rawLeft) ? rawLeft : fallback.left, CUSTOM_COLOR_MODAL_MARGIN), maxLeft)),
+        top: Math.round(Math.min(Math.max(Number.isFinite(rawTop) ? rawTop : fallback.top, CUSTOM_COLOR_MODAL_MARGIN), maxTop))
+      };
+    }
+
+    function saveCustomColorModalPosition(position) {
+      localStorage.setItem(CUSTOM_COLOR_MODAL_POSITION_STORAGE_KEY, JSON.stringify(position));
+    }
+
+    function applyCustomColorModalPosition(position = getStoredCustomColorModalPosition() || getDefaultCustomColorModalPosition(), shouldSave = false) {
+      if (!customColorDialog) return null;
+      const clamped = clampCustomColorModalPosition(position);
+      customColorDialog.style.left = `${clamped.left}px`;
+      customColorDialog.style.top = `${clamped.top}px`;
+      if (shouldSave) saveCustomColorModalPosition(clamped);
+      return clamped;
+    }
+
+    function startCustomColorModalDrag(e) {
+      if (!customColorDialog || e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = customColorDialog.getBoundingClientRect();
+      customColorModalDragOffset = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+      isDraggingCustomColorModal = true;
+      customColorDialog.classList.add('cursor-grabbing');
+      document.body.classList.add('select-none');
+      window.addEventListener('pointermove', handleCustomColorModalDrag);
+      window.addEventListener('pointerup', finishCustomColorModalDrag);
+      window.addEventListener('pointercancel', finishCustomColorModalDrag);
+    }
+
+    function handleCustomColorModalDrag(e) {
+      if (!isDraggingCustomColorModal) return;
+      e.preventDefault();
+      applyCustomColorModalPosition({
+        left: e.clientX - customColorModalDragOffset.x,
+        top: e.clientY - customColorModalDragOffset.y
+      }, true);
+    }
+
+    function finishCustomColorModalDrag() {
+      if (!isDraggingCustomColorModal) return;
+      isDraggingCustomColorModal = false;
+      customColorDialog?.classList.remove('cursor-grabbing');
+      document.body.classList.remove('select-none');
+      const rect = customColorDialog?.getBoundingClientRect();
+      if (rect) saveCustomColorModalPosition(clampCustomColorModalPosition({ left: rect.left, top: rect.top }));
+      window.removeEventListener('pointermove', handleCustomColorModalDrag);
+      window.removeEventListener('pointerup', finishCustomColorModalDrag);
+      window.removeEventListener('pointercancel', finishCustomColorModalDrag);
+    }
+
+    loadLeftPanelWidth();
+    if (leftPanelResizeHandle) leftPanelResizeHandle.addEventListener('pointerdown', startLeftPanelResize);
+    if (customColorModalDragHandle) customColorModalDragHandle.addEventListener('pointerdown', startCustomColorModalDrag);
 
     function drawCanvas() {
       if (!bgImage) return;
@@ -1639,8 +1816,9 @@
     function openCustomColorModal(preset = activeColorPreset) {
       resetCustomPresetModalForm(preset);
       customColorModal.classList.remove('hidden');
-      customPresetFillColorInput.focus();
-      customPresetFillColorInput.select();
+      applyCustomColorModalPosition();
+      customPresetFillColorInput?.focus();
+      customPresetFillColorInput?.select();
     }
 
     function closeCustomColorModal() {
@@ -2175,6 +2353,11 @@
 
     let resizeTimer = null;
     function handleWindowResize() {
+      if (leftToolPanel) applyLeftPanelWidth(leftToolPanel.getBoundingClientRect().width);
+      if (customColorModal && !customColorModal.classList.contains('hidden')) {
+        const rect = customColorDialog?.getBoundingClientRect();
+        applyCustomColorModalPosition(rect ? { left: rect.left, top: rect.top } : undefined);
+      }
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(resizeCanvasToViewport, 80);
     }
