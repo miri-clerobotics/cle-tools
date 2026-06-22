@@ -64,11 +64,34 @@
         <i data-lucide="folder-open" class="w-4 h-4"></i><span>프로젝트 열기</span>
         <input id="loadProjectInput" type="file" accept="application/json,.json" class="hidden">
       </label>
+      <button id="shortcutHelpBtn" type="button" aria-expanded="false" aria-controls="shortcutHelpPopover" class="bg-white hover:bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-slate-500 hover:text-[#FF4747] transition-all shadow-sm" title="단축키 목록">
+        <i data-lucide="keyboard" class="w-4 h-4"></i>
+      </button>
       <button id="helpBtn" class="bg-white hover:bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-slate-500 hover:text-slate-850 transition-all shadow-sm">
         <i data-lucide="info" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
+
+  <div id="shortcutHelpPopover" class="hidden fixed top-[74px] right-6 z-40 w-72 bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 p-4 text-left">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <div class="bg-[#FF4747]/10 text-[#FF4747] p-1.5 rounded-lg"><i data-lucide="keyboard" class="w-4 h-4"></i></div>
+        <h3 class="text-sm font-extrabold text-slate-800">단축키</h3>
+      </div>
+      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manual Tool</span>
+    </div>
+    <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-xs">
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">V</kbd><span class="text-slate-600 font-semibold">선택 및 이동</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">R</kbd><span class="text-slate-600 font-semibold">사각형 포커스</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">B</kbd><span class="text-slate-600 font-semibold">자동 번호표</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">M</kbd><span class="text-slate-600 font-semibold">민감정보 가림</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Ctrl + A</kbd><span class="text-slate-600 font-semibold">전체 객체 선택</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Ctrl + D</kbd><span class="text-slate-600 font-semibold">선택 객체 복제</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Ctrl + +/-</kbd><span class="text-slate-600 font-semibold">작업영역 확대/축소</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Space</kbd><span class="text-slate-600 font-semibold">누른 상태로 패닝</span>
+    </div>
+  </div>
 
   <div class="flex-1 flex overflow-hidden">
     
@@ -233,10 +256,7 @@
             <button id="deleteSelectedBtn" class="w-full flex items-center justify-center gap-2 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span id="deleteSelCount">선택 요소 1개 삭제</span>
             </button>
-            <div class="grid grid-cols-2 gap-1.5">
-              <button id="lockSelectedBtn" type="button" class="flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-rose-100 py-2 rounded-xl text-[11px] font-bold transition-all">
-                <i data-lucide="lock" class="w-3.5 h-3.5"></i><span>잠금</span>
-              </button>
+            <div class="grid grid-cols-1 gap-1.5">
               <button id="hideSelectedBtn" type="button" class="flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-rose-100 py-2 rounded-xl text-[11px] font-bold transition-all">
                 <i data-lucide="eye-off" class="w-3.5 h-3.5"></i><span>숨김</span>
               </button>
@@ -324,19 +344,20 @@
       </div>
 
       <!-- 모서리 둥글기 효과 완전 제거(rounded-none) 및 중앙 정렬(m-auto) -->
+      <!-- 자르기 안내/컨트롤 바: 줌·패닝과 무관하게 항상 화면 맨 하단에 고정 -->
+      <div id="cropControlArea" class="hidden absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xl z-30 flex items-center gap-4 min-w-[340px]">
+        <div class="flex items-center gap-1.5 text-slate-500 font-semibold text-xs shrink-0 select-none">
+          <i data-lucide="info" class="w-4 h-4"></i><span>이미지 자르는 중</span>
+        </div>
+        <div class="flex gap-1.5 flex-1">
+          <button id="cancelCropBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 px-3 rounded-xl text-xs font-semibold transition-all">취소</button>
+          <button id="applyCropBtn" class="flex-1 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">자르기 완료</button>
+        </div>
+      </div>
+
       <div id="canvasContainer" class="m-auto hidden relative inline-flex shadow-[0_24px_70px_rgba(0,0,0,0.06)] border border-slate-200 bg-white rounded-none">
         <canvas id="editorCanvas" class="block object-contain rounded-none"></canvas>
-        
-        <div id="cropControlArea" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-200/80 shadow-2xl z-20 flex items-center gap-4 min-w-[340px]">
-          <div class="flex items-center gap-1.5 text-slate-500 font-semibold text-xs shrink-0 select-none">
-            <i data-lucide="info" class="w-4 h-4"></i><span>이미지 자르는 중</span>
-          </div>
-          <div class="flex gap-1.5 flex-1">
-            <button id="cancelCropBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 px-3 rounded-xl text-xs font-semibold transition-all">취소</button>
-            <button id="applyCropBtn" class="flex-1 bg-[#FF4747] hover:bg-[#FF4747]/90 text-white py-2 px-3 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#FF4747]/10">자르기 완료</button>
-          </div>
-        </div>
-        
+
         <div id="canvasTextInputContainer" class="absolute hidden bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-3.5 shadow-2xl z-30 w-72 flex flex-col gap-2.5">
           <span class="text-[10px] text-slate-900 font-bold uppercase tracking-wider flex items-center gap-1.5">
             <i data-lucide="type" class="w-3.5 h-3.5 text-pink-400"></i> 설명 말풍선 입력
@@ -447,10 +468,10 @@
         <div class="space-y-2.5 border-t border-slate-200/60 pt-5">
           <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">04. 가이드 추출</h2>
           <button id="downloadBtn" class="clevis-gradient-border w-full flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 text-slate-800 py-3.5 rounded-xl text-xs font-bold transition-all shadow-md border border-slate-200">
-            <i data-lucide="download" class="w-4 h-4 text-[#FF4747]"></i>스크린샷 다운로드
+            <i data-lucide="download" class="w-4 h-4 text-[#FF4747]"></i><span id="downloadBtnLabel">스크린샷 다운로드</span>
           </button>
           <button id="copyClipBtn" class="w-full flex items-center justify-center gap-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 py-3 rounded-xl text-xs font-semibold border border-slate-200 transition-all">
-            <i data-lucide="clipboard" class="w-3.5 h-3.5 text-[#FF4747]"></i>클립보드 즉시 복사
+            <i data-lucide="clipboard" class="w-3.5 h-3.5 text-[#FF4747]"></i><span id="copyClipBtnLabel">클립보드 즉시 복사</span>
           </button>
         </div>
       </div>
@@ -536,9 +557,9 @@
     let canvasBackgroundColor = '#FFFFFF';
     let imageAutoFitEnabled = true;
     let currentTool = 'select';
-    let lockedTool = null; // 두 번 눌러 잠근(연속 생성) 도구
+    let lockedTool = null; // 반복 생성으로 잠근 도구
+    let isCreationRepeatModifierActive = false;
     const LOCKABLE_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
-    const CREATION_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
     let focusAreas = []; 
     let elements = []; 
     let badgeType = 'number'; 
@@ -584,6 +605,8 @@
     let cropArea = null;
     let isResizingCrop = false;
     let activeCropHandle = null;
+    let isMovingCrop = false;
+    let cropMoveOffset = null;
     const isIframe = window !== window.parent;
 
     // 이미지(배경) 자체 스케일 관련 제어 변수들
@@ -676,6 +699,8 @@
     const ctx = canvas.getContext('2d');
     const AUTO_CANVAS_MARGIN = calculateScaledSize(48);
     const helpBtn = document.getElementById('helpBtn');
+    const shortcutHelpBtn = document.getElementById('shortcutHelpBtn');
+    const shortcutHelpPopover = document.getElementById('shortcutHelpPopover');
     const infoModal = document.getElementById('infoModal');
     const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
     const confirmInfoModalBtn = document.getElementById('confirmInfoModalBtn');
@@ -715,6 +740,8 @@
     const scaleModeLabel = document.getElementById('scaleModeLabel');
     const downloadBtn = document.getElementById('downloadBtn');
     const copyClipBtn = document.getElementById('copyClipBtn');
+    const downloadBtnLabel = document.getElementById('downloadBtnLabel');
+    const copyClipBtnLabel = document.getElementById('copyClipBtnLabel');
     const colorPalette = document.getElementById('colorPalette');
     const addCustomColorBtn = document.getElementById('addCustomColorBtn');
     const customColorModal = document.getElementById('customColorModal');
@@ -768,6 +795,10 @@
       return currentTool === 'focus-rect' || currentTool === 'focus-circle';
     }
 
+    function isCreationPlacementTool() {
+      return isFocusCreationTool() || currentTool === 'badge' || currentTool === 'redact';
+    }
+
     function normalizeRotation(value) {
       const number = Number(value);
       if (!Number.isFinite(number)) return 0;
@@ -781,7 +812,6 @@
         item.id = `${prefix}_${Date.now()}_${index}_${Math.random().toString(16).slice(2)}`;
       }
       if (item.visible === undefined) item.visible = true;
-      if (item.locked === undefined) item.locked = false;
       item.rotation = normalizeRotation(item.rotation);
       return item;
     }
@@ -809,10 +839,6 @@
 
     function isObjectVisible(item) {
       return !item || item.visible !== false;
-    }
-
-    function isObjectLocked(item) {
-      return !!item && item.locked === true;
     }
 
     function isFocusObject(item) {
@@ -895,7 +921,7 @@
       ensureDocumentObjectState();
     }
 
-    function rotateCanvasContextAroundBounds(bounds, rotation, drawCallback) {
+    function rotateContextAroundBounds(targetCtx, bounds, rotation, drawCallback) {
       const angle = normalizeRotation(rotation);
       if (!angle || !bounds) {
         drawCallback();
@@ -903,12 +929,28 @@
       }
       const centerX = bounds.left + bounds.width / 2;
       const centerY = bounds.top + bounds.height / 2;
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(angle * Math.PI / 180);
-      ctx.translate(-centerX, -centerY);
+      targetCtx.save();
+      targetCtx.translate(centerX, centerY);
+      targetCtx.rotate(angle * Math.PI / 180);
+      targetCtx.translate(-centerX, -centerY);
       drawCallback();
-      ctx.restore();
+      targetCtx.restore();
+    }
+
+    function rotateCanvasContextAroundBounds(bounds, rotation, drawCallback) {
+      rotateContextAroundBounds(ctx, bounds, rotation, drawCallback);
+    }
+
+    function cutFocusDimHole(targetCtx, f) {
+      rotateContextAroundBounds(targetCtx, createBounds(f.x, f.y, f.x + f.w, f.y + f.h), f.rotation, () => {
+        targetCtx.beginPath();
+        if (f.type === 'rect') {
+          targetCtx.rect(f.x, f.y, f.w, f.h);
+        } else if (f.type === 'circle') {
+          targetCtx.ellipse(f.x + f.w/2, f.y + f.h/2, Math.abs(f.w/2), Math.abs(f.h/2), 0, 0, Math.PI * 2);
+        }
+        targetCtx.fill();
+      });
     }
 
     function drawCanvas() {
@@ -937,13 +979,7 @@
           if (!isObjectVisible(f)) return;
           tempCtx.globalCompositeOperation = 'destination-out';
           tempCtx.fillStyle = '#000'; 
-          tempCtx.beginPath();
-          if (f.type === 'rect') {
-            tempCtx.rect(f.x, f.y, f.w, f.h);
-          } else if (f.type === 'circle') {
-            tempCtx.ellipse(f.x + f.w/2, f.y + f.h/2, Math.abs(f.w/2), Math.abs(f.h/2), 0, 0, Math.PI * 2);
-          }
-          tempCtx.fill();
+          cutFocusDimHole(tempCtx, f);
           tempCtx.globalCompositeOperation = 'source-over'; 
         });
         ctx.drawImage(tempCanvas, 0, 0);
@@ -1260,9 +1296,8 @@
         badge.scale = toolDefaults.badge.badgeScale;
         return;
       }
-      const center = { x: start.x + dx / 2, y: start.y + dy / 2 };
-      const radius = Math.max(Math.abs(dx), Math.abs(dy)) / 2;
-      setBadgeCenterFromPoint(badge, center);
+      const radius = Math.max(Math.abs(dx), Math.abs(dy));
+      setBadgeCenterFromPoint(badge, start);
       badge.scale = clampNumber(radius / calculateScaledSize(BADGE_BASE_RADIUS), BADGE_MIN_SCALE, BADGE_MAX_SCALE);
     }
 
@@ -1899,6 +1934,15 @@
       return null;
     }
 
+    function isPointInCropArea(pos) {
+      if (!cropArea) return false;
+      const minX = Math.min(cropArea.x, cropArea.x + cropArea.w);
+      const maxX = Math.max(cropArea.x, cropArea.x + cropArea.w);
+      const minY = Math.min(cropArea.y, cropArea.y + cropArea.h);
+      const maxY = Math.max(cropArea.y, cropArea.y + cropArea.h);
+      return pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY;
+    }
+
     function hitFocusObject(f, x, y) {
       if (!isObjectVisible(f)) return false;
       const minX = Math.min(f.x, f.x + f.w);
@@ -1926,7 +1970,7 @@
     function createTextElementFromOverlay() {
       const textVal = canvasTextInput.value.trim();
       if (textVal && pendingTextPos) {
-        const newText = ensureObjectIdentity({ type: 'text', x: pendingTextPos.x / canvas.width, y: pendingTextPos.y / canvas.height, color: toolDefaults.text.fillColor, textColor: toolDefaults.text.textColor, text: textVal, visible: true, locked: false, rotation: 0 }, 'element', elements.length);
+        const newText = ensureObjectIdentity({ type: 'text', x: pendingTextPos.x / canvas.width, y: pendingTextPos.y / canvas.height, color: toolDefaults.text.fillColor, textColor: toolDefaults.text.textColor, text: textVal, visible: true, rotation: 0 }, 'element', elements.length);
         addEditorObject(newText);
         selectedElement = newText; selectedFocusArea = null; multiSel = [];
         autoExpandCanvasForBounds(getItemBounds(newText));
@@ -1958,6 +2002,16 @@
     if (watermarkPosSelect) { watermarkPosSelect.addEventListener('change', (e) => { watermarkPos = e.target.value; drawCanvas(); }); }
     if (watermarkOpacityRange) { watermarkOpacityRange.addEventListener('input', (e) => { watermarkOpacity = e.target.value / 100; if (wmOpacityVal) wmOpacityVal.innerText = `${e.target.value}%`; drawCanvas(); }); }
     if (watermarkScaleRange) { watermarkScaleRange.addEventListener('input', (e) => { watermarkSize = e.target.value / 100; if (wmScaleVal) wmScaleVal.innerText = `${e.target.value}%`; drawCanvas(); }); }
+
+    function isCreationRepeatModifierKey(e) {
+      return e?.key === 'Control' || e?.key === 'Meta';
+    }
+
+    function setCreationRepeatModifierActive(active) {
+      if (isCreationRepeatModifierActive === active) return;
+      isCreationRepeatModifierActive = active;
+      updateToolLockToggle();
+    }
 
     // --- 기타 이벤트 연동 ---
     if (applyCropBtn) applyCropBtn.addEventListener('click', executeCrop);
@@ -2016,7 +2070,7 @@
       if (!clone) return clone;
       clone.rotation = normalizeRotation(item.rotation);
       clone.visible = isObjectVisible(item);
-      clone.locked = isObjectLocked(item);
+      delete clone.locked;
       return clone;
     }
 
@@ -2528,6 +2582,7 @@
       if (projectPageCountLabel) projectPageCountLabel.innerText = `${projectPages.length}장`;
       if (duplicateProjectPageBtn) duplicateProjectPageBtn.disabled = projectPages.length === 0;
       if (deleteProjectPageBtn) deleteProjectPageBtn.disabled = projectPages.length <= 1 && selectedPageIds.length <= 1;
+      updatePageExportActionLabels();
       lucide.createIcons();
     }
 
@@ -2691,6 +2746,17 @@
       return true;
     }
 
+    function getSelectedExportPages() {
+      const selectedSet = new Set(selectedPageIds.length > 0 ? selectedPageIds : [currentPageId]);
+      return projectPages.filter(page => selectedSet.has(page.id) && page.background?.src);
+    }
+
+    function updatePageExportActionLabels() {
+      const selectedCount = new Set(selectedPageIds.length > 0 ? selectedPageIds : [currentPageId]).size || 1;
+      if (downloadBtnLabel) downloadBtnLabel.innerText = selectedCount > 1 ? `${selectedCount}개 페이지 다운로드` : '스크린샷 다운로드';
+      if (copyClipBtnLabel) copyClipBtnLabel.innerText = selectedCount > 1 ? `${selectedCount}개 페이지 복사` : '클립보드 즉시 복사';
+    }
+
     function deferredManualProjectDownload() {
       ensureProjectHasPage();
       const project = createSerializableProject();
@@ -2746,8 +2812,36 @@
       toastTimeout = setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none'); toast.classList.remove('opacity-100', 'translate-y-0'); }, 2300);
     }
 
+    function closeShortcutHelpPopover() {
+      if (!shortcutHelpPopover) return;
+      shortcutHelpPopover.classList.add('hidden');
+      if (shortcutHelpBtn) shortcutHelpBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function openShortcutHelpPopover() {
+      if (!shortcutHelpPopover) return;
+      shortcutHelpPopover.classList.remove('hidden');
+      if (shortcutHelpBtn) shortcutHelpBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function toggleShortcutHelpPopover(event = null) {
+      if (event) event.stopPropagation();
+      if (!shortcutHelpPopover) return;
+      if (shortcutHelpPopover.classList.contains('hidden')) openShortcutHelpPopover();
+      else closeShortcutHelpPopover();
+    }
+
+    function handleShortcutHelpOutsideClick(event) {
+      if (!shortcutHelpPopover || shortcutHelpPopover.classList.contains('hidden')) return;
+      if (shortcutHelpPopover.contains(event.target)) return;
+      if (shortcutHelpBtn && shortcutHelpBtn.contains(event.target)) return;
+      closeShortcutHelpPopover();
+    }
+
     if (closePreviewModalBtn) closePreviewModalBtn.addEventListener('click', hideRenderedModal);
     if (previewModalCloseBtn) previewModalCloseBtn.addEventListener('click', hideRenderedModal);
+    if (shortcutHelpBtn) shortcutHelpBtn.addEventListener('click', toggleShortcutHelpPopover);
+    document.addEventListener('mousedown', handleShortcutHelpOutsideClick);
     if (helpBtn && infoModal) { helpBtn.addEventListener('click', () => infoModal.classList.remove('hidden')); }
     if (closeInfoModalBtn) { closeInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
     if (confirmInfoModalBtn) { confirmInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
@@ -2783,9 +2877,7 @@
     if (downloadBtn) downloadBtn.addEventListener('click', downloadResult);
     if (copyClipBtn) copyClipBtn.addEventListener('click', copyToClipboard);
     if (deleteSelectedBtn) deleteSelectedBtn.addEventListener('click', executeDeleteSelected);
-    const lockSelectedBtn = document.getElementById('lockSelectedBtn');
     const hideSelectedBtn = document.getElementById('hideSelectedBtn');
-    if (lockSelectedBtn) lockSelectedBtn.addEventListener('click', toggleSelectedObjectLock);
     if (hideSelectedBtn) hideSelectedBtn.addEventListener('click', toggleSelectedObjectVisibility);
     if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomViewportByStep(1));
     if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomViewportByStep(-1));
@@ -2840,11 +2932,11 @@
     Object.keys(tools).forEach(toolKey => {
       const toolEl = tools[toolKey];
       if (toolEl) toolEl.addEventListener('click', () => {
-        // 이미 활성화된 도구를 다시 누르면 잠금 토글 (연속 생성 모드)
+        // 이미 활성화된 도구를 다시 누르면 반복 생성 고정 토글
         if (currentTool === toolKey && LOCKABLE_TOOLS.includes(toolKey)) {
           lockedTool = (lockedTool === toolKey) ? null : toolKey;
           refreshToolButtons();
-          showToast(lockedTool ? '연속 생성 잠금 ON — 계속 생성됩니다.' : '연속 생성 잠금 OFF');
+          showToast(lockedTool ? '반복 생성 ON — 계속 생성됩니다.' : '반복 생성 OFF');
           return;
         }
         selectTool(toolKey);
@@ -3050,8 +3142,8 @@
         drawCanvas(); updateSelectedActionArea();
         return true;
       }
-      if (isDragging || isResizingFocus || isResizingBadge || isResizingRedaction || isResizingCrop || isResizingBackground || isEditingLinePoint || isRotatingSelection) {
-        isDragging = false; isResizingFocus = false; isResizingBadge = false; isResizingRedaction = false; isResizingCrop = false; isResizingBackground = false; isEditingLinePoint = false; isRotatingSelection = false;
+      if (isDragging || isResizingFocus || isResizingBadge || isResizingRedaction || isResizingCrop || isMovingCrop || isResizingBackground || isEditingLinePoint || isRotatingSelection) {
+        isDragging = false; isResizingFocus = false; isResizingBadge = false; isResizingRedaction = false; isResizingCrop = false; isMovingCrop = false; cropMoveOffset = null; isResizingBackground = false; isEditingLinePoint = false; isRotatingSelection = false;
         activeFocusHandle = null; activeBadgeHandle = null; activeRedactionHandle = null; activeCropHandle = null; activeSnapGuides = [];
         activeLinePointIndex = null; rotationCenter = null; rotationStartStates = [];
         finishSelectionDrag();
@@ -3076,7 +3168,9 @@
     }
 
     window.addEventListener('keydown', (e) => {
+      if (isCreationRepeatModifierKey(e)) setCreationRepeatModifierActive(true);
       if (!customColorModal.classList.contains('hidden') && e.key === 'Escape') { closeCustomColorModal(); return; }
+      if (shortcutHelpPopover && !shortcutHelpPopover.classList.contains('hidden') && e.key === 'Escape') { closeShortcutHelpPopover(); e.preventDefault(); return; }
       const activeInput = document.activeElement;
       if (activeInput === customColorHexInput || activeInput === customColorInput) return;
       if (activeInput === selectedTextInput || activeInput === selectedTextColorInput || activeInput === objectColorInput || activeInput === badgeBorderColorInput || activeInput === redactionMosaicRange) return;
@@ -3177,7 +3271,7 @@
       }
     }
 
-    canvasContainer.addEventListener('wheel', handleViewportWheel, { passive: false });
+    workspace.addEventListener('wheel', handleViewportWheel, { passive: false });
     workspace.addEventListener('wheel', suppressHorizontalViewportWheel, { passive: false, capture: true });
     workspace.addEventListener('mousedown', handleWorkspaceEmptyMouseDown);
     workspace.addEventListener('pointerdown', handleViewportPanStart, true);
@@ -3194,6 +3288,7 @@
     window.addEventListener('mousemove', handleCanvasEditMouseMove);
     window.addEventListener('mouseup', finishCanvasEditInteraction);
     window.addEventListener('keyup', (e) => {
+      if (isCreationRepeatModifierKey(e)) setCreationRepeatModifierActive(false);
       if (e.code === 'Space') {
         clearSpacePanState();
       }
@@ -3658,6 +3753,7 @@
     function handleViewportWindowBlur() {
       componentClipboardFresh = false;
       pageClipboardFresh = false;
+      setCreationRepeatModifierActive(false);
       clearSpacePanState();
       finishViewportPan();
     }
@@ -3785,9 +3881,10 @@
         cropControlArea.classList.remove('hidden');
       } else {
         cropArea = null; cropControlArea.classList.add('hidden');
+        isMovingCrop = false; cropMoveOffset = null; canvas.style.cursor = '';
       }
       if (toolKey !== 'select') { selectedFocusArea = null; selectedElement = null; multiSel = []; activeSnapGuides = []; }
-      // 다른 도구로 전환하면 잠금 해제
+      // 다른 도구로 전환하면 반복 생성 고정 해제
       if (lockedTool && lockedTool !== toolKey) lockedTool = null;
 
       updateToolSpecificPanels();
@@ -3805,7 +3902,7 @@
     }
 
     function getObjectStyleSelectionList() {
-      return getSelectionList().filter(item => !isObjectLocked(item) && (item.type === 'rect' || item.type === 'circle' || item.type === 'line' || item.type === 'badge' || item.type === 'text'));
+      return getSelectionList().filter(item => item.type === 'rect' || item.type === 'circle' || item.type === 'line' || item.type === 'badge' || item.type === 'text');
     }
 
     function getCurrentObjectDefaultColor() {
@@ -3864,7 +3961,7 @@
     }
 
     function getBadgeBorderSelectionList() {
-      return getSelectionList().filter(item => !isObjectLocked(item) && item.type === 'badge');
+      return getSelectionList().filter(item => item.type === 'badge');
     }
 
     function getCurrentBadgeBorderColor() {
@@ -3958,7 +4055,7 @@
     }
 
     function getRedactionSelectionList() {
-      return getSelectionList().filter(item => !isObjectLocked(item) && item.type === 'redact');
+      return getSelectionList().filter(item => item.type === 'redact');
     }
 
     function getCurrentRedactionMosaicSize() {
@@ -4000,7 +4097,7 @@
     }
 
     function getEditableTextSelectionList() {
-      return getSelectionList().filter(item => !isObjectLocked(item) && (item.type === 'badge' || item.type === 'text'));
+      return getSelectionList().filter(item => item.type === 'badge' || item.type === 'text');
     }
 
     function getCurrentTextDefaultColor() {
@@ -4033,16 +4130,19 @@
       if (!lockable) return;
 
       const locked = lockedTool === currentTool;
-      toolLockToggle.className = locked
+      const modifierActive = isCreationRepeatModifierActive && !locked;
+      toolLockToggle.className = locked || modifierActive
         ? "w-full flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 py-2 px-3 rounded-xl text-xs font-bold transition-all"
         : "w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-500 border border-slate-200/60 py-2 px-3 rounded-xl text-xs font-bold transition-all";
       toolLockToggle.innerHTML = locked
         ? '<i data-lucide="pin" class="w-3.5 h-3.5"></i><span>현재 도구 반복 생성 ON</span>'
+        : modifierActive
+          ? '<i data-lucide="keyboard" class="w-3.5 h-3.5"></i><span>Ctrl 반복 생성</span>'
         : '<i data-lucide="pin-off" class="w-3.5 h-3.5"></i><span>현재 도구 반복 생성 OFF</span>';
       lucide.createIcons();
     }
 
-    // 도구 버튼 외형 및 잠금 표시 갱신
+    // 도구 버튼 외형 및 반복 생성 표시 갱신
     function refreshToolButtons() {
       Object.keys(tools).forEach(key => {
         const btn = tools[key]; if (!btn) return;
@@ -4056,7 +4156,7 @@
           if (!lockEl) {
             lockEl = document.createElement('span');
             lockEl.className = 'tool-lock-indicator absolute top-1 right-1 bg-amber-400 text-white rounded-full w-4 h-4 flex items-center justify-center shadow ring-1 ring-white';
-            lockEl.innerHTML = '<i data-lucide="lock" class="w-2.5 h-2.5"></i>';
+            lockEl.innerHTML = '<i data-lucide="pin" class="w-2.5 h-2.5"></i>';
             btn.appendChild(lockEl);
             lucide.createIcons();
           }
@@ -4117,7 +4217,7 @@
 
     function selectAllEditableObjects() {
       if (!bgImage) return false;
-      const items = getDocumentObjects().map(record => record.item).filter(item => isObjectVisible(item) && !isObjectLocked(item));
+      const items = getDocumentObjects().map(record => record.item).filter(item => isObjectVisible(item));
       if (items.length === 0) return false;
       setSelectionFromItems(items);
       currentTool = 'select';
@@ -4198,19 +4298,7 @@
     }
 
     function getMutableSelection() {
-      return getSelectionList().filter(item => item && isObjectVisible(item) && !isObjectLocked(item));
-    }
-
-    function toggleSelectedObjectLock() {
-      const list = getSelectionList().filter(Boolean);
-      if (list.length === 0) return false;
-      const shouldLock = list.some(item => !isObjectLocked(item));
-      list.forEach(item => { item.locked = shouldLock; });
-      saveHistoryState();
-      drawCanvas();
-      updateSelectedActionArea();
-      showToast(shouldLock ? '선택 요소를 잠갔습니다.' : '선택 요소 잠금을 해제했습니다.');
-      return true;
+      return getSelectionList().filter(item => item && isObjectVisible(item));
     }
 
     function toggleSelectedObjectVisibility() {
@@ -4375,7 +4463,7 @@
     }
 
     function beginSelectionDrag(pos, items = getMutableSelection()) {
-      const movable = items.filter(item => item && isObjectVisible(item) && !isObjectLocked(item));
+      const movable = items.filter(item => item && isObjectVisible(item));
       const bounds = getBoundsForItems(movable);
       if (!bounds) {
         selectionDragState = null;
@@ -4561,8 +4649,6 @@
 
     function startActiveFocusEditIfHit(pos) {
       if (!isFocusCreationTool() || !selectedFocusArea) return false;
-      if (isObjectLocked(selectedFocusArea)) return false;
-
       const handle = getFocusHandleAt(pos, selectedFocusArea);
       if (handle) {
         isResizingFocus = true;
@@ -4631,7 +4717,7 @@
       }
 
       const clicked = findObjectAt(pos.x, pos.y);
-      if (!clicked || !selection.includes(clicked) || isObjectLocked(clicked)) return false;
+      if (!clicked || !selection.includes(clicked)) return false;
       isDragging = true;
       beginSelectionDrag(pos, selection);
       drawCanvas();
@@ -4662,7 +4748,6 @@
       delete clone.id;
       delete clone.zIndex;
       clone.visible = true;
-      clone.locked = false;
       clone.rotation = normalizeRotation(clone.rotation);
 
       if (clone.type === 'rect' || clone.type === 'circle' || clone.type === 'redact') {
@@ -4731,13 +4816,13 @@
       const y1 = Math.min(rect.y, rect.y + rect.h), y2 = Math.max(rect.y, rect.y + rect.h);
       const picked = [];
       focusAreas.forEach(f => {
-        if (!isObjectVisible(f) || isObjectLocked(f)) return;
+        if (!isObjectVisible(f)) return;
         const fx1 = Math.min(f.x, f.x + f.w), fx2 = Math.max(f.x, f.x + f.w);
         const fy1 = Math.min(f.y, f.y + f.h), fy2 = Math.max(f.y, f.y + f.h);
         if (fx1 < x2 && fx2 > x1 && fy1 < y2 && fy2 > y1) picked.push(f); // 교차 시 선택
       });
       elements.forEach(el => {
-        if (!isObjectVisible(el) || isObjectLocked(el)) return;
+        if (!isObjectVisible(el)) return;
         if (el.type === 'badge' || el.type === 'text' || el.type === 'line') {
           const bounds = getItemBounds(el);
           if (bounds && bounds.left < x2 && bounds.right > x1 && bounds.top < y2 && bounds.bottom > y1) picked.push(el);
@@ -4784,7 +4869,6 @@
       const list = getSelectionList();
       if (list.length !== 1) return null;
       const item = list[0];
-      if (isObjectLocked(item)) return null;
       return (item.type === 'badge' || item.type === 'text') ? item : null;
     }
 
@@ -4973,6 +5057,7 @@
       dragStartX = pos.x; dragStartY = pos.y;
 
       if (startSelectedObjectInteraction(pos, e)) return;
+      if (clearCreationSelectionOnEmptyCanvasClick(pos)) return;
 
       if (currentTool === 'select') {
         const rect = canvas.getBoundingClientRect();
@@ -5020,11 +5105,6 @@
         const clickedFocus = isFocusObject(clicked) ? clicked : null;
 
         if (clicked) {
-          if (isObjectLocked(clicked)) {
-            showToast('잠긴 요소입니다. 선택한 뒤 잠금을 해제하세요.', 'error');
-            updateSelectedActionArea();
-            return;
-          }
           if (e.shiftKey && clicked) {
             toggleCanvasSelectionItem(clicked);
             return;
@@ -5047,17 +5127,22 @@
       else if (currentTool === 'crop') {
         const handle = getCropHandleAt(pos);
         if (handle) { isResizingCrop = true; activeCropHandle = handle; }
-      } 
+        else if (isPointInCropArea(pos)) {
+          isMovingCrop = true;
+          cropMoveOffset = { dx: pos.x - cropArea.x, dy: pos.y - cropArea.y };
+          canvas.style.cursor = 'grabbing';
+        }
+      }
       else if (isFocusCreationTool()) {
         if (startActiveFocusEditIfHit(pos)) return;
         selectedFocusArea = null; selectedElement = null; multiSel = [];
         isDrawingFocus = true; focusStartX = pos.x; focusStartY = pos.y;
-        const newFocus = ensureObjectIdentity({ type: currentTool === 'focus-rect' ? 'rect' : 'circle', x: pos.x, y: pos.y, w: 0, h: 0, color: toolDefaults.focus.strokeColor, visible: true, locked: false, rotation: 0 }, 'focus', focusAreas.length);
+        const newFocus = ensureObjectIdentity({ type: currentTool === 'focus-rect' ? 'rect' : 'circle', x: pos.x, y: pos.y, w: 0, h: 0, color: toolDefaults.focus.strokeColor, visible: true, rotation: 0 }, 'focus', focusAreas.length);
         addEditorObject(newFocus); selectedFocusArea = newFocus;
       } 
       else if (currentTool === 'badge') {
         clearSelection();
-        const newBadge = ensureObjectIdentity({ type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: toolDefaults.badge.badgeStyle, color: toolDefaults.badge.fillColor, textColor: toolDefaults.badge.textColor, scale: toolDefaults.badge.badgeScale, borderColor: toolDefaults.badge.borderColor, borderOpacity: toolDefaults.badge.borderOpacity, text: '', visible: true, locked: false, rotation: 0 }, 'element', elements.length);
+        const newBadge = ensureObjectIdentity({ type: 'badge', x: pos.x / canvas.width, y: pos.y / canvas.height, badgeStyle: toolDefaults.badge.badgeStyle, color: toolDefaults.badge.fillColor, textColor: toolDefaults.badge.textColor, scale: toolDefaults.badge.badgeScale, borderColor: toolDefaults.badge.borderColor, borderOpacity: toolDefaults.badge.borderOpacity, text: '', visible: true, rotation: 0 }, 'element', elements.length);
         addEditorObject(newBadge);
         placingBadge = newBadge;
         badgePlacementStart = pos;
@@ -5071,7 +5156,7 @@
       else if (currentTool === 'line') {
         if (!drawingLineInstance) {
           clearSelection();
-          drawingLineInstance = ensureObjectIdentity({ type: 'line', points: [pos, {x: pos.x, y: pos.y}], color: toolDefaults.line.strokeColor, visible: true, locked: false, rotation: 0 }, 'element', elements.length);
+          drawingLineInstance = ensureObjectIdentity({ type: 'line', points: [pos, {x: pos.x, y: pos.y}], color: toolDefaults.line.strokeColor, visible: true, rotation: 0 }, 'element', elements.length);
           addEditorObject(drawingLineInstance);
           selectedElement = drawingLineInstance;
         } else {
@@ -5087,7 +5172,7 @@
       }
       else if (currentTool === 'redact') {
         clearSelection();
-        const newRedaction = ensureObjectIdentity({ type: 'redact', x: pos.x, y: pos.y, w: 0, h: 0, mosaicSize: toolDefaults.redact.mosaicSize, visible: true, locked: false, rotation: 0 }, 'element', elements.length);
+        const newRedaction = ensureObjectIdentity({ type: 'redact', x: pos.x, y: pos.y, w: 0, h: 0, mosaicSize: toolDefaults.redact.mosaicSize, visible: true, rotation: 0 }, 'element', elements.length);
         addEditorObject(newRedaction);
         selectedElement = newRedaction;
         selectedFocusArea = null;
@@ -5105,6 +5190,13 @@
       if (!bgImage) return;
       if (isPanningViewport) return;
       const pos = getMousePos(e);
+
+      // 자르기 모드: 핸들 위가 아니면 박스 내부에서 이동 가능함을 커서로 안내
+      if (currentTool === 'crop' && cropArea && !isResizingCrop) {
+        if (isMovingCrop) canvas.style.cursor = 'grabbing';
+        else if (getCropHandleAt(pos)) canvas.style.cursor = '';
+        else canvas.style.cursor = isPointInCropArea(pos) ? 'grab' : '';
+      }
 
       if (isResizingBackground) {
         const physicalDx = (e.clientX - bgInitialClientX) / viewportScale;
@@ -5203,7 +5295,20 @@
         else if (activeCropHandle === 'l') { const x2 = cropArea.x + cropArea.w; cropArea.x = pos.x; cropArea.w = x2 - pos.x; }
         else if (activeCropHandle === 'r') { cropArea.w = pos.x - cropArea.x; }
         drawCanvas();
-      } 
+      }
+      else if (currentTool === 'crop' && isMovingCrop && cropArea) {
+        const w = cropArea.w, h = cropArea.h;
+        // 폭/높이 부호와 무관하게 박스 전체가 캔버스 안에 머물도록 좌상단(min)을 기준으로 제한
+        let nx = pos.x - cropMoveOffset.dx;
+        let ny = pos.y - cropMoveOffset.dy;
+        let left = Math.min(nx, nx + w);
+        let top = Math.min(ny, ny + h);
+        left = Math.max(0, Math.min(left, canvas.width - Math.abs(w)));
+        top = Math.max(0, Math.min(top, canvas.height - Math.abs(h)));
+        cropArea.x = w < 0 ? left + Math.abs(w) : left;
+        cropArea.y = h < 0 ? top + Math.abs(h) : top;
+        drawCanvas();
+      }
       else if (currentTool === 'line' && drawingLineInstance) {
         const points = drawingLineInstance.points;
         const lastFixedPt = points[points.length - 2];
@@ -5233,13 +5338,39 @@
       }
     }
 
-    function finishBadgePlacement() {
+    function shouldKeepCreationToolAfterCreate(e = null) {
+      return !!(lockedTool === currentTool || isCreationRepeatModifierActive || (e?.ctrlKey || e?.metaKey));
+    }
+
+    function clearCreationSelectionOnEmptyCanvasClick(pos) {
+      if (!isCreationPlacementTool() || getSelectionList().length === 0) return false;
+      if (findObjectAt(pos.x, pos.y)) return false;
+      clearSelection();
+      activeSnapGuides = [];
+      drawCanvas();
+      updateSelectedActionArea();
+      return true;
+    }
+
+    function finishCreatedObjectInteraction(createdItem, e = null) {
+      if (!createdItem) return;
+      if (shouldKeepCreationToolAfterCreate(e)) {
+        clearSelection();
+        return;
+      }
+      const created = createdItem;
+      setSelectionFromItems([created]);
+    }
+
+    function finishBadgePlacement(e = null) {
       if (!isPlacingBadge || !placingBadge) return false;
+      const placedBadge = placingBadge;
       isPlacingBadge = false;
       placingBadge = null;
       badgePlacementStart = null;
       activeSnapGuides = [];
       reindexBadges();
+      finishCreatedObjectInteraction(placedBadge, e);
       saveHistoryState();
       drawCanvas(); updateSelectedActionArea();
       return true;
@@ -5250,7 +5381,7 @@
       if (isResizingBackground) {
         isResizingBackground = false; saveHistoryState(); return;
       }
-      if (finishBadgePlacement()) return;
+      if (finishBadgePlacement(e)) return;
       if (isDrawingRedaction) {
         const area = redactionArea;
         isDrawingRedaction = false;
@@ -5270,6 +5401,7 @@
         selectedElement = area;
         selectedFocusArea = null;
         multiSel = [];
+        finishCreatedObjectInteraction(area, e);
         saveHistoryState();
         drawCanvas();
         updateSelectedActionArea();
@@ -5289,7 +5421,7 @@
         drawCanvas(); updateSelectedActionArea();
         return;
       }
-      let wasActionActive = isDragging || isResizingFocus || isResizingBadge || isResizingRedaction || isDrawingFocus || isResizingCrop || isEditingLinePoint || isRotatingSelection;
+      let wasActionActive = isDragging || isResizingFocus || isResizingBadge || isResizingRedaction || isDrawingFocus || isResizingCrop || isMovingCrop || isEditingLinePoint || isRotatingSelection;
       let justDrewFocus = false;
       if (isDrawingFocus && selectedFocusArea) {
         if (selectedFocusArea.w < 0) { selectedFocusArea.x += selectedFocusArea.w; selectedFocusArea.w = Math.abs(selectedFocusArea.w); }
@@ -5302,16 +5434,12 @@
           justDrewFocus = true;
         }
       }
-      isDragging = false; isResizingFocus = false; isResizingBadge = false; isResizingRedaction = false; isResizingCrop = false; isDrawingFocus = false; isEditingLinePoint = false; isRotatingSelection = false;
+      isDragging = false; isResizingFocus = false; isResizingBadge = false; isResizingRedaction = false; isResizingCrop = false; isMovingCrop = false; cropMoveOffset = null; isDrawingFocus = false; isEditingLinePoint = false; isRotatingSelection = false;
       activeBadgeHandle = null; activeRedactionHandle = null; activeLinePointIndex = null; rotationCenter = null; rotationStartStates = [];
+      if (currentTool === 'crop') canvas.style.cursor = '';
       finishSelectionDrag();
       activeSnapGuides = [];
-      // 생성 도구에서는 방금 만든 포커스를 활성 상태로 유지해 바로 이동/리사이즈할 수 있게 둔다.
-      if (justDrewFocus && !CREATION_TOOLS.includes(currentTool)) {
-        const drawn = selectedFocusArea;
-        selectTool('select');
-        selectedFocusArea = drawn;
-      }
+      if (justDrewFocus) finishCreatedObjectInteraction(selectedFocusArea, e);
       drawCanvas(); updateSelectedActionArea();
       if (wasActionActive && currentTool !== 'crop') saveHistoryState();
     }
@@ -5383,20 +5511,114 @@
       }
     }
 
-    async function downloadResult() {
-      if (!bgImage) { showToast('추출 대상이 없습니다.', 'error'); return; }
-      if (isIframe) {
-        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
-        showRenderedModal(dataUrl);
-        return;
-      }
+    async function withProjectPageExportContext(exportCallback) {
+      ensureProjectHasPage();
+      syncCurrentPageSnapshot({ updateThumbnail: true, render: false });
+      const pages = getSelectedExportPages();
+      const originalPageId = currentPageId;
+      const originalSelectedPageIds = [...selectedPageIds];
+      const originalLastSelectedPageId = lastSelectedPageId;
+      const originalHistory = [...history];
+      const originalRedoStack = [...redoStack];
       try {
-        const link = document.createElement('a');
-        const fileIndex = String(downloadCount).padStart(3, '0');
-        link.download = `CLE Robotics_Manual_${fileIndex}.png`;
-        link.href = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        downloadCount++; showToast('성공적으로 저장되었습니다!');
+        return await exportCallback(pages);
+      } finally {
+        const originalPage = projectPages.find(page => page.id === originalPageId) || projectPages[0];
+        if (originalPage) {
+          currentPageId = originalPage.id;
+          selectedPageIds = originalSelectedPageIds.length > 0 ? originalSelectedPageIds : [originalPage.id];
+          lastSelectedPageId = originalLastSelectedPageId || selectedPageIds[selectedPageIds.length - 1];
+          await applyEditorPageSnapshot(originalPage);
+          history = originalHistory;
+          redoStack = originalRedoStack;
+          renderProjectPageRail();
+        }
+      }
+    }
+
+    function buildScreenshotFileName(page, index, total) {
+      const fileIndex = String(downloadCount + index).padStart(3, '0');
+      const pageName = String(page?.name || `페이지 ${index + 1}`).replace(/[\\/:*?"<>|]/g, '_').trim();
+      return total > 1
+        ? `CLE Robotics_Manual_${fileIndex}_${pageName}.png`
+        : `CLE Robotics_Manual_${fileIndex}.png`;
+    }
+
+    function downloadRenderedPagePng(dataUrl, page, index, total) {
+      const link = document.createElement('a');
+      link.download = buildScreenshotFileName(page, index, total);
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function renderCurrentPageBlob() {
+      return withCleanOutputRender(() => new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error('clipboard blob creation failed')); return; }
+          resolve(blob);
+        }, 'image/png');
+      }));
+    }
+
+    async function downloadSelectedPagesAsImages() {
+      return withProjectPageExportContext(async (pages) => {
+        if (pages.length === 0) { showToast('추출 대상이 없습니다.', 'error'); return false; }
+        if (isIframe) {
+          await applyEditorPageSnapshot(pages[0]);
+          const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+          showRenderedModal(dataUrl);
+          return true;
+        }
+        for (const [index, page] of pages.entries()) {
+          await applyEditorPageSnapshot(page);
+          const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+          downloadRenderedPagePng(dataUrl, page, index, pages.length);
+        }
+        downloadCount += pages.length;
+        showToast(pages.length > 1 ? `${pages.length}개 페이지를 저장했습니다.` : '성공적으로 저장되었습니다!');
+        return true;
+      });
+    }
+
+    async function copySelectedPagesToClipboard() {
+      if (isIframe) {
+        return withProjectPageExportContext(async (pages) => {
+          if (pages.length === 0) { showToast('복사 대상이 없습니다.', 'error'); return false; }
+          await applyEditorPageSnapshot(pages[0]);
+          const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+          showRenderedModal(dataUrl);
+          return true;
+        });
+      }
+      if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
+        return withProjectPageExportContext(async (pages) => {
+          if (pages.length === 0) { showToast('복사 대상이 없습니다.', 'error'); return false; }
+          await applyEditorPageSnapshot(pages[0]);
+          const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
+          showRenderedModal(dataUrl);
+          return true;
+        });
+      }
+
+      return withProjectPageExportContext(async (pages) => {
+        if (pages.length === 0) { showToast('복사 대상이 없습니다.', 'error'); return false; }
+        const items = [];
+        for (const page of pages) {
+          await applyEditorPageSnapshot(page);
+          const blob = await renderCurrentPageBlob();
+          items.push(new ClipboardItem({ "image/png": blob }));
+        }
+        await navigator.clipboard.write(items);
+        showToast(pages.length > 1 ? `${pages.length}개 페이지 이미지가 클립보드에 복사되었습니다!` : '클립보드에 이미지가 복사되었습니다!');
+        return true;
+      });
+    }
+
+    async function downloadResult() {
+      try {
+        await downloadSelectedPagesAsImages();
       } catch (e) {
         const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
         showRenderedModal(dataUrl);
@@ -5404,27 +5626,8 @@
     }
 
     async function copyToClipboard() {
-      if (!bgImage) { showToast('복사 대상이 없습니다.', 'error'); return; }
-      if (isIframe) {
-        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
-        showRenderedModal(dataUrl);
-        return;
-      }
-      if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
-        const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
-        showRenderedModal(dataUrl);
-        return;
-      }
       try {
-        const blob = await withCleanOutputRender(() => new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {
-            if (!blob) { reject(new Error('clipboard blob creation failed')); return; }
-            resolve(blob);
-          }, 'image/png');
-        }));
-        const item = new ClipboardItem({ "image/png": blob });
-        await navigator.clipboard.write([item]);
-        showToast('클립보드에 이미지가 복사되었습니다!');
+        await copySelectedPagesToClipboard();
       } catch (e) {
         const dataUrl = await withCleanOutputRender(() => canvas.toDataURL('image/png'));
         showRenderedModal(dataUrl);
