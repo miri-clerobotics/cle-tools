@@ -792,6 +792,10 @@
       return currentTool === 'focus-rect' || currentTool === 'focus-circle';
     }
 
+    function isCreationPlacementTool() {
+      return isFocusCreationTool() || currentTool === 'badge' || currentTool === 'redact';
+    }
+
     function normalizeRotation(value) {
       const number = Number(value);
       if (!Number.isFinite(number)) return 0;
@@ -5040,6 +5044,7 @@
       dragStartX = pos.x; dragStartY = pos.y;
 
       if (startSelectedObjectInteraction(pos, e)) return;
+      if (clearCreationSelectionOnEmptyCanvasClick(pos)) return;
 
       if (currentTool === 'select') {
         const rect = canvas.getBoundingClientRect();
@@ -5299,6 +5304,16 @@
       return !!(lockedTool === currentTool || isCreationRepeatModifierActive || (e?.ctrlKey || e?.metaKey));
     }
 
+    function clearCreationSelectionOnEmptyCanvasClick(pos) {
+      if (!isCreationPlacementTool() || getSelectionList().length === 0) return false;
+      if (findObjectAt(pos.x, pos.y)) return false;
+      clearSelection();
+      activeSnapGuides = [];
+      drawCanvas();
+      updateSelectedActionArea();
+      return true;
+    }
+
     function finishCreatedObjectInteraction(createdItem, e = null) {
       if (!createdItem) return;
       if (shouldKeepCreationToolAfterCreate(e)) {
@@ -5306,7 +5321,6 @@
         return;
       }
       const created = createdItem;
-      selectTool('select');
       setSelectionFromItems([created]);
     }
 
