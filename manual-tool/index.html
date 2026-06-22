@@ -125,6 +125,9 @@
             <button id="toolRedact" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
               <i data-lucide="scan-face" class="w-4 h-4 text-slate-700 shrink-0"></i><span class="truncate w-full text-center">민감정보 가림</span>
             </button>
+            <button id="toolEraseText" class="tool-btn w-full h-16 flex flex-col items-center justify-center gap-1 bg-white hover:bg-slate-50 text-slate-700 px-2 rounded-xl font-semibold text-[11px] border border-slate-200/80 transition-all duration-200">
+              <i data-lucide="eraser" class="w-4 h-4 text-sky-500 shrink-0"></i><span class="truncate w-full text-center">글자 지우기</span>
+            </button>
           </div>
           <p class="text-[10px] text-slate-400 mt-2 leading-normal font-medium bg-slate-50 border border-slate-200/60 p-2.5 rounded-xl select-none">
             💡 <b>가이드 라인 그리기 종료</b>:<br>화면 <b>더블 클릭</b> 또는 키보드 <kbd class="bg-white border px-1 rounded text-slate-500 shadow-sm font-bold">ESC</kbd> 입력
@@ -559,7 +562,7 @@
     let currentTool = 'select';
     let lockedTool = null; // 반복 생성으로 잠근 도구
     let isCreationRepeatModifierActive = false;
-    const LOCKABLE_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
+    const LOCKABLE_TOOLS = ['focus-rect', 'focus-circle', 'badge', 'erase-text'];
     let focusAreas = []; 
     let elements = []; 
     let badgeType = 'number'; 
@@ -607,6 +610,11 @@
     let activeCropHandle = null;
     let isMovingCrop = false;
     let cropMoveOffset = null;
+    let isDrawingEraseRegion = false;
+    let eraseRegion = null;
+    let eraseRegionStart = null;
+    let isErasingText = false;
+    let tesseractLoadPromise = null;
     const isIframe = window !== window.parent;
 
     // 이미지(배경) 자체 스케일 관련 제어 변수들
@@ -788,7 +796,8 @@
       'badge': document.getElementById('toolBadge'),
       'text': document.getElementById('toolText'),
       'line': document.getElementById('toolLine'),
-      'redact': document.getElementById('toolRedact')
+      'redact': document.getElementById('toolRedact'),
+      'erase-text': document.getElementById('toolEraseText')
     };
 
     function isFocusCreationTool() {
@@ -1074,6 +1083,18 @@
         ctx.strokeRect(cropArea.x, cropArea.y, cropArea.w, cropArea.h);
         drawHandles(cropArea.x, cropArea.y, cropArea.w, cropArea.h, '#a78bfa');
         drawEdgeHandles(cropArea.x, cropArea.y, cropArea.w, cropArea.h, '#a78bfa');
+      }
+
+      // 6-1. 글자 지우기 영역 (드래그 중) 점선 사각형
+      if (currentTool === 'erase-text' && eraseRegion && !isRenderingCleanOutput) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(14,165,233,0.12)';
+        ctx.fillRect(eraseRegion.x, eraseRegion.y, eraseRegion.w, eraseRegion.h);
+        ctx.strokeStyle = '#0ea5e9';
+        ctx.lineWidth = calculateScaledSize(2);
+        ctx.setLineDash([calculateScaledSize(6), calculateScaledSize(4)]);
+        ctx.strokeRect(eraseRegion.x, eraseRegion.y, eraseRegion.w, eraseRegion.h);
+        ctx.restore();
       }
 
       // 7. 워터마크 그리기
@@ -3134,6 +3155,13 @@
         drawCanvas(); updateSelectedActionArea();
         return true;
       }
+      if (isDrawingEraseRegion) {
+        isDrawingEraseRegion = false;
+        eraseRegion = null;
+        eraseRegionStart = null;
+        drawCanvas(); updateSelectedActionArea();
+        return true;
+      }
       if (isMarqueeSelecting) {
         isMarqueeSelecting = false;
         marqueeRect = null;
@@ -3874,6 +3902,7 @@
       isPlacingBadge = false; placingBadge = null; badgePlacementStart = null; isResizingBadge = false; activeBadgeHandle = null;
       isEditingLinePoint = false; activeLinePointIndex = null; isRotatingSelection = false; rotationCenter = null; rotationStartStates = [];
       isDrawingRedaction = false; redactionArea = null; isResizingRedaction = false; activeRedactionHandle = null;
+      if (toolKey !== 'erase-text') { isDrawingEraseRegion = false; eraseRegion = null; eraseRegionStart = null; if (!isErasingText) canvas.style.cursor = ''; }
 
       currentTool = toolKey; hideInlineTextInput();
       if (toolKey === 'crop' && bgImage) {
@@ -3883,6 +3912,7 @@
         cropArea = null; cropControlArea.classList.add('hidden');
         isMovingCrop = false; cropMoveOffset = null; canvas.style.cursor = '';
       }
+      if (toolKey === 'erase-text' && !isErasingText) canvas.style.cursor = 'crosshair';
       if (toolKey !== 'select') { selectedFocusArea = null; selectedElement = null; multiSel = []; activeSnapGuides = []; }
       // 다른 도구로 전환하면 반복 생성 고정 해제
       if (lockedTool && lockedTool !== toolKey) lockedTool = null;
@@ -5050,6 +5080,152 @@
       croppedImage.src = tempCanvas.toDataURL();
     }
 
+    // ── 글자 지우기 ───────────────────────────────────────────────
+    // Tesseract.js를 첫 사용 시점에만 CDN에서 지연 로드 (초기 로딩 부담 방지)
+    function ensureTesseractLoaded() {
+      if (window.Tesseract) return Promise.resolve();
+      if (tesseractLoadPromise) return tesseractLoadPromise;
+      tesseractLoadPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => { tesseractLoadPromise = null; reject(new Error('Tesseract 로드 실패')); };
+        document.head.appendChild(s);
+      });
+      return tesseractLoadPromise;
+    }
+
+    // 글자 영역 테두리 바깥 픽셀을 평균내어 주변 배경색을 추정 (블렌딩용)
+    function sampleSurroundingColor(ctx, bx, by, bw, bh, maxW, maxH) {
+      const margin = Math.max(2, Math.round(Math.min(bw, bh) * 0.25));
+      const x0 = Math.max(0, Math.floor(bx - margin));
+      const y0 = Math.max(0, Math.floor(by - margin));
+      const x1 = Math.min(maxW, Math.ceil(bx + bw + margin));
+      const y1 = Math.min(maxH, Math.ceil(by + bh + margin));
+      const rw = x1 - x0, rh = y1 - y0;
+      if (rw <= 0 || rh <= 0) return null;
+      const data = ctx.getImageData(x0, y0, rw, rh).data;
+      // 글자 박스(안쪽)는 제외하고 바깥 링 픽셀만 사용
+      const ix0 = bx - x0, iy0 = by - y0, ix1 = ix0 + bw, iy1 = iy0 + bh;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let yy = 0; yy < rh; yy++) {
+        for (let xx = 0; xx < rw; xx++) {
+          if (xx >= ix0 && xx < ix1 && yy >= iy0 && yy < iy1) continue;
+          const i = (yy * rw + xx) * 4;
+          r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+        }
+      }
+      if (!n) return null;
+      return `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`;
+    }
+
+    async function eraseTextInRegion(region) {
+      if (!bgImage || isErasingText) return;
+      // 영역 정규화 (음수 폭/높이 보정 후 이미지 경계로 클램프)
+      let rx = region.x, ry = region.y, rw = region.w, rh = region.h;
+      if (rw < 0) { rx += rw; rw = -rw; }
+      if (rh < 0) { ry += rh; rh = -rh; }
+      rx = Math.max(0, Math.round(rx)); ry = Math.max(0, Math.round(ry));
+      rw = Math.min(Math.round(rw), canvas.width - rx);
+      rh = Math.min(Math.round(rh), canvas.height - ry);
+      if (rw < 8 || rh < 8) { showToast('영역이 너무 좁습니다.', 'error'); return; }
+
+      isErasingText = true;
+      canvas.style.cursor = 'progress';
+      showToast('글자를 분석하는 중입니다…');
+
+      let worker = null;
+      try {
+        await ensureTesseractLoaded();
+
+        // OCR 정확도를 위해 선택 영역만 잘라서 인식
+        const regionCanvas = document.createElement('canvas');
+        regionCanvas.width = rw; regionCanvas.height = rh;
+        regionCanvas.getContext('2d', { willReadFrequently: true })
+          .drawImage(bgImage, rx, ry, rw, rh, 0, 0, rw, rh);
+
+        worker = await Tesseract.createWorker('kor+eng');
+        const { data } = await worker.recognize(regionCanvas, {}, { blocks: true });
+
+        // Tesseract.js v5는 data.words가 비어있을 수 있어 blocks 구조에서도 단어를 수집
+        let words = Array.isArray(data.words) ? data.words.slice() : [];
+        if (!words.length && Array.isArray(data.blocks)) {
+          data.blocks.forEach(blk => (blk.paragraphs || []).forEach(par =>
+            (par.lines || []).forEach(line => (line.words || []).forEach(w => words.push(w)))));
+        }
+        // 글자가 아닌 그래픽/아이콘을 글자로 오인식하는 것을 거르기 위한 다중 필터
+        const MEANINGFUL = /[A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/; // 영문·숫자·한글(음절/자모)
+        words = words.filter(w => {
+          if (!w || !w.bbox) return false;
+          // 신뢰도가 낮은 인식은 대부분 노이즈 → 기준 상향
+          if ((w.confidence ?? 0) < 60) return false;
+          const t = (w.text || '').trim();
+          if (!t) return false;
+          // 의미 있는 문자(영문/숫자/한글)가 하나도 없으면 기호 덩어리로 보고 제외
+          if (!MEANINGFUL.test(t)) return false;
+          // 의미 문자 비율이 너무 낮으면(기호 위주) 제외
+          const meaningfulCount = (t.match(/[A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/g) || []).length;
+          if (meaningfulCount / t.length < 0.5) return false;
+          const bw = w.bbox.x1 - w.bbox.x0, bh = w.bbox.y1 - w.bbox.y0;
+          if (bw <= 1 || bh <= 1) return false;
+          // 글자로 보기엔 비정상적으로 납작하거나 길쭉한 박스 제외 (가로/세로 비율)
+          const ratio = bw / bh;
+          if (ratio > 40 || ratio < 0.05) return false;
+          // 선택 영역 거의 전체를 차지하는 큰 박스는 텍스트가 아닐 가능성 → 제외
+          if (bw > rw * 0.97 && bh > rh * 0.97) return false;
+          return true;
+        });
+
+        if (!words.length) { showToast('지울 만한 글자를 찾지 못했습니다.'); return; }
+
+        // 전체 이미지 사본에 글자 영역을 주변 배경색으로 덮기
+        const work = document.createElement('canvas');
+        work.width = canvas.width; work.height = canvas.height;
+        const wctx = work.getContext('2d', { willReadFrequently: true });
+        wctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+        let erased = 0;
+        for (const w of words) {
+          const bx = rx + w.bbox.x0, by = ry + w.bbox.y0;
+          const bw = w.bbox.x1 - w.bbox.x0, bh = w.bbox.y1 - w.bbox.y0;
+          if (bw <= 0 || bh <= 0) continue;
+          const color = sampleSurroundingColor(wctx, bx, by, bw, bh, canvas.width, canvas.height);
+          if (!color) continue;
+          const pad = 2;
+          wctx.fillStyle = color;
+          wctx.fillRect(bx - pad, by - pad, bw + pad * 2, bh + pad * 2);
+          erased++;
+        }
+
+        if (!erased) { showToast('영역에서 글자를 찾지 못했습니다.'); return; }
+
+        await new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            bgImage = img;
+            setupCanvasWithImage(img, false); // 주석/포커스 유지, 캔버스 크기 동일
+            resolve();
+          };
+          img.src = work.toDataURL();
+        });
+
+        // 도구가 고정(pin)된 상태면 계속 글자 지우기를 이어갈 수 있도록 유지
+        if (lockedTool === 'erase-text') {
+          showToast(`글자 ${erased}곳을 지웠습니다. (반복 모드 — 계속 영역을 선택하세요)`);
+        } else {
+          selectTool('select');
+          showToast(`글자 ${erased}곳을 지웠습니다.`);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('글자 인식에 실패했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+      } finally {
+        if (worker) { try { await worker.terminate(); } catch (e) {} }
+        isErasingText = false;
+        canvas.style.cursor = currentTool === 'erase-text' ? 'crosshair' : '';
+      }
+    }
+
     canvas.addEventListener('mousedown', (e) => {
       if (!bgImage) return;
       if (e.button !== 0 || isSpacePanActive) return;
@@ -5132,6 +5308,14 @@
           cropMoveOffset = { dx: pos.x - cropArea.x, dy: pos.y - cropArea.y };
           canvas.style.cursor = 'grabbing';
         }
+      }
+      else if (currentTool === 'erase-text') {
+        if (isErasingText) return;
+        clearSelection();
+        isDrawingEraseRegion = true;
+        eraseRegionStart = { x: pos.x, y: pos.y };
+        eraseRegion = { x: pos.x, y: pos.y, w: 0, h: 0 };
+        drawCanvas();
       }
       else if (isFocusCreationTool()) {
         if (startActiveFocusEditIfHit(pos)) return;
@@ -5309,6 +5493,15 @@
         cropArea.y = h < 0 ? top + Math.abs(h) : top;
         drawCanvas();
       }
+      else if (currentTool === 'erase-text' && isDrawingEraseRegion && eraseRegionStart) {
+        eraseRegion = {
+          x: eraseRegionStart.x,
+          y: eraseRegionStart.y,
+          w: pos.x - eraseRegionStart.x,
+          h: pos.y - eraseRegionStart.y
+        };
+        drawCanvas();
+      }
       else if (currentTool === 'line' && drawingLineInstance) {
         const points = drawingLineInstance.points;
         const lastFixedPt = points[points.length - 2];
@@ -5382,6 +5575,15 @@
         isResizingBackground = false; saveHistoryState(); return;
       }
       if (finishBadgePlacement(e)) return;
+      if (isDrawingEraseRegion) {
+        isDrawingEraseRegion = false;
+        const region = eraseRegion;
+        eraseRegion = null;
+        eraseRegionStart = null;
+        drawCanvas();
+        if (region) eraseTextInRegion(region);
+        return;
+      }
       if (isDrawingRedaction) {
         const area = redactionArea;
         isDrawingRedaction = false;
