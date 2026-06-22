@@ -580,6 +580,7 @@
     const PROJECT_PAGE_RAIL_MIN_WIDTH = 120;
     const PROJECT_PAGE_RAIL_MAX_WIDTH = 320;
     const MANUAL_TOOL_PROJECT_VERSION = 2;
+    const MULTI_CLIPBOARD_FALLBACK_MESSAGE = '다중 복사가 지원되지 않아 첫 번째 이미지만 클립보드에 복사되었습니다.';
     let dimOpacity = 0.3; 
     let currentScalePreset = 1.0; 
     let autoScaleEnabled = true; 
@@ -5501,6 +5502,12 @@
       }));
     }
 
+    async function copyProjectPageToClipboard(page) {
+      await applyEditorPageSnapshot(page);
+      const blob = await renderCurrentPageBlob();
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    }
+
     async function downloadSelectedPagesAsImages() {
       return withProjectPageExportContext(async (pages) => {
         if (pages.length === 0) { showToast('추출 대상이 없습니다.', 'error'); return false; }
@@ -5541,7 +5548,8 @@
         });
       }
 
-      return withProjectPageExportContext(async (pages) => {
+      let fallbackCopiedPageId = null;
+      const copied = await withProjectPageExportContext(async (pages) => {
         if (pages.length === 0) { showToast('복사 대상이 없습니다.', 'error'); return false; }
         const items = [];
         for (const page of pages) {
@@ -5549,10 +5557,21 @@
           const blob = await renderCurrentPageBlob();
           items.push(new ClipboardItem({ "image/png": blob }));
         }
-        await navigator.clipboard.write(items);
+        try {
+          await navigator.clipboard.write(items);
+        } catch (error) {
+          if (pages.length <= 1) throw error;
+          const fallbackPage = pages[0];
+          await copyProjectPageToClipboard(fallbackPage);
+          fallbackCopiedPageId = fallbackPage.id;
+          showToast(MULTI_CLIPBOARD_FALLBACK_MESSAGE);
+          return true;
+        }
         showToast(pages.length > 1 ? `${pages.length}개 페이지 이미지가 클립보드에 복사되었습니다!` : '클립보드에 이미지가 복사되었습니다!');
         return true;
       });
+      if (fallbackCopiedPageId) await selectProjectPage(fallbackCopiedPageId);
+      return copied;
     }
 
     async function downloadResult() {
