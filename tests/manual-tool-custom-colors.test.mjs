@@ -5,11 +5,19 @@ const html = fs.readFileSync(new URL('../manual-tool/index.html', import.meta.ur
 
 assert.match(html, /id="addCustomColorBtn"/, 'custom color add button should exist');
 assert.match(html, /id="customColorModal"/, 'custom color modal should exist');
+assert.match(html, /id="customColorModal" class="fixed inset-0 z-50 hidden[^"]*"/, 'custom color modal should behave like a small internal floating window');
+assert.doesNotMatch(html, /id="customColorModal"[^>]*bg-slate-950/, 'custom color modal should not dim the whole editor workspace');
 assert.match(html, /id="customColorInput"/, 'color input should exist');
 assert.match(html, /id="customColorHexInput"/, 'hex input should exist');
+assert.match(html, /id="customColorList"/, 'custom color modal should show saved custom colors');
+assert.match(html, /id="customColorEmptyState"/, 'custom color modal should show an empty state before custom colors exist');
 assert.match(html, /manualToolCustomColors/, 'custom colors should be persisted in localStorage');
 assert.match(html, /function normalizeHexColor/, 'hex colors should be normalized before use');
 assert.match(html, /function renderCustomColorButtons/, 'saved custom colors should render into the palette');
+assert.match(html, /function renderCustomColorManager/, 'saved custom colors should be editable from the modal');
+assert.match(html, /function startEditingCustomColor/, 'custom colors should support edit mode');
+assert.match(html, /function deleteCustomColor/, 'custom colors should be removable from localStorage');
+assert.match(html, /let editingCustomColor = null/, 'custom color modal should track whether it is adding or editing');
 assert.match(html, /function selectColorButton/, 'dynamic color buttons should share the existing selection behavior');
 assert.match(html, /function calculateFittedCanvasSize/, 'canvas fit size should be reusable after viewport changes');
 assert.match(html, /function resizeCanvasToViewport/, 'canvas should resize when the viewport grows or shrinks');
@@ -64,7 +72,10 @@ assert.match(html, /id="objectStylePanel"[^>]*hidden/, 'fill and stroke colors s
 assert.match(html, /id="objectStylePanelTitle"/, 'mode-specific style panel should have a dynamic title');
 assert.match(html, /id="objectColorSwatch"/, 'object color panel should use the same swatch control as text color');
 assert.match(html, /id="objectColorInput"[^>]*class="w-20 min-w-0/, 'object color hex input should match text color input sizing');
-assert.match(html, /id="colorPalette" class="grid grid-cols-6 gap-1.5"/, 'object color palette should use the same grid layout as text color');
+assert.match(html, /id="colorPalette" class="space-y-2"/, 'object color palette should separate default and custom colors');
+assert.match(html, /id="defaultColorPalette" class="grid grid-cols-6 gap-1.5"/, 'default object colors should stay on the first row');
+assert.match(html, /id="customColorPalette" class="flex flex-wrap items-center gap-1.5 pt-1"/, 'custom object colors should live below the default palette');
+assert.match(html, /id="customColorPalette"[\s\S]*id="addCustomColorBtn"/, 'the custom color add button should live with the custom color row');
 assert.match(html, /class="color-picker-btn w-6 h-6 rounded-full border border-slate-200 bg-\[#FFFFFF\]" data-color="#FFFFFF"/, 'object color palette should include the same white swatch as text color');
 assert.doesNotMatch(html, /color-picker-btn[^"]*w-7 h-7/, 'object custom color swatches should use the same size as text color swatches');
 assert.doesNotMatch(html, /class="color-picker-btn[^"]*ring-\[/, 'object color swatches should not use a different selected-state UI from text color swatches');
