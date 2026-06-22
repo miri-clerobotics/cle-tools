@@ -599,6 +599,8 @@ assert.match(html, /function updateBadgePlacementFromDrag/, 'badge placement sho
 assert.match(html, /let badgePlacementStart = null/, 'badge placement should remember the drag origin');
 assert.match(html, /updateBadgePlacementFromDrag\(placingBadge, badgePlacementStart, pos\)/, 'badge placement mouse move should size from the drag gesture');
 assert.match(html, /updateBadgePlacementFromDrag\(placingBadge, badgePlacementStart, pos\);[\s\S]*?activeSnapGuides = \[\];[\s\S]*?autoExpandCanvasForBounds\(getBadgeBounds\(placingBadge\)\)/, 'drag-sizing a new badge should clear snap guides before canvas expansion');
+assert.match(extractFunctionBody('updateBadgePlacementFromDrag'), /setBadgeCenterFromPoint\(badge, start\);[\s\S]*?badge\.scale = clampNumber\(radius \/ calculateScaledSize\(BADGE_BASE_RADIUS\), BADGE_MIN_SCALE, BADGE_MAX_SCALE\)/, 'drag-sizing a new badge should keep the mouse-down point as the badge center');
+assert.doesNotMatch(extractFunctionBody('updateBadgePlacementFromDrag'), /setBadgeCenterFromPoint\(badge, center\)/, 'drag-sizing a new badge should not move the badge center to the drag midpoint');
 assert.match(html, /reindexBadges\(\);[\s\S]*?activeSnapGuides = \[\];[\s\S]*?autoExpandCanvasForBounds\(getBadgeBounds\(newBadge\)\)/, 'initial badge creation should start without snap guides');
 assert.doesNotMatch(extractFunctionBody('setBadgeCenterFromPoint'), /clampNumber/, 'badge drag placement should not clamp before auto canvas expansion can run');
 assert.match(extractFunctionBody('applySnapToBadgeResize'), /clampNumber\(snappedRadius \/ calculateScaledSize\(BADGE_BASE_RADIUS\), BADGE_MIN_SCALE, BADGE_MAX_SCALE\)/, 'completed badge resize should still support snapped radius sizing');

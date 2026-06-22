@@ -1289,9 +1289,8 @@
         badge.scale = toolDefaults.badge.badgeScale;
         return;
       }
-      const center = { x: start.x + dx / 2, y: start.y + dy / 2 };
-      const radius = Math.max(Math.abs(dx), Math.abs(dy)) / 2;
-      setBadgeCenterFromPoint(badge, center);
+      const radius = Math.max(Math.abs(dx), Math.abs(dy));
+      setBadgeCenterFromPoint(badge, start);
       badge.scale = clampNumber(radius / calculateScaledSize(BADGE_BASE_RADIUS), BADGE_MIN_SCALE, BADGE_MAX_SCALE);
     }
 
