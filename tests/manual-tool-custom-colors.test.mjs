@@ -15,6 +15,20 @@ assert.match(html, /function calculateFittedCanvasSize/, 'canvas fit size should
 assert.match(html, /function resizeCanvasToViewport/, 'canvas should resize when the viewport grows or shrinks');
 assert.match(html, /window\.addEventListener\('resize', handleWindowResize\)/, 'window resize should trigger canvas refit');
 assert.match(html, /imageAutoFitEnabled = false/, 'manual background resizing should disable automatic viewport fitting');
+assert.match(html, /const intrinsicWidth = img\.naturalWidth \|\| img\.width/, 'pasted images should preserve their source pixel width');
+assert.match(html, /const intrinsicHeight = img\.naturalHeight \|\| img\.height/, 'pasted images should preserve their source pixel height');
+assert.match(html, /setCanvasSize\(intrinsicWidth, intrinsicHeight\)/, 'canvas backing resolution should use original image pixels');
+const setupCanvasBody = html.match(/function setupCanvasWithImage\(img, isFreshLoad = true\) \{([\s\S]*?)\n    window\.addEventListener\('resize', handleWindowResize\)/);
+assert.ok(setupCanvasBody, 'setupCanvasWithImage should be inspectable');
+assert.doesNotMatch(setupCanvasBody[1], /calculateFittedCanvasSize\(img\)/, 'initial paste should not downsample canvas to the viewport');
+assert.match(setupCanvasBody[1], /fitViewportToWorkspace\(false\)/, 'initial paste should fit visually without changing canvas pixels');
+const resizeCanvasBody = html.match(/function resizeCanvasToViewport\(\) \{([\s\S]*?)\n    let resizeTimer/);
+assert.ok(resizeCanvasBody, 'resizeCanvasToViewport should be inspectable');
+assert.doesNotMatch(resizeCanvasBody[1], /setCanvasSize\(/, 'window resize should not change canvas backing resolution');
+assert.doesNotMatch(resizeCanvasBody[1], /scaleAbsoluteCanvasItems\(/, 'window resize should not rescale annotations');
+assert.match(resizeCanvasBody[1], /fitViewportToWorkspace\(false\)/, 'window resize should only refit the viewport transform');
+assert.match(html, /function fitViewportToWorkspace\(allowUpscale = true\)/, 'viewport fitting should support non-upscaling initial fit');
+assert.match(html, /if \(!allowUpscale\) nextScale = Math\.min\(1, nextScale\)/, 'initial viewport fit should avoid scaling small screenshots above 100%');
 assert.match(html, /const CREATION_TOOLS = \['focus-rect', 'focus-circle', 'badge'\]/, 'creation tools should stay active for repeated placement');
 assert.match(html, /if \(CREATION_TOOLS\.includes\(currentTool\)\) {\s*selectedFocusArea = null;\s*} else {[\s\S]*?selectTool\('select'\)/, 'created focus shapes should not force creation tools back to select mode');
 assert.match(html, /let copiedComponents = \[\]/, 'selected components should have an internal clipboard');
@@ -61,7 +75,7 @@ assert.match(html, /color: toolDefaults\.badge\.fillColor/, 'new badges should c
 assert.match(html, /function getSingleEditableTextElement/, 'text editing should target one selected badge or text element');
 assert.match(html, /function applySelectedTextEdit/, 'selected text edits should be applied explicitly');
 assert.match(html, /el\.textColor \|\| '#ffffff'/, 'badge and text drawing should support per-element text colors');
-assert.match(html, /if \(el\.manualText\) return;/, 'manually edited badge labels should not be overwritten by reindexing');
+assert.match(html, /if \(el\.manualText\) \{ count\+\+; return; \}/, 'manually edited badge labels should not be overwritten and should consume sequence order');
 assert.match(html, /let viewportScale = 1/, 'workspace should track a separate viewport zoom scale');
 assert.match(html, /function applyViewportTransform/, 'viewport transform should be centralized');
 assert.match(html, /function zoomViewportAt/, 'wheel zoom should preserve the pointer anchor');
@@ -70,6 +84,8 @@ assert.match(html, /id="viewportZoomToolbar"/, 'viewport navigation controls sho
 assert.match(html, /id="zoomOutBtn"/, 'viewport toolbar should expose zoom out');
 assert.match(html, /id="zoomInBtn"/, 'viewport toolbar should expose zoom in');
 assert.match(html, /id="fitViewportBtn"/, 'viewport toolbar should expose fit-to-screen');
+assert.match(html, /<main class="[^"]*overflow-hidden/, 'editor workspace should not use native scrolling while viewport zoom handles wheel input');
+assert.doesNotMatch(html, /<main class="[^"]*overflow-auto/, 'editor workspace should not scroll vertically while wheel zooming');
 assert.doesNotMatch(html, /id="actualSizeViewportBtn"/, 'viewport toolbar should not expose a duplicate actual-size view');
 assert.match(html, /id="zoomPercentLabel"/, 'viewport toolbar should show the current zoom percent');
 assert.match(html, /const resetViewportBtn = document\.getElementById\('resetViewportBtn'\)/, 'reset viewport button should be bound');
@@ -107,6 +123,13 @@ assert.match(html, /Date\.now\(\) - lastViewportPanEndedAt < VIEWPORT_WHEEL_AFTE
 assert.match(html, /Math\.abs\(e\.deltaY\) < 1/, 'wheel zoom should ignore zero vertical wheel delta');
 assert.match(html, /Math\.abs\(e\.deltaX\) > Math\.abs\(e\.deltaY\)/, 'horizontal wheel gestures should not be treated as zoom');
 assert.match(html, /if \(!shouldHandleViewportWheel\(e\)\) return;/, 'wheel handler should return before preventing default when a wheel is unrelated to zooming');
+assert.match(html, /function shouldSuppressHorizontalViewportWheel/, 'horizontal wheel suppression should be centralized');
+assert.match(html, /Math\.abs\(e\.deltaX\) >= 1/, 'horizontal wheel suppression should detect real horizontal deltas');
+assert.match(html, /Math\.abs\(e\.deltaX\) >= Math\.abs\(e\.deltaY\)/, 'horizontal wheel suppression should ignore diagonal vertical zoom gestures');
+assert.match(html, /function suppressHorizontalViewportWheel/, 'workspace horizontal wheel events should have a suppress-only handler');
+assert.match(html, /workspace\.addEventListener\('wheel', suppressHorizontalViewportWheel, \{ passive: false, capture: true \}\)/, 'horizontal wheel suppression should run before workspace scrolling');
+assert.match(html, /if \(shouldSuppressHorizontalViewportWheel\(e\)\) \{[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);[\s\S]*?return;[\s\S]*?\}/, 'canvas wheel handler should block horizontal wheel default scrolling without zooming');
+assert.match(html, /if \(!shouldSuppressHorizontalViewportWheel\(e\)\) return;[\s\S]*?e\.preventDefault\(\);[\s\S]*?e\.stopPropagation\(\);/, 'workspace suppress handler should prevent and stop horizontal wheel events');
 assert.match(html, /workspace\.addEventListener\('pointerdown', handleViewportPanStart, true\)/, 'right-click panning should use pointer events before canvas editing handlers');
 assert.match(html, /document\.addEventListener\('contextmenu', suppressViewportContextMenu, true\)/, 'context menu should be suppressed at capture phase while viewport panning is available');
 assert.match(html, /workspace\.contains\(e\.target\)/, 'context menu suppression should stay scoped to the editing workspace');
@@ -143,7 +166,7 @@ assert.match(html, /let placingBadge = null/, 'badge placement should keep the p
 assert.match(html, /isPlacingBadge = true/, 'badge mousedown should start placement instead of saving immediately');
 assert.match(html, /if \(isPlacingBadge && placingBadge\)/, 'badge mousemove should update the pending badge');
 assert.match(html, /function finishBadgePlacement/, 'badge placement should finalize through a reusable mouseup handler');
-assert.match(html, /window\.addEventListener\('mouseup', \(\) => \{ finishBadgePlacement\(\); \}\)/, 'badge placement should finalize even if the pointer leaves the canvas');
+assert.match(html, /window\.addEventListener\('mouseup', finishCanvasEditInteraction\)/, 'badge placement should finalize even if the pointer leaves the canvas');
 assert.match(html, /scale: toolDefaults\.badge\.badgeScale/, 'new badges should copy the tool-level size default');
 assert.match(html, /let isResizingBadge = false/, 'badge resizing should have explicit interaction state');
 assert.match(html, /if \(selectedElement && selectedElement\.type === 'badge'\)/, 'badge resize handles should be checked before dragging selection');
@@ -158,5 +181,99 @@ assert.match(html, /activeSnapGuides = snapResult\.guides/, 'active snap guides 
 assert.match(html, /const SNAP_THRESHOLD_PX = 8/, 'snap threshold should be defined in screen pixels');
 assert.match(html, /canvas\.width \/ rect\.width/, 'snap threshold should account for viewport zoom');
 assert.match(html, /item\.type === 'line'[\s\S]*?item\.points\.forEach/, 'line endpoints should contribute snap anchors');
+assert.match(html, /function shouldBypassSnap\(e\)/, 'snap bypass should be centralized');
+assert.match(html, /return e\?\.shiftKey === true/, 'holding Shift should bypass snap behavior');
+assert.match(html, /function applySnapUnlessBypassed\(e, snapAction\)/, 'snap application and Shift bypass should share one helper');
+assert.match(html, /if \(shouldBypassSnap\(e\)\) \{[\s\S]*?activeSnapGuides = \[\];[\s\S]*?return false;[\s\S]*?\}/, 'snap bypass helper should clear guides and report that snapping was skipped');
+assert.match(html, /applySnapUnlessBypassed\(e, \(\) => applySnapToBadgePlacement\(newBadge\)\)/, 'holding Shift should disable initial badge placement snap on mousedown');
+assert.match(html, /applySnapUnlessBypassed\(e, \(\) => applySnapToBadgePlacement\(placingBadge\)\)/, 'holding Shift should disable snap while placing badges');
+assert.match(html, /applySnapUnlessBypassed\(e, \(\) => applySnapToBadgeResize\(selectedElement\)\)/, 'holding Shift should disable snap while resizing badges');
+assert.match(html, /const snappedDelta = shouldBypassSnap\(e\) \? \{ dx, dy \} : getSnappedMoveDelta\(selection, dx, dy\)/, 'holding Shift should disable snap while moving selected components');
+assert.match(html, /if \(shouldBypassSnap\(e\)\) activeSnapGuides = \[\];/, 'holding Shift should clear visible snap guides during movement');
+assert.match(html, /points\[points\.length - 1\] = shouldBypassSnap\(e\) \? orthogonalPos : snapPointToTargets\(orthogonalPos, \[drawingLineInstance\]\)/, 'holding Shift should disable snap while moving line endpoints');
+assert.match(html, /function snapFocusDraftToTargets\(focus, e\)/, 'focus draft snapping should receive the pointer event');
+assert.match(html, /if \(shouldBypassSnap\(e\)\) \{[\s\S]*?activeSnapGuides = \[\];[\s\S]*?return;[\s\S]*?\}/, 'holding Shift should disable snap while drawing focus rectangles');
+assert.match(html, /if \(e\.key === 'Shift' && activeSnapGuides\.length\)/, 'pressing Shift should immediately clear visible snap guides');
+
+const redoBody = html.match(/function handleRedo\(\) \{([\s\S]*?)\n    function applySnapshot/);
+assert.ok(redoBody, 'redo handler should be inspectable');
+assert.match(redoBody[1], /history\.push\(next\)/, 'redo should push the redone snapshot into undo history');
+assert.doesNotMatch(redoBody[1], /history\.push\(current\)/, 'redo should not push the pre-redo snapshot as the new undo baseline');
+
+assert.match(html, /function createHistorySnapshot/, 'history snapshots should be created through a reusable helper');
+const historySnapshotBody = html.match(/function createHistorySnapshot\(\) \{([\s\S]*?)\n    function saveHistoryState/);
+assert.ok(historySnapshotBody, 'history snapshot helper should be inspectable');
+['focusAreas', 'elements', 'canvasWidth', 'canvasHeight', 'bgImage', 'originalBgImage', 'cropArea', 'dimOpacity', 'currentScalePreset', 'autoScaleEnabled', 'watermarkEnabled', 'watermarkOpacity', 'watermarkSize', 'watermarkPos'].forEach(key => {
+  assert.match(historySnapshotBody[1], new RegExp(`${key}:`), `history snapshots should include ${key}`);
+});
+const applySnapshotBody = html.match(/function applySnapshot\(state\) \{([\s\S]*?)[\r\n]+    if \(undoBtn\)/);
+assert.ok(applySnapshotBody, 'snapshot restore should be inspectable');
+assert.match(applySnapshotBody[1], /syncDocumentVisibility\(\)/, 'snapshot restore should sync dropzone and canvas visibility');
+assert.match(applySnapshotBody[1], /syncRenderControlsFromState\(\)/, 'snapshot restore should refresh render-affecting controls');
+
+const clearCanvasBody = html.match(/clearCanvasBtn\.addEventListener\('click', \(\) => \{([\s\S]*?)\n      \}\);/);
+assert.ok(clearCanvasBody, 'clear canvas handler should be inspectable');
+assert.doesNotMatch(clearCanvasBody[1], /history = \[\]; redoStack = \[\];/, 'clear canvas should not erase undo history');
+assert.match(clearCanvasBody[1], /saveHistoryState\(\)/, 'clear canvas should save a blank undoable snapshot');
+const revertImageBody = html.match(/revertImageBtn\.addEventListener\('click', \(\) => \{([\s\S]*?)\n      \}\);/);
+assert.ok(revertImageBody, 'revert image handler should be inspectable');
+assert.doesNotMatch(revertImageBody[1], /setupCanvasWithImage\(originalBgImage, true\)/, 'revert image should not reset history as a fresh load');
+assert.match(revertImageBody[1], /saveHistoryState\(\)/, 'revert image should be undoable');
+
+assert.match(html, /function shouldReplaceCurrentImage/, 'image replacement should be gated through a reusable confirmation helper');
+assert.match(html, /if \(!shouldReplaceCurrentImage\('클립보드'\)\) return;/, 'pasting an image over existing work should ask before replacing it');
+assert.match(html, /if \(!shouldReplaceCurrentImage\('파일'\)\) return;/, 'loading a file over existing work should ask before replacing it');
+assert.match(html, /if \(!shouldReplaceCurrentImage\('드래그 앤 드롭'\)\) return;/, 'dropping a file over existing work should ask before replacing it');
+
+const finishLineBody = html.match(/function finishDrawingLine\(\) \{([\s\S]*?)\n    function handleFileSelect/);
+assert.ok(finishLineBody, 'line finalization should be inspectable');
+assert.match(finishLineBody[1], /if \(drawingLineInstance\.points\.length < 2\)/, 'one-point lines should be removed instead of saved');
+assert.match(finishLineBody[1], /elements = elements\.filter\(el => el !== drawingLineInstance\)/, 'invalid line finalization should remove the pending line object');
+
+const focusHitBody = html.match(/function findFocusAreaAt\(x, y\) \{([\s\S]*?)\n    function createTextElementFromOverlay/);
+assert.ok(focusHitBody, 'focus hit testing should be inspectable');
+assert.match(focusHitBody[1], /f\.type === 'circle'/, 'circle focus hit testing should branch by shape type');
+assert.match(focusHitBody[1], /normalizedX \* normalizedX \+ normalizedY \* normalizedY <= 1/, 'circle focus hit testing should use ellipse math');
+
+assert.match(html, /function distanceToSegment/, 'line hit testing should use point-to-segment distance');
+const elementHitBody = html.match(/function findElementAt\(x, y\) \{([\s\S]*?)\n    function getMousePos/);
+assert.ok(elementHitBody, 'element hit testing should be inspectable');
+assert.match(elementHitBody[1], /distanceToSegment\(x, y, el\.points\[i - 1\], el\.points\[i\]\)/, 'line hit testing should check every visible segment');
+
+assert.match(html, /function finishCanvasEditInteraction/, 'canvas edit interactions should share a global finalizer');
+assert.match(html, /window\.addEventListener\('mousemove', handleCanvasEditMouseMove\)/, 'canvas editing should keep moving when the pointer leaves the canvas');
+assert.match(html, /window\.addEventListener\('mouseup', finishCanvasEditInteraction\)/, 'canvas editing should end on global mouseup');
+assert.match(html, /if \(!marqueeMoved && marqueeRect\) \{[\s\S]*?clearSelection\(\);/, 'empty canvas click should deselect instead of selecting the background');
+assert.doesNotMatch(html, /selectedElement = 'background'; selectedFocusArea = null; multiSel = \[\];/, 'empty canvas click should no longer select the background implicitly');
+
+const deleteBody = html.match(/function executeDeleteSelected\(\) \{([\s\S]*?)\n    function getSingleEditableTextElement/);
+assert.ok(deleteBody, 'delete command should be inspectable');
+assert.match(deleteBody[1], /return false;/, 'delete command should return false when nothing was deleted');
+assert.match(deleteBody[1], /return true;/, 'delete command should return true after deleting');
+assert.match(html, /if \(e\.key === 'Delete' \|\| e\.key === 'Backspace'\) \{[\s\S]*?if \(executeDeleteSelected\(\)\) e\.preventDefault\(\);[\s\S]*?return;[\s\S]*?\}/, 'delete and backspace should prevent browser defaults only when an editor delete ran');
+
+assert.match(html, /if \(\(e\.ctrlKey \|\| e\.metaKey\) && e\.shiftKey && e\.key\.toLowerCase\(\) === 'z'\) \{ e\.preventDefault\(\); handleRedo\(\); return; \}/, 'Ctrl+Shift+Z should redo instead of undo');
+assert.match(html, /function cancelActiveInteraction/, 'Escape should route through a central cancel command');
+assert.match(html, /if \(e\.key === 'Escape'\) \{[\s\S]*?if \(cancelActiveInteraction\(\)\) e\.preventDefault\(\);[\s\S]*?return;[\s\S]*?\}/, 'Escape should cancel active editor state or clear selection');
+
+assert.match(html, /const VIEWPORT_MIN_SCALE = 0\.05/, 'fit-to-screen should allow very large images to fit into the workspace');
+assert.match(html, /function handleWorkspaceEmptyMouseDown/, 'workspace empty clicks should be handled explicitly');
+assert.match(html, /workspace\.addEventListener\('mousedown', handleWorkspaceEmptyMouseDown\)/, 'clicking the pasteboard should clear selection in select mode');
+
+assert.match(html, /function indexToAlphaLabel/, 'badge alpha labels should support values past Z');
+assert.match(html, /while \(remaining > 0\)/, 'alpha labels should use spreadsheet-style rollover');
+const reindexBody = html.match(/function reindexBadges\(\) \{([\s\S]*?)\n    function drawHandles/);
+assert.ok(reindexBody, 'badge reindexing should be inspectable');
+assert.match(reindexBody[1], /if \(el\.manualText\) \{ count\+\+; return; \}/, 'manual badge labels should consume their sequence slot to avoid duplicate following labels');
+assert.match(reindexBody[1], /indexToAlphaLabel\(count, false\)/, 'lowercase alpha badges should use rollover labels');
+assert.match(reindexBody[1], /indexToAlphaLabel\(count, true\)/, 'uppercase alpha badges should use rollover labels');
+
+assert.match(html, /function withCleanOutputRender/, 'export and clipboard should render through a clean output state');
+assert.match(html, /currentTool = 'select'/, 'clean output render should hide crop overlays and transient editor UI');
+assert.match(html, /finally \{ restoreOutputRenderState\(previousState\); \}/, 'clean output render should always restore editor state');
+assert.match(html, /withCleanOutputRender\(\(\) => canvas\.toDataURL\('image\/png'\)\)/, 'download should export a clean render');
+assert.match(html, /withCleanOutputRender\(\(\) => new Promise/, 'clipboard copy should export a clean render through async cleanup');
+assert.match(html, /if \(!blob\) \{ reject\(new Error\('clipboard blob creation failed'\)\); return; \}/, 'clipboard copy should guard against null blobs');
+assert.match(html, /if \(!navigator\.clipboard \|\| typeof ClipboardItem === 'undefined'\)/, 'clipboard copy should feature-detect ClipboardItem support');
 
 console.log('manual-tool custom color checks passed');
