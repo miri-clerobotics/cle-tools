@@ -557,6 +557,8 @@
     let imageAutoFitEnabled = true;
     let currentTool = 'select';
     let lockedTool = null; // 반복 생성으로 잠근 도구
+    let pendingCreationToolAfterDeselect = null;
+    let pendingMarqueeResumeCreationTool = null;
     let isCreationRepeatModifierActive = false;
     const LOCKABLE_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
     let focusAreas = []; 
@@ -3848,8 +3850,12 @@
 
     window.addEventListener('resize', handleWindowResize);
 
-    function selectTool(toolKey) {
+    function selectTool(toolKey, options = {}) {
       if (!bgImage && toolKey !== 'select') { showToast('먼저 캡쳐 이미지를 붙여넣거나 스크린샷 파일을 올려주세요!', 'error'); return false; }
+      if (!options.preservePendingCreationTool) {
+        pendingCreationToolAfterDeselect = null;
+        pendingMarqueeResumeCreationTool = null;
+      }
       if (currentTool === 'line' && drawingLineInstance && toolKey !== 'line') finishDrawingLine();
       if (isPlacingBadge && placingBadge) {
         elements = elements.filter(el => el !== placingBadge);
@@ -5092,6 +5098,8 @@
         const clickedFocus = isFocusObject(clicked) ? clicked : null;
 
         if (clicked) {
+          pendingCreationToolAfterDeselect = null;
+          pendingMarqueeResumeCreationTool = null;
           if (e.shiftKey && clicked) {
             toggleCanvasSelectionItem(clicked);
             return;
@@ -5106,6 +5114,7 @@
         }
 
         // 빈 공간 → 드래그 박스(마퀴) 선택 시작 (떼는 순간 클릭이면 배경 선택)
+        pendingMarqueeResumeCreationTool = pendingCreationToolAfterDeselect;
         clearSelection();
         isMarqueeSelecting = true; marqueeMoved = false;
         marqueeRect = { x: pos.x, y: pos.y, w: 0, h: 0 };
@@ -5304,6 +5313,14 @@
       return !!(lockedTool === currentTool || isCreationRepeatModifierActive || (e?.ctrlKey || e?.metaKey));
     }
 
+    function resumePendingCreationToolAfterDeselect() {
+      const toolToResume = pendingCreationToolAfterDeselect;
+      if (!toolToResume) return false;
+      pendingCreationToolAfterDeselect = null;
+      pendingMarqueeResumeCreationTool = null;
+      return selectTool(toolToResume);
+    }
+
     function clearCreationSelectionOnEmptyCanvasClick(pos) {
       if (!isCreationPlacementTool() || getSelectionList().length === 0) return false;
       if (findObjectAt(pos.x, pos.y)) return false;
@@ -5320,9 +5337,11 @@
         clearSelection();
         return;
       }
+      const creationTool = currentTool;
       const created = createdItem;
       setSelectionFromItems([created]);
-      selectTool('select');
+      pendingCreationToolAfterDeselect = creationTool;
+      selectTool('select', { preservePendingCreationTool: true });
     }
 
     function finishBadgePlacement(e = null) {
@@ -5374,12 +5393,16 @@
       if (isMarqueeSelecting) {
         isMarqueeSelecting = false;
         if (marqueeMoved && marqueeRect) {
+          pendingCreationToolAfterDeselect = null;
+          pendingMarqueeResumeCreationTool = null;
           multiSel = selectInMarquee(marqueeRect);
           selectedElement = null; selectedFocusArea = null;
           if (multiSel.length > 0) showToast(`${multiSel.length}개 요소를 선택했습니다.`);
         } else if (!marqueeMoved && marqueeRect) {
           clearSelection();
+          if (pendingMarqueeResumeCreationTool) resumePendingCreationToolAfterDeselect();
         }
+        pendingMarqueeResumeCreationTool = null;
         marqueeRect = null; marqueeMoved = false;
         drawCanvas(); updateSelectedActionArea();
         return;
