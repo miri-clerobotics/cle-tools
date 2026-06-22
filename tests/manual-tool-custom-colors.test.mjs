@@ -42,12 +42,12 @@ assert.doesNotMatch(resizeCanvasBody[1], /scaleAbsoluteCanvasItems\(/, 'window r
 assert.match(resizeCanvasBody[1], /fitViewportToWorkspace\(false\)/, 'window resize should only refit the viewport transform');
 assert.match(html, /function fitViewportToWorkspace\(allowUpscale = true\)/, 'viewport fitting should support non-upscaling initial fit');
 assert.match(html, /if \(!allowUpscale\) nextScale = Math\.min\(1, nextScale\)/, 'initial viewport fit should avoid scaling small screenshots above 100%');
-assert.match(html, /const CREATION_TOOLS = \['focus-rect', 'focus-circle', 'badge'\]/, 'creation tools should stay active for repeated placement');
+assert.match(html, /function shouldKeepCreationToolAfterCreate/, 'creation tools should use a shared completion policy for one-shot versus repeated placement');
 assert.match(html, /function isFocusCreationTool/, 'focus creation tools should share creation-mode focus editing checks');
 assert.match(html, /function startActiveFocusEditIfHit/, 'active focus created in creation mode should be editable before leaving that mode');
 assert.match(html, /if \(startActiveFocusEditIfHit\(pos\)\) return;[\s\S]*?selectedFocusArea = null; selectedElement = null; multiSel = \[\];/, 'clicking the active focus should edit it, while clicking elsewhere should clear it before new drawing');
 assert.doesNotMatch(html, /if \(CREATION_TOOLS\.includes\(currentTool\)\) {\s*selectedFocusArea = null;\s*}/, 'created focus shapes should stay active in creation mode after mouseup');
-assert.match(html, /if \(justDrewFocus && !CREATION_TOOLS\.includes\(currentTool\)\)/, 'only non-creation focus drawing should force select mode');
+assert.match(html, /if \(justDrewFocus\) finishCreatedObjectInteraction\(selectedFocusArea, e\)/, 'finished focus drawing should apply the shared creation completion policy');
 assert.match(html, /let copiedComponents = \[\]/, 'selected components should have an internal clipboard');
 assert.match(html, /let componentClipboardFresh = false/, 'internal component clipboard should track whether the last copy came from the editor');
 assert.match(html, /function copySelectedComponents/, 'selected components should be copyable');
@@ -587,5 +587,14 @@ assert.match(html, /updateBadgePlacementFromDrag\(placingBadge, badgePlacementSt
 assert.match(html, /reindexBadges\(\);[\s\S]*?activeSnapGuides = \[\];[\s\S]*?autoExpandCanvasForBounds\(getBadgeBounds\(newBadge\)\)/, 'initial badge creation should start without snap guides');
 assert.doesNotMatch(extractFunctionBody('setBadgeCenterFromPoint'), /clampNumber/, 'badge drag placement should not clamp before auto canvas expansion can run');
 assert.match(extractFunctionBody('applySnapToBadgeResize'), /clampNumber\(snappedRadius \/ calculateScaledSize\(BADGE_BASE_RADIUS\), BADGE_MIN_SCALE, BADGE_MAX_SCALE\)/, 'completed badge resize should still support snapped radius sizing');
+assert.match(html, /function shouldKeepCreationToolAfterCreate\(e = null\)/, 'creation completion should centralize whether the active tool stays armed');
+assert.match(extractFunctionBody('shouldKeepCreationToolAfterCreate'), /\(e\?\.(ctrlKey|metaKey) \|\| e\?\.(ctrlKey|metaKey)\)/, 'holding Ctrl or Meta while creating should request repeated creation');
+assert.match(extractFunctionBody('shouldKeepCreationToolAfterCreate'), /lockedTool === currentTool/, 'the repeat-create toggle should request repeated creation');
+assert.match(html, /function finishCreatedObjectInteraction\(createdItem, e = null\)/, 'created objects should finalize through one shared interaction policy');
+assert.match(extractFunctionBody('finishCreatedObjectInteraction'), /shouldKeepCreationToolAfterCreate\(e\)[\s\S]*?clearSelection\(\)[\s\S]*?return;/, 'Ctrl or locked repeated creation should keep the creation tool active and clear the new selection');
+assert.match(extractFunctionBody('finishCreatedObjectInteraction'), /const created = createdItem;[\s\S]*?selectTool\('select'\)[\s\S]*?setSelectionFromItems\(\[created\]\)/, 'normal creation should switch to select mode while preserving the new object selection');
+assert.match(extractFunctionBody('finishBadgePlacement'), /const placedBadge = placingBadge;[\s\S]*?finishCreatedObjectInteraction\(placedBadge, e\)/, 'finished badge placement should use the shared creation completion policy');
+assert.match(extractFunctionBody('finishCanvasEditInteraction'), /justDrewFocus[\s\S]*?finishCreatedObjectInteraction\(selectedFocusArea, e\)/, 'finished focus drawing should use the shared creation completion policy');
+assert.match(extractFunctionBody('finishCanvasEditInteraction'), /selectedElement = area;[\s\S]*?finishCreatedObjectInteraction\(area, e\)/, 'finished redaction drawing should use the shared creation completion policy');
 
 console.log('manual-tool custom color checks passed');

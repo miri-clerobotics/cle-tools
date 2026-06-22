@@ -559,9 +559,8 @@
     let canvasBackgroundColor = '#FFFFFF';
     let imageAutoFitEnabled = true;
     let currentTool = 'select';
-    let lockedTool = null; // 두 번 눌러 잠근(연속 생성) 도구
+    let lockedTool = null; // 반복 생성으로 잠근 도구
     const LOCKABLE_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
-    const CREATION_TOOLS = ['focus-rect', 'focus-circle', 'badge'];
     let focusAreas = []; 
     let elements = []; 
     let badgeType = 'number'; 
@@ -5287,13 +5286,30 @@
       }
     }
 
-    function finishBadgePlacement() {
+    function shouldKeepCreationToolAfterCreate(e = null) {
+      return !!(lockedTool === currentTool || (e?.ctrlKey || e?.metaKey));
+    }
+
+    function finishCreatedObjectInteraction(createdItem, e = null) {
+      if (!createdItem) return;
+      if (shouldKeepCreationToolAfterCreate(e)) {
+        clearSelection();
+        return;
+      }
+      const created = createdItem;
+      selectTool('select');
+      setSelectionFromItems([created]);
+    }
+
+    function finishBadgePlacement(e = null) {
       if (!isPlacingBadge || !placingBadge) return false;
+      const placedBadge = placingBadge;
       isPlacingBadge = false;
       placingBadge = null;
       badgePlacementStart = null;
       activeSnapGuides = [];
       reindexBadges();
+      finishCreatedObjectInteraction(placedBadge, e);
       saveHistoryState();
       drawCanvas(); updateSelectedActionArea();
       return true;
@@ -5304,7 +5320,7 @@
       if (isResizingBackground) {
         isResizingBackground = false; saveHistoryState(); return;
       }
-      if (finishBadgePlacement()) return;
+      if (finishBadgePlacement(e)) return;
       if (isDrawingRedaction) {
         const area = redactionArea;
         isDrawingRedaction = false;
@@ -5324,6 +5340,7 @@
         selectedElement = area;
         selectedFocusArea = null;
         multiSel = [];
+        finishCreatedObjectInteraction(area, e);
         saveHistoryState();
         drawCanvas();
         updateSelectedActionArea();
@@ -5360,12 +5377,7 @@
       activeBadgeHandle = null; activeRedactionHandle = null; activeLinePointIndex = null; rotationCenter = null; rotationStartStates = [];
       finishSelectionDrag();
       activeSnapGuides = [];
-      // 생성 도구에서는 방금 만든 포커스를 활성 상태로 유지해 바로 이동/리사이즈할 수 있게 둔다.
-      if (justDrewFocus && !CREATION_TOOLS.includes(currentTool)) {
-        const drawn = selectedFocusArea;
-        selectTool('select');
-        selectedFocusArea = drawn;
-      }
+      if (justDrewFocus) finishCreatedObjectInteraction(selectedFocusArea, e);
       drawCanvas(); updateSelectedActionArea();
       if (wasActionActive && currentTool !== 'crop') saveHistoryState();
     }
