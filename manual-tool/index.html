@@ -64,11 +64,34 @@
         <i data-lucide="folder-open" class="w-4 h-4"></i><span>프로젝트 열기</span>
         <input id="loadProjectInput" type="file" accept="application/json,.json" class="hidden">
       </label>
+      <button id="shortcutHelpBtn" type="button" aria-expanded="false" aria-controls="shortcutHelpPopover" class="bg-white hover:bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-slate-500 hover:text-[#FF4747] transition-all shadow-sm" title="단축키 목록">
+        <i data-lucide="keyboard" class="w-4 h-4"></i>
+      </button>
       <button id="helpBtn" class="bg-white hover:bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl text-slate-500 hover:text-slate-850 transition-all shadow-sm">
         <i data-lucide="info" class="w-4 h-4"></i>
       </button>
     </div>
   </header>
+
+  <div id="shortcutHelpPopover" class="hidden fixed top-[74px] right-6 z-40 w-72 bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-900/10 p-4 text-left">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <div class="bg-[#FF4747]/10 text-[#FF4747] p-1.5 rounded-lg"><i data-lucide="keyboard" class="w-4 h-4"></i></div>
+        <h3 class="text-sm font-extrabold text-slate-800">단축키</h3>
+      </div>
+      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manual Tool</span>
+    </div>
+    <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-xs">
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">V</kbd><span class="text-slate-600 font-semibold">선택 및 이동</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">R</kbd><span class="text-slate-600 font-semibold">사각형 포커스</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">B</kbd><span class="text-slate-600 font-semibold">자동 번호표</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">M</kbd><span class="text-slate-600 font-semibold">민감정보 가림</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Ctrl + A</kbd><span class="text-slate-600 font-semibold">전체 객체 선택</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Ctrl + D</kbd><span class="text-slate-600 font-semibold">선택 객체 복제</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Ctrl + +/-</kbd><span class="text-slate-600 font-semibold">작업영역 확대/축소</span>
+      <kbd class="bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200 font-bold text-[10px]">Space</kbd><span class="text-slate-600 font-semibold">누른 상태로 패닝</span>
+    </div>
+  </div>
 
   <div class="flex-1 flex overflow-hidden">
     
@@ -676,6 +699,8 @@
     const ctx = canvas.getContext('2d');
     const AUTO_CANVAS_MARGIN = calculateScaledSize(48);
     const helpBtn = document.getElementById('helpBtn');
+    const shortcutHelpBtn = document.getElementById('shortcutHelpBtn');
+    const shortcutHelpPopover = document.getElementById('shortcutHelpPopover');
     const infoModal = document.getElementById('infoModal');
     const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
     const confirmInfoModalBtn = document.getElementById('confirmInfoModalBtn');
@@ -2746,8 +2771,36 @@
       toastTimeout = setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none'); toast.classList.remove('opacity-100', 'translate-y-0'); }, 2300);
     }
 
+    function closeShortcutHelpPopover() {
+      if (!shortcutHelpPopover) return;
+      shortcutHelpPopover.classList.add('hidden');
+      if (shortcutHelpBtn) shortcutHelpBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function openShortcutHelpPopover() {
+      if (!shortcutHelpPopover) return;
+      shortcutHelpPopover.classList.remove('hidden');
+      if (shortcutHelpBtn) shortcutHelpBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function toggleShortcutHelpPopover(event = null) {
+      if (event) event.stopPropagation();
+      if (!shortcutHelpPopover) return;
+      if (shortcutHelpPopover.classList.contains('hidden')) openShortcutHelpPopover();
+      else closeShortcutHelpPopover();
+    }
+
+    function handleShortcutHelpOutsideClick(event) {
+      if (!shortcutHelpPopover || shortcutHelpPopover.classList.contains('hidden')) return;
+      if (shortcutHelpPopover.contains(event.target)) return;
+      if (shortcutHelpBtn && shortcutHelpBtn.contains(event.target)) return;
+      closeShortcutHelpPopover();
+    }
+
     if (closePreviewModalBtn) closePreviewModalBtn.addEventListener('click', hideRenderedModal);
     if (previewModalCloseBtn) previewModalCloseBtn.addEventListener('click', hideRenderedModal);
+    if (shortcutHelpBtn) shortcutHelpBtn.addEventListener('click', toggleShortcutHelpPopover);
+    document.addEventListener('mousedown', handleShortcutHelpOutsideClick);
     if (helpBtn && infoModal) { helpBtn.addEventListener('click', () => infoModal.classList.remove('hidden')); }
     if (closeInfoModalBtn) { closeInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
     if (confirmInfoModalBtn) { confirmInfoModalBtn.addEventListener('click', () => infoModal.classList.add('hidden')); }
@@ -3077,6 +3130,7 @@
 
     window.addEventListener('keydown', (e) => {
       if (!customColorModal.classList.contains('hidden') && e.key === 'Escape') { closeCustomColorModal(); return; }
+      if (shortcutHelpPopover && !shortcutHelpPopover.classList.contains('hidden') && e.key === 'Escape') { closeShortcutHelpPopover(); e.preventDefault(); return; }
       const activeInput = document.activeElement;
       if (activeInput === customColorHexInput || activeInput === customColorInput) return;
       if (activeInput === selectedTextInput || activeInput === selectedTextColorInput || activeInput === objectColorInput || activeInput === badgeBorderColorInput || activeInput === redactionMosaicRange) return;
@@ -3177,7 +3231,7 @@
       }
     }
 
-    canvasContainer.addEventListener('wheel', handleViewportWheel, { passive: false });
+    workspace.addEventListener('wheel', handleViewportWheel, { passive: false });
     workspace.addEventListener('wheel', suppressHorizontalViewportWheel, { passive: false, capture: true });
     workspace.addEventListener('mousedown', handleWorkspaceEmptyMouseDown);
     workspace.addEventListener('pointerdown', handleViewportPanStart, true);

@@ -196,8 +196,8 @@ assert.match(html, /function clearSpacePanState/, 'space-pan should have one cle
 assert.match(html, /window\.addEventListener\('keyup'[\s\S]*?clearSpacePanState\(\)/, 'releasing Space should stop space-pan mode');
 assert.match(html, /function handleViewportWindowBlur/, 'window blur should clear stuck viewport input state');
 assert.match(extractFunctionBody('handleViewportWindowBlur'), /clearSpacePanState\(\);[\s\S]*?finishViewportPan\(\)/, 'window blur should stop space-pan and active panning together');
-assert.match(html, /canvasContainer\.addEventListener\('wheel', handleViewportWheel, \{ passive: false \}\)/, 'wheel zoom should be scoped to the canvas instead of the whole workspace');
-assert.doesNotMatch(html, /workspace\.addEventListener\('wheel', handleViewportWheel/, 'workspace-level wheel zoom should not accidentally catch unrelated scroll events');
+assert.match(html, /workspace\.addEventListener\('wheel', handleViewportWheel, \{ passive: false \}\)/, 'wheel zoom should work across the whole canvas workspace');
+assert.doesNotMatch(html, /canvasContainer\.addEventListener\('wheel', handleViewportWheel/, 'wheel zoom should not be limited to the image canvas container');
 assert.match(html, /const VIEWPORT_WHEEL_AFTER_PAN_IGNORE_MS = \d+/, 'stray wheel events immediately after panning should be ignored');
 assert.match(html, /Date\.now\(\) - lastViewportPanEndedAt < VIEWPORT_WHEEL_AFTER_PAN_IGNORE_MS/, 'wheel zoom should ignore residual wheel events right after panning');
 assert.match(html, /Math\.abs\(e\.deltaY\) < 1/, 'wheel zoom should ignore zero vertical wheel delta');
@@ -522,6 +522,16 @@ assert.match(html, /function selectToolByShortcut/, 'editor modes should have ke
 assert.match(html, /case 'v': return selectTool\('select'\)/, 'V shortcut should switch to select mode');
 assert.match(html, /case 'r': return selectTool\('focus-rect'\)/, 'R shortcut should switch to rectangle focus mode');
 assert.match(html, /case 'b': return selectTool\('badge'\)/, 'B shortcut should switch to badge mode');
+assert.match(html, /id="shortcutHelpBtn"/, 'header should expose a shortcut help toggle');
+assert.match(html, /id="shortcutHelpPopover"[^>]*hidden/, 'shortcut help should render as a hidden popover');
+assert.match(html, /Ctrl \+ A/, 'shortcut help should explain select-all');
+assert.match(html, /Ctrl \+ D/, 'shortcut help should explain duplicate');
+assert.match(html, /function toggleShortcutHelpPopover/, 'shortcut help should have a reusable toggle function');
+assert.match(html, /function closeShortcutHelpPopover/, 'shortcut help should have a reusable close function');
+assert.match(html, /shortcutHelpBtn\.addEventListener\('click'[\s\S]*?toggleShortcutHelpPopover/, 'shortcut help button should toggle the popover');
+assert.match(html, /document\.addEventListener\('mousedown', handleShortcutHelpOutsideClick\)/, 'clicking outside should close the shortcut popover');
+assert.match(extractFunctionBody('handleShortcutHelpOutsideClick'), /shortcutHelpPopover\.contains\(event\.target\)[\s\S]*?return/, 'clicking inside the shortcut popover should keep it open');
+assert.match(extractFunctionBody('handleShortcutHelpOutsideClick'), /shortcutHelpBtn\.contains\(event\.target\)[\s\S]*?return/, 'clicking the shortcut button should not be treated as an outside click');
 assert.match(html, /id="toolRedact"/, 'manual workflow should include a sensitive-information redaction tool');
 assert.doesNotMatch(html, /function applyRedactionToImage/, 'redaction should stay editable instead of destructively rewriting the working image');
 assert.match(html, /redact: \{ mosaicSize: \d+ \}/, 'redaction tool should have a mosaic-size default');
