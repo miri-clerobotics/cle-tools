@@ -36,6 +36,14 @@ assert.match(html, /function applyColorPreset/, 'preset selection should apply f
 assert.match(html, /function saveCustomColorPreset/, 'custom preset popover should save badge text and background as one preset');
 assert.match(html, /function deleteSelectedCustomPreset/, 'custom presets should be removable from localStorage');
 assert.match(html, /let editingCustomPresetKey = null/, 'custom preset modal should track whether it is adding or editing');
+assert.match(html, /let isCustomPresetAddModalOpen = false/, 'custom preset add flow should temporarily clear the palette selection highlight');
+assert.match(html, /function openCustomColorAddModal/, 'the add button should use a dedicated add flow instead of editing the selected custom preset');
+assert.match(html, /addCustomColorBtn\.addEventListener\('click', openCustomColorAddModal\)/, 'clicking plus should always open the custom preset modal in add mode');
+assert.doesNotMatch(html, /addCustomColorBtn\.addEventListener\('click', \(\) => openCustomColorModal\(activeColorPreset\)\)/, 'clicking plus should not edit the currently selected custom preset');
+assert.match(html, /resetCustomPresetModalForm\(activeColorPreset, true\)/, 'plus flow should seed colors from the current preset while forcing add mode');
+assert.match(html, /const activeKey = isCustomPresetAddModalOpen \? '' : getPresetKey\(activeColorPreset\)/, 'plus flow should clear the visible preset selection while the modal is open');
+assert.match(html, /function closeCustomColorModal\(\) \{[\s\S]*?isCustomPresetAddModalOpen = false;[\s\S]*?resetCustomPresetModalForm\(activeColorPreset\);[\s\S]*?updateColorPresetPanel\(\)/, 'closing without saving should restore the previously selected preset highlight');
+assert.match(html, /function saveCustomColorPreset\(\) \{[\s\S]*?isCustomPresetAddModalOpen = false;[\s\S]*?applyColorPreset\(preset\.fillColor, preset\.textColor\);[\s\S]*?customColorModal\.classList\.add\('hidden'\)/, 'saving should select the newly saved preset and close the modal');
 assert.match(html, /data-fill-color="#FF4747" data-text-color="#FFFFFF"/, 'default presets should carry badge background and text colors');
 assert.match(html, /function calculateFittedCanvasSize/, 'canvas fit size should be reusable after viewport changes');
 assert.match(html, /function resizeCanvasToViewport/, 'canvas should resize when the viewport grows or shrinks');

@@ -491,6 +491,7 @@
     ];
     let activeColorPreset = { fillColor: '#FF4747', textColor: '#FFFFFF' };
     let editingCustomPresetKey = null;
+    let isCustomPresetAddModalOpen = false;
     let isResizingLeftPanel = false;
     let isDraggingCustomColorModal = false;
     let customColorModalDragOffset = { x: 0, y: 0 };
@@ -1806,16 +1807,28 @@
       if (deleteCustomColorBtn) deleteCustomColorBtn.disabled = !normalized;
     }
 
-    function resetCustomPresetModalForm(preset = activeColorPreset) {
+    function resetCustomPresetModalForm(preset = activeColorPreset, forceAdd = false) {
       const normalized = normalizeColorPreset(preset) || activeColorPreset;
-      setCustomPresetEditState(isDefaultPreset(normalized) ? null : normalized);
+      setCustomPresetEditState(forceAdd || isDefaultPreset(normalized) ? null : normalized);
       setCustomPresetDraft('text', normalized.textColor);
       setCustomPresetDraft('fill', normalized.fillColor);
     }
 
     function openCustomColorModal(preset = activeColorPreset) {
+      isCustomPresetAddModalOpen = false;
       resetCustomPresetModalForm(preset);
       customColorModal.classList.remove('hidden');
+      updateColorPresetPanel();
+      applyCustomColorModalPosition();
+      customPresetFillColorInput?.focus();
+      customPresetFillColorInput?.select();
+    }
+
+    function openCustomColorAddModal() {
+      isCustomPresetAddModalOpen = true;
+      resetCustomPresetModalForm(activeColorPreset, true);
+      customColorModal.classList.remove('hidden');
+      updateColorPresetPanel();
       applyCustomColorModalPosition();
       customPresetFillColorInput?.focus();
       customPresetFillColorInput?.select();
@@ -1823,7 +1836,9 @@
 
     function closeCustomColorModal() {
       customColorModal.classList.add('hidden');
+      isCustomPresetAddModalOpen = false;
       resetCustomPresetModalForm(activeColorPreset);
+      updateColorPresetPanel();
     }
 
     function getDraftCustomPreset() {
@@ -1848,8 +1863,10 @@
       }
       saveStoredCustomColorPresets(presets);
       renderCustomColorPresets();
+      isCustomPresetAddModalOpen = false;
       applyColorPreset(preset.fillColor, preset.textColor);
       setCustomPresetEditState(isDefaultPreset(preset) ? null : preset);
+      customColorModal.classList.add('hidden');
       showToast(wasEditing ? '커스텀 프리셋이 수정되었습니다.' : '커스텀 프리셋이 추가되었습니다.');
     }
 
@@ -1875,7 +1892,7 @@
     });
     renderCustomColorPresets();
 
-    if (addCustomColorBtn) addCustomColorBtn.addEventListener('click', () => openCustomColorModal(activeColorPreset));
+    if (addCustomColorBtn) addCustomColorBtn.addEventListener('click', openCustomColorAddModal);
     if (closeCustomColorModalBtn) closeCustomColorModalBtn.addEventListener('click', closeCustomColorModal);
     if (cancelCustomColorBtn) cancelCustomColorBtn.addEventListener('click', closeCustomColorModal);
     if (saveCustomColorBtn) saveCustomColorBtn.addEventListener('click', saveCustomColorPreset);
@@ -2422,7 +2439,7 @@
     }
 
     function updateColorPresetPanel() {
-      const activeKey = getPresetKey(activeColorPreset);
+      const activeKey = isCustomPresetAddModalOpen ? '' : getPresetKey(activeColorPreset);
       document.querySelectorAll('.color-preset-btn').forEach(btn => {
         const key = getPresetKey({
           fillColor: btn.getAttribute('data-fill-color'),
